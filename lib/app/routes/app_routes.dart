@@ -1,0 +1,81 @@
+part of 'app_pages.dart';
+
+abstract class Routes {
+  Routes._();
+  static const SPLASH = _Paths.SPLASH;
+  static const USER_TYPE = _Paths.USER_TYPE;
+  static const LOGIN = _Paths.LOGIN;
+  static const HOME = _Paths.HOME;
+  static const CUSTOMER_HOME = _Paths.CUSTOMER_HOME;
+  static const MAIN_NAVIGATION = _Paths.MAIN_NAVIGATION;
+  static const ORDER = _Paths.ORDER;
+  static const ORDER_DETAILS = _Paths.ORDER_DETAILS;
+  static const BOOTH_CAPTURE = _Paths.BOOTH_CAPTURE;
+  static const CART = _Paths.CART;
+  static const CUSTOMER_LOGIN = _Paths.CUSTOMER_LOGIN;
+  static const CUSTOMER_PROFILE = _Paths.CUSTOMER_PROFILE;
+  static const CUSTOMER_ORDER = _Paths.CUSTOMER_ORDER;
+  static const CUSTOMER_ORDERS = _Paths.CUSTOMER_ORDERS;
+  static const BOOTH_SELECTION = _Paths.BOOTH_SELECTION;
+  static const EASYPAY_WEBVIEW = _Paths.EASYPAY_WEBVIEW;
+  static const CLAIMS = _Paths.CLAIMS;
+  static const CREATE_CLAIM = _Paths.CREATE_CLAIM;
+  static const CLAIM_DETAILS = _Paths.CLAIM_DETAILS;
+  static const CUSTOMER_PRODUCT_SELECTION = _Paths.CUSTOMER_PRODUCT_SELECTION;
+  static const CUSTOMER_CART = _Paths.CUSTOMER_CART;
+  static const CUSTOMER_CHECKOUT = _Paths.CUSTOMER_CHECKOUT;
+  static const CUSTOMER_WALLET = _Paths.CUSTOMER_WALLET;
+  static const ADD_FUNDS = _Paths.ADD_FUNDS;
+  static const CUSTOMER_SUBSCRIPTIONS = _Paths.CUSTOMER_SUBSCRIPTIONS;
+  static const CUSTOMER_SUBSCRIPTION_DETAILS =
+      _Paths.CUSTOMER_SUBSCRIPTION_DETAILS;
+  static const SUBSCRIPTION_ORDERS = _Paths.SUBSCRIPTION_ORDERS;
+  static const CUSTOMER_ORDER_DETAILS = _Paths.CUSTOMER_ORDER_DETAILS;
+  static const CUSTOMER_ADDRESSES = _Paths.CUSTOMER_ADDRESSES;
+  static const ADD_ADDRESS_MAP = _Paths.ADD_ADDRESS_MAP;
+  static const CHECKOUT = _Paths.CHECKOUT;
+  static const ORDER_SUCCESS = _Paths.ORDER_SUCCESS;
+  static const PRODUCT_SELECTION = _Paths.PRODUCT_SELECTION;
+  static const COMMISSION_STATEMENT = _Paths.COMMISSION_STATEMENT;
+  static const CHANGE_PASSWORD = _Paths.CHANGE_PASSWORD;
+}
+
+abstract class _Paths {
+  _Paths._();
+  static const SPLASH = '/splash';
+  static const USER_TYPE = '/user-type';
+  static const LOGIN = '/login';
+  static const HOME = '/home';
+  static const CUSTOMER_HOME = '/customer-home';
+  static const MAIN_NAVIGATION = '/main-navigation';
+  static const ORDER = '/order';
+  static const CUSTOMER_ORDERS = '/customer-orders';
+  static const ORDER_DETAILS = '/order-details';
+  static const BOOTH_CAPTURE = '/booth-capture';
+  static const CART = '/cart';
+  static const CUSTOMER_LOGIN = '/customer-login';
+  static const CUSTOMER_PROFILE = '/customer-profile';
+  static const CUSTOMER_ORDER = '/customer-order';
+  static const BOOTH_SELECTION = '/booth-selection';
+  static const EASYPAY_WEBVIEW = '/easypay-webview';
+  static const CLAIMS = '/claims';
+  static const CREATE_CLAIM = '/create-claim';
+  static const CLAIM_DETAILS = '/claim-details';
+  static const CUSTOMER_PRODUCT_SELECTION = '/customer-product-selection';
+  static const CUSTOMER_CART = '/customer-cart';
+  static const CUSTOMER_CHECKOUT = '/customer-checkout';
+  static const CUSTOMER_WALLET = '/customer-wallet';
+  static const ADD_FUNDS = '/add-funds';
+  static const CUSTOMER_SUBSCRIPTIONS = '/customer-subscriptions';
+  static const CUSTOMER_SUBSCRIPTION_DETAILS = '/customer-subscription-details';
+  static const SUBSCRIPTION_ORDERS = '/subscription-orders';
+  static const CUSTOMER_ORDER_DETAILS = '/customer-order-details';
+  static const CUSTOMER_ADDRESSES = '/customer-addresses';
+  static const ADD_ADDRESS_MAP = '/add-address-map';
+  static const CHECKOUT = '/checkout';
+  static const ORDER_SUCCESS = '/order-success';
+  static const PRODUCT_SELECTION = '/product-selection';
+  static const COMMISSION_STATEMENT = '/commission-statement';
+  static const MONTHLY_STATEMENTS = '/monthly-statement';
+  static const CHANGE_PASSWORD = '/change-password';
+}
