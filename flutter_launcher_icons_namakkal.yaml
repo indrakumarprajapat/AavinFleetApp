@@ -1,0 +1,6 @@
+flutter_launcher_icons:
+  android: false
+  ios: true
+  image_path: assets/images/app_icon_namakkal.png
+  android_flavor: namakkal
+  remove_alpha_ios: true
