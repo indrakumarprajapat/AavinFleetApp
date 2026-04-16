@@ -38,62 +38,39 @@ class SplashController extends GetxController {
     final shouldUpdate = await _checkForceUpdate();
     if (shouldUpdate) return;
 
+    // Skipping login and going directly to HOME for development
+    Get.offAllNamed(Routes.HOME);
+    return;
+
     final accessToken = storage.read('access_token');
 
     if (accessToken != null) {
       try {
-        final userType = storage.read('user_type') ?? UserType.society.index;
-        LoginResponseModel response;
-        var  deviceInfo = DeviceInfo();
-        var  version = '';
-        try{
-          deviceInfo = await DeviceUtil.getDeviceDetails();
-          version = await DeviceUtil.getAppVersion();
+        // TODO: Call your new backend "fresh token" method here if needed
+        // await apiService.getFreshToken();
 
-        }catch(err){
-          print(err);
+        /* 
+        // Commented out as per flow requirements:
+        response = await apiService.agentAutoLogin(accessToken,deviceInfo,version);
+        await storage.write('agent', response.agent?.toJson() ?? {});
+        await storage.write('societyDetails', response.boothDetails?.toJson() ?? {});
+        await storage.write('razorpay_key', response.agent?.key ?? '');
+        
+        try {
+          final configService = Get.find<ConfigService>();
+          await configService.fetchConfig();
+        } catch (e) {
+          print('Config fetch error: $e');
         }
-
-        // if (userType == UserType.customer.index) {
-        //   response = await apiService.autoLogin(accessToken,deviceInfo,version);
-        //   await storage.write('customer', response.customer ?? {});
-        //   try {
-        //     final configService = Get.find<ConfigService>();
-        //     await configService.fetchConfig();
-        //   } catch (e) {
-        //     print('Config fetch error: $e');
-        //   }
-        //
-        //   Get.offAllNamed(Routes.CUSTOMER_HOME);
-        // } else {
-          response = await apiService.agentAutoLogin(accessToken,deviceInfo,version);
-          await storage.write('agent', response.agent?.toJson() ?? {});
-          await storage.write('societyDetails', response.boothDetails?.toJson() ?? {});
-          await storage.write('razorpay_key', response.agent?.key ?? '');
-          // await storage.write('itemUnitType', response.agent?.itemUnitType);
-          try {
-            final configService = Get.find<ConfigService>();
-            await configService.fetchConfig();
-          } catch (e) {
-            print('Config fetch error: $e');
-          }
-          
-          Get.offAllNamed(Routes.HOME);
-        // }
+        */
+        
+        Get.offAllNamed(Routes.HOME);
       } catch (e) {
         storage.erase();
-        if(config.name == ClientConfig.CLIENT_CBE){
-          Get.offNamed(Routes.USER_TYPE);
-        }else{
-          Get.offNamed(Routes.LOGIN, arguments: UserType.society);
-        }
-      }
-    } else {
-      if(config.name == ClientConfig.CLIENT_CBE){
-        Get.offNamed(Routes.USER_TYPE);
-      }else{
         Get.offNamed(Routes.LOGIN, arguments: UserType.society);
       }
+    } else {
+      Get.offNamed(Routes.LOGIN, arguments: UserType.society);
     }
   }
 
