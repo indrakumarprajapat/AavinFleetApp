@@ -11,66 +11,41 @@ import 'package:get_storage/get_storage.dart';
 import '../../../utils/device-util.dart';
 
 class LoginController extends GetxController {
-  final phoneController = TextEditingController();
+  final boothCodeController = TextEditingController();
   final passwordController = TextEditingController();
-  final otpController = TextEditingController();
 
   /// 🔹 Reactive State
   final _isLoading = false.obs;
-  final _isOtpSent = false.obs;
-  final _isPasswordLogin = true.obs; // ✅ default password login
   final _selectedUserType = UserType.society.obs;
-  final _customerId = 0.obs;
-  final _accessToken = ''.obs;
-  final tempToken = ''.obs;
-  final resetToken = ''.obs;
 
   final apiService = Get.find<ApiService>();
   final storage = GetStorage();
 
   /// 🔹 Getters (UI uses these)
   bool get isLoading => _isLoading.value;
-  bool get isOtpSent => _isOtpSent.value;
-  bool get isPasswordLogin => _isPasswordLogin.value;
   UserType get selectedUserType => _selectedUserType.value;
-  int get customerId => _customerId.value;
 
-  /// 🔹 Force Agent Mode
   @override
   void onInit() {
     super.onInit();
     _selectedUserType.value = UserType.society;
-    _isPasswordLogin.value = true; // always password login
   }
 
   void setUserType(UserType type) {
     _selectedUserType.value = type;
   }
 
-  /// 🔹 OPTIONAL (kept but not used in UI)
-  void toggleLoginMethod() {
-    _isPasswordLogin.value = !_isPasswordLogin.value;
-    _isOtpSent.value = false;
-    resetToken.value = '';
-    otpController.clear();
-    passwordController.clear();
-  }
-
   void resetLoginState() {
-    _isOtpSent.value = false;
-    _isPasswordLogin.value = true;
-    resetToken.value = '';
-    otpController.clear();
     passwordController.clear();
-    phoneController.clear();
+    boothCodeController.clear();
   }
 
   /// ===========================
   /// PASSWORD LOGIN (MAIN FLOW)
   /// ===========================
   Future<void> loginWithPassword() async {
-    if (phoneController.text.isEmpty || passwordController.text.isEmpty) {
-      Get.snackbar('Error', 'Please enter Username and Password');
+    if (boothCodeController.text.isEmpty || passwordController.text.isEmpty) {
+      Get.snackbar('Error', 'Please enter Booth Code and Password');
       return;
     }
 
@@ -78,15 +53,9 @@ class LoginController extends GetxController {
 
     try {
       final response = await apiService.loginWithPassword(
-        phoneController.text.trim(),
+        boothCodeController.text.trim(),
         passwordController.text.trim(),
       );
-
-      /// 🔹 Force password reset case
-      if (response['isForcePasswordReset'] == true) {
-        await forgotPassword();
-        return;
-      }
 
       /// 🔹 Store token
       await storage.write('access_token', response['token'] ?? '');
@@ -107,8 +76,10 @@ class LoginController extends GetxController {
           var agentData = SocietyUser.fromJson(societyUserData);
 
           await storage.write('agent', agentData.toJson());
-          await storage.write(
-              'razorpay_key', response['societyUser']['key'] ?? '');
+          
+          if (response['societyUser']['key'] != null) {
+            await storage.write('razorpay_key', response['societyUser']['key']);
+          }
 
           await storage.write(
               'isAadhaarKycVerified', agentData.isAadhaarKycVerified ?? false);
@@ -127,8 +98,8 @@ class LoginController extends GetxController {
 
       Get.snackbar('Success', response['message'] ?? 'Login successful');
 
-      /// 🔹 Navigate to PDF Screen first as per flow
-      Get.offAllNamed(Routes.PDF);
+      /// 🔹 Navigate to Home Screen
+      Get.offAllNamed(Routes.HOME);
 
     } catch (e) {
       Get.snackbar('Error', e.toString());
@@ -136,103 +107,12 @@ class LoginController extends GetxController {
       _isLoading.value = false;
     }
   }
-
-  /// ===========================
-  /// 🔹 FORGOT PASSWORD (USED)
-  /// ===========================
-  Future<void> forgotPassword() async {
-    if (phoneController.text.isEmpty) {
-      Get.snackbar('Error', 'Please enter username');
-      return;
-    }
-
-    _isLoading.value = true;
-
-    try {
-      final response =
-      await apiService.agentForgotPassword(phoneController.text.trim());
-
-      resetToken.value = response['resetToken'] ?? '';
-      _isOtpSent.value = true;
-
-      Get.snackbar(
-          'Success', response['message'] ?? 'OTP sent for password reset');
-    } catch (e) {
-      Get.snackbar('Error', e.toString());
-    } finally {
-      _isLoading.value = false;
-    }
-  }
-
-  /// ===========================
-  /// ❌ UNUSED (OTP LOGIN)
-  /// ===========================
-  Future<void> sendOtp() async {
-    _isLoading.value = true;
-
-    try {
-      var deviceInfo = await DeviceUtil.getDeviceDetails();
-      var version = await DeviceUtil.getAppVersion();
-
-      final response = await apiService.agentLogin(
-          phoneController.text, deviceInfo, version);
-
-      _accessToken.value = response.accessToken ?? '';
-      tempToken.value = response.accessToken ?? '';
-      _customerId.value = response.agentId ?? 0;
-
-      _isOtpSent.value = true;
-
-      Get.snackbar('Success', response.message ?? 'OTP sent successfully');
-    } catch (e) {
-      Get.snackbar('Error', e.toString());
-    } finally {
-      _isLoading.value = false;
-    }
-  }
-
-  Future<void> verifyOtp() async {
-    if (otpController.text.length != 4) {
-      Get.snackbar('Error', 'Enter valid OTP');
-      return;
-    }
-
-    _isLoading.value = true;
-
-    try {
-      if (resetToken.value.isNotEmpty) {
-        final response = await apiService.verifyResetOtp(
-          resetToken.value,
-          otpController.text,
-        );
-
-        Get.toNamed('/reset-password', arguments: resetToken.value);
-      } else {
-        final response = await apiService.agentVerifyOtp(
-          _accessToken.value,
-          otpController.text,
-        );
-
-        await storage.write('access_token', response.token ?? '');
-
-        Get.offAllNamed(Routes.HOME);
-      }
-    } catch (e) {
-      Get.snackbar('Error', e.toString());
-    } finally {
-      _isLoading.value = false;
-    }
-  }
-
-  /// 🔹 Dispose Safety
-  bool isDisposed = false;
 
   @override
   void onClose() {
-    isDisposed = true;
-    phoneController.dispose();
+    //isDisposed = true;
+    boothCodeController.dispose();
     passwordController.dispose();
-    otpController.dispose();
     super.onClose();
   }
 }

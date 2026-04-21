@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
@@ -20,8 +22,6 @@ class DeliveryRouteView extends GetView<DeliveryController> {
       backgroundColor: Colors.grey[100],
       body: Column(
         children: [
-
-          /// 🔹 HEADER
           SizedBox(
             height: h * 0.22,
             child: Stack(
@@ -42,7 +42,10 @@ class DeliveryRouteView extends GetView<DeliveryController> {
                     padding: EdgeInsets.only(top: paddingTop * 0.6),
                     child: SvgPicture.asset(
                       config.loginLogo,
-                      height: h * 0.08,
+                      colorFilter: const ColorFilter.mode(
+                          Colors.white,
+                          BlendMode.srcIn),
+                      height: h * 0.06,
                     ),
                   ),
                 ),
@@ -52,7 +55,6 @@ class DeliveryRouteView extends GetView<DeliveryController> {
 
           SizedBox(height: h * 0.02),
 
-          /// 🔹 USER INFO
           Padding(
             padding: EdgeInsets.symmetric(horizontal: w * 0.05),
             child: Obx(() {
@@ -120,10 +122,8 @@ class DeliveryRouteView extends GetView<DeliveryController> {
             }),
           ),
 
-          /// 🔹 SMALL SPACING FIX (was too small before)
           SizedBox(height: h * 0.01),
 
-          /// 🔹 LIST
           Expanded(
             child: Obx(() {
               final isCollection =
@@ -150,7 +150,6 @@ class DeliveryRouteView extends GetView<DeliveryController> {
                       itemBuilder: (context, index) {
                         final delivery = deliveries[index];
 
-                        /// 🔹 STATUS LOGIC FOR COLLECTION (Reverse Flow)
                         DeliveryStatus status;
 
                         if (isCollection) {
@@ -158,17 +157,13 @@ class DeliveryRouteView extends GetView<DeliveryController> {
                           // index 0 is the last store (Store 6)
                           // index 5 is the first store (Store 1)
                           
-                          // We need to compare with the original index in the controller
                           final originalIndex = originalDeliveries.indexOf(delivery);
                           
                           if (originalIndex > controller.currentCollectingIndex.value) {
-                            // Already collected (because we go from 6 down to 1)
                             status = DeliveryStatus.delivered;
                           } else if (originalIndex == controller.currentCollectingIndex.value) {
-                            // Currently collecting
                             status = DeliveryStatus.delivering;
                           } else {
-                            // To be collected later
                             status = DeliveryStatus.pending;
                           }
                         } else {
@@ -180,7 +175,7 @@ class DeliveryRouteView extends GetView<DeliveryController> {
                           child: DeliveryCard(
                             store: delivery,
                             tray: isCollection
-                                ? delivery.totalTrays // Show target trays
+                                ? delivery.totalTrays
                                 : delivery.totalTrays,
                             packet: isCollection ? 0 : delivery.totalPackets,
                             isCollection: isCollection,
@@ -191,7 +186,6 @@ class DeliveryRouteView extends GetView<DeliveryController> {
                     ),
                   ),
 
-                  /// 🔹 START COLLECTION BUTTON
                   if (controller.appMode.value == AppMode.delivery &&
                       deliveries.every(
                               (d) => d.status == DeliveryStatus.delivered))

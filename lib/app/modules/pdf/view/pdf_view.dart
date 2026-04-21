@@ -30,17 +30,17 @@ class PdfView extends GetView<PdfController> {
               children: [
 
                 /// PDF VIEWER
-                SfPdfViewer.network(
-                  controller.pdfUrl,
-
-                  onDocumentLoaded: (details) {
-                    controller.onLoaded();
-                  },
-
-                  onDocumentLoadFailed: (details) {
-                    controller.onError();
-                  },
-                ),
+                Obx(() => controller.pdfUrl.value.isNotEmpty
+                    ? SfPdfViewer.network(
+                        controller.pdfUrl.value,
+                        onDocumentLoaded: (details) {
+                          controller.onLoaded();
+                        },
+                        onDocumentLoadFailed: (details) {
+                          controller.onError();
+                        },
+                      )
+                    : const SizedBox()),
 
                 /// LOADING
                 Obx(() => controller.isLoading.value

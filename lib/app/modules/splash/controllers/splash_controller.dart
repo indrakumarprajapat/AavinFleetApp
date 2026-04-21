@@ -34,44 +34,11 @@ class SplashController extends GetxController {
 
   void _checkAutoLogin() async {
     await Future.delayed(const Duration(seconds: 1));
-    
+
     final shouldUpdate = await _checkForceUpdate();
     if (shouldUpdate) return;
 
-    // Skipping login and going directly to HOME for development
-    Get.offAllNamed(Routes.HOME);
-    return;
-
-    final accessToken = storage.read('access_token');
-
-    if (accessToken != null) {
-      try {
-        // TODO: Call your new backend "fresh token" method here if needed
-        // await apiService.getFreshToken();
-
-        /* 
-        // Commented out as per flow requirements:
-        response = await apiService.agentAutoLogin(accessToken,deviceInfo,version);
-        await storage.write('agent', response.agent?.toJson() ?? {});
-        await storage.write('societyDetails', response.boothDetails?.toJson() ?? {});
-        await storage.write('razorpay_key', response.agent?.key ?? '');
-        
-        try {
-          final configService = Get.find<ConfigService>();
-          await configService.fetchConfig();
-        } catch (e) {
-          print('Config fetch error: $e');
-        }
-        */
-        
-        Get.offAllNamed(Routes.HOME);
-      } catch (e) {
-        storage.erase();
-        Get.offNamed(Routes.LOGIN, arguments: UserType.society);
-      }
-    } else {
-      Get.offNamed(Routes.LOGIN, arguments: UserType.society);
-    }
+    Get.offAllNamed(Routes.LOGIN);
   }
 
   Future<bool> _checkForceUpdate() async {

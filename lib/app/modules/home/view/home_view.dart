@@ -21,7 +21,6 @@ class HomeView extends GetView<HomeController> {
 
       body: Column(
         children: [
-          /// HEADER
           SizedBox(
             height: h * 0.22,
             child: Stack(
@@ -37,12 +36,16 @@ class HomeView extends GetView<HomeController> {
                   ),
                 ),
                 Align(
-                  alignment: Alignment.center,
+                  alignment: Alignment.topCenter,
                   child: Padding(
-                    padding: EdgeInsets.only(top: paddingTop / 2),
+                    padding: EdgeInsets.only(top: paddingTop + (h * 0.025)),
                     child: SvgPicture.asset(
                       config.loginLogo,
-                      height: h * 0.08,
+                      colorFilter: const ColorFilter.mode(
+                        Colors.white,
+                        BlendMode.srcIn,
+                      ),
+                      height: h * 0.06,
                     ),
                   ),
                 ),
@@ -55,9 +58,8 @@ class HomeView extends GetView<HomeController> {
               padding: EdgeInsets.only(bottom: h * 0.05),
               child: Column(
                 children: [
-                  SizedBox(height: h * 0.06),
+                  SizedBox(height: h * 0.04),
 
-                  /// MAIN CARD
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: w * 0.05),
 
@@ -69,7 +71,7 @@ class HomeView extends GetView<HomeController> {
                         borderRadius: BorderRadius.circular(w * 0.04),
                         boxShadow: [
                           BoxShadow(
-                            blurRadius: 8,
+                            blurRadius: w * 0.02,
                             color: Colors.black.withOpacity(0.1),
                           ),
                         ],
@@ -79,7 +81,6 @@ class HomeView extends GetView<HomeController> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
 
-                          /// DATE
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -101,11 +102,10 @@ class HomeView extends GetView<HomeController> {
 
                           SizedBox(height: h * 0.04),
 
-                          /// PDF
                           GestureDetector(
                             onTap: controller.openPdf,
                             child: Container(
-                              height: h * 0.22,
+                              height: h * 0.2,
                               width: double.infinity,
                               decoration: BoxDecoration(
                                 border: Border.all(color: Colors.blueAccent),
@@ -139,7 +139,6 @@ class HomeView extends GetView<HomeController> {
 
                           SizedBox(height: h * 0.05),
 
-                          /// START DELIVERY
                           SizedBox(
                             width: double.infinity,
                             height: h * 0.065,

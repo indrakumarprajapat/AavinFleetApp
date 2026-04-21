@@ -1,8 +1,7 @@
 import 'package:aavin/app/modules/pdf/view/pdf_view.dart';
 import 'package:get/get.dart';
 import '../../../routes/app_pages.dart';
-import '../../delivery/controllers/delivery_controller.dart';
-import '../../delivery/view/delivery_route_view.dart';
+
 
 class HomeController extends GetxController {
 
@@ -18,7 +17,7 @@ class HomeController extends GetxController {
   }
 
   void openPdf() {
-    Get.to(() => const PdfView());
+    Get.toNamed(Routes.PDF);
   }
 
   void startDelivery() {

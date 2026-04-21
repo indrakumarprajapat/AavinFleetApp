@@ -39,7 +39,6 @@ class DeliveryController extends GetxController {
   void onInit() {
     super.onInit();
     _loadUserInfo();
-    // Try API first
     fetchRouteBooths();
   }
 
@@ -109,12 +108,9 @@ class DeliveryController extends GetxController {
     super.onClose();
   }
 
-  // ================== API (SAFE WITH FALLBACK) ==================
   Future<void> fetchRouteBooths() async {
     try {
       isLoading.value = true;
-      
-      // Forces dummy data for testing
       loadDummyData();
       
     } catch (e) {
@@ -124,7 +120,6 @@ class DeliveryController extends GetxController {
     }
   }
 
-  // ================== FALLBACK DATA (DO NOT REMOVE - UI DEPENDENCY) ==================
   void loadDummyData() {
     deliveries.assignAll([
       DeliveryModel(
@@ -210,7 +205,6 @@ class DeliveryController extends GetxController {
     ]);
   }
 
-  // ================== HELPERS ==================
   int _getIndexById(String id) {
     return deliveries.indexWhere((s) => s.id == id);
   }
@@ -226,10 +220,8 @@ class DeliveryController extends GetxController {
     }
   }
 
-  // ================== COLLECTION ==================
   void startCollection() {
     appMode.value = AppMode.collection;
-    // For reverse flow, we start at the last index
     currentCollectingIndex.value = deliveries.length - 1;
     isDialogShown.value = false;
 
@@ -248,11 +240,9 @@ class DeliveryController extends GetxController {
       return;
     }
 
-    // Update the store status
     final updatedStore = store.copyWith(status: DeliveryStatus.delivered);
     deliveries[index] = updatedStore;
 
-    // Update next store to 'delivering' if applicable
     if (index < deliveries.length - 1) {
       final next = deliveries[index + 1];
       if (next.status == DeliveryStatus.pending) {
@@ -264,7 +254,6 @@ class DeliveryController extends GetxController {
     Get.snackbar("Success", "${store.storeName} marked delivered",
         snackPosition: SnackPosition.TOP);
 
-    // Navigate to next store or back to list
     final nextStore = getNextStore(store);
     if (nextStore != null) {
       Get.offNamed(Routes.STORE_DETAILS, arguments: nextStore, preventDuplicates: false);
@@ -283,14 +272,12 @@ class DeliveryController extends GetxController {
       return;
     }
 
-    // Update collected trays
     deliveries[index] = store.copyWith(collectedTrays: trays);
 
     isLoading.value = false;
     Get.snackbar("Success", "${store.storeName} collected",
         snackPosition: SnackPosition.TOP);
 
-    // In reverse flow, move to the PREVIOUS store
     if (index > 0) {
       currentCollectingIndex.value = index - 1;
       final prevStore = deliveries[index - 1];

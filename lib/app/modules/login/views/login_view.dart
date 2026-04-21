@@ -58,7 +58,7 @@ class _LoginViewState extends State<LoginView> {
                       style: TextStyle(fontSize: 13),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 4),
                   const Text('&'),
                   TextButton(
                     onPressed: () {
@@ -102,14 +102,11 @@ class _LoginViewState extends State<LoginView> {
   }
 
   Widget _buildPhoneSection(LoginController controller) {
-    final phoneController = controller.phoneController;
-
     return Column(
       children: [
-
-        /// Agent ID / Mobile
+        /// Booth Code
         TextField(
-          controller: phoneController,
+          controller: controller.boothCodeController,
           maxLength: 20,
           decoration: InputDecoration(
             labelText: 'Enter Booth Code',
@@ -147,9 +144,7 @@ class _LoginViewState extends State<LoginView> {
             ),
             suffixIcon: IconButton(
               icon: Icon(
-                _obscurePassword
-                    ? Icons.visibility
-                    : Icons.visibility_off,
+                _obscurePassword ? Icons.visibility : Icons.visibility_off,
                 color: Colors.grey,
               ),
               onPressed: () {
@@ -161,49 +156,48 @@ class _LoginViewState extends State<LoginView> {
           ),
         ),
 
-
         const SizedBox(height: 40),
 
         /// Login Button
         Obx(() => SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: ElevatedButton(
-            onPressed: controller.isLoading
-                ? null
-                : () {
-              if (controller.phoneController.text.isEmpty ||
-                  controller.passwordController.text.isEmpty) {
-                Get.snackbar("Error", "All fields are required");
-                return;
-              }
-              controller.loginWithPassword();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: AppColors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: controller.isLoading
+                    ? null
+                    : () {
+                        if (controller.boothCodeController.text.isEmpty ||
+                            controller.passwordController.text.isEmpty) {
+                          Get.snackbar("Error", "All fields are required");
+                          return;
+                        }
+                        controller.loginWithPassword();
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: controller.isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        'Login',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
               ),
-            ),
-            child: controller.isLoading
-                ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                color: Colors.white,
-                strokeWidth: 2,
-              ),
-            )
-                : const Text(
-              'Login',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        )),
+            )),
       ],
     );
   }

@@ -30,22 +30,12 @@ class ApiService extends GetxService {
     );
   }
 
-  Future<ApiResponseModel> agentLogin(
-    String mobileNumber,
-    DeviceInfo deviceInfo,
-    String versionStr,
-  ) async {
+  Future<ApiResponseModel> agentLogin(String mobileNumber,) async {
     try {
       final response = await _societyDio.post(
-        '/auth/login',
+        '/account/login',
         data: {
           'username': mobileNumber,
-          "login_device": deviceInfo.loginDevice,
-          "d_os_api": deviceInfo.dOsApi,
-          "d_manufacture": deviceInfo.dManufacture,
-          "d_model": deviceInfo.dModel,
-          "d_os_version": deviceInfo.dOsVersion,
-          "app_cur_version": versionStr,
         },
       );
       return ApiResponseModel.fromJson(response.data, null);
@@ -54,13 +44,11 @@ class ApiService extends GetxService {
     }
   }
 
-  Future<Map<String, dynamic>> loginWithPassword(
-    String username,
-    String password,
-  ) async {
+  Future<Map<String, dynamic>> loginWithPassword(String username,
+      String password,) async {
     try {
       final response = await _societyDio.post(
-        '/auth/login',
+        '/account/login',
         data: {
           'username': username,
           'password': password,
@@ -84,10 +72,8 @@ class ApiService extends GetxService {
     }
   }
 
-  Future<Map<String, dynamic>> verifyResetOtp(
-    String resetToken,
-    String otp,
-  ) async {
+  Future<Map<String, dynamic>> verifyResetOtp(String resetToken,
+      String otp,) async {
     try {
       final response = await _societyDio.post(
         '/auth/verify-reset-otp',
@@ -102,10 +88,8 @@ class ApiService extends GetxService {
     }
   }
 
-  Future<Map<String, dynamic>> resetPassword(
-    String resetToken,
-    String newPassword,
-  ) async {
+  Future<Map<String, dynamic>> resetPassword(String resetToken,
+      String newPassword,) async {
     try {
       final response = await _societyDio.post(
         '/auth/reset-password',
@@ -120,10 +104,8 @@ class ApiService extends GetxService {
     }
   }
 
-  Future<LoginResponseModel> agentVerifyOtp(
-    String accessToken,
-    String otp,
-  ) async {
+  Future<LoginResponseModel> agentVerifyOtp(String accessToken,
+      String otp,) async {
     try {
       final response = await _societyDio.post(
         '/auth/verify-otp',
@@ -147,22 +129,12 @@ class ApiService extends GetxService {
     }
   }
 
-  Future<LoginResponseModel> agentAutoLogin(
-    String accessToken,
-    DeviceInfo deviceInfo,
-    String versionStr,
-  ) async {
+  Future<LoginResponseModel> agentAutoLogin(String accessToken,) async {
     try {
       final response = await _societyDio.post(
         '/auth/autologin',
         data: {
           'accessToken': accessToken,
-          "login_device": deviceInfo.loginDevice,
-          "d_os_api": deviceInfo.dOsApi,
-          "d_manufacture": deviceInfo.dManufacture,
-          "d_model": deviceInfo.dModel,
-          "d_os_version": deviceInfo.dOsVersion,
-          "app_cur_version": versionStr,
         },
       );
       return LoginResponseModel.fromJson(response.data);
@@ -180,7 +152,7 @@ class ApiService extends GetxService {
         '/agent/slots',
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       );
-      
+
       if (response.data is Map && response.data['slots'] != null) {
         final slots = response.data['slots'] as List? ?? [];
         return slots.map((slot) => SlotModel.fromJson(slot)).toList();
@@ -188,7 +160,7 @@ class ApiService extends GetxService {
         final slots = response.data as List;
         return slots.map((slot) => SlotModel.fromJson(slot)).toList();
       }
-      
+
       return [];
     } catch (e) {
       throw _handleError(e);
@@ -215,9 +187,9 @@ class ApiService extends GetxService {
       final data = hasBankAccountVerified != null
           ? {'hasBankAccountVerified': hasBankAccountVerified}
           : {
-              'isAadhaarKycVerified': isAadhaarKycVerified,
-              'isPanKycVerified': isPanKycVerified,
-            };
+        'isAadhaarKycVerified': isAadhaarKycVerified,
+        'isPanKycVerified': isPanKycVerified,
+      };
 
       final response = await dioClient.put(
         '/account/verify-kyc',
@@ -243,7 +215,7 @@ class ApiService extends GetxService {
     try {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
-      
+
       print('=== Booth Location Update ===');
       print('Access Token: $accessToken');
       print('Lat: $lat, Lng: $lng');
@@ -299,7 +271,8 @@ class ApiService extends GetxService {
       if (aadharNumber != null) data['aadharNumber'] = aadharNumber;
       if (panNumber != null) data['panNumber'] = panNumber;
       if (accountNumber != null) data['accountNumber'] = accountNumber;
-      if (accountHolderName != null) data['accountHolderName'] = accountHolderName;
+      if (accountHolderName != null)
+        data['accountHolderName'] = accountHolderName;
       if (ifscCode != null) data['ifscCode'] = ifscCode;
       if (bankName != null) data['bankName'] = bankName;
       if (bankBranch != null) data['bankBranch'] = bankBranch;
@@ -348,8 +321,7 @@ class ApiService extends GetxService {
     }
   }
 
-  Future<RazorpayOrderResponse> getRazorPayOrderId(
-    double amount) async {
+  Future<RazorpayOrderResponse> getRazorPayOrderId(double amount) async {
     try {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
@@ -663,10 +635,8 @@ class ApiService extends GetxService {
     }
   }
 
-  Future<Map<String, dynamic>> updateOrderStatus(
-    int orderId,
-    int status,
-  ) async {
+  Future<Map<String, dynamic>> updateOrderStatus(int orderId,
+      int status,) async {
     try {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
@@ -1133,7 +1103,8 @@ class ApiService extends GetxService {
       if (limit != null) queryParams['limit'] = limit;
 
       print(
-        'Claims API call: ${_societyDio.options.baseUrl}/claims with params: $queryParams',
+        'Claims API call: ${_societyDio.options
+            .baseUrl}/claims with params: $queryParams',
       );
 
       final response = await _societyDio.get(
@@ -1158,7 +1129,8 @@ class ApiService extends GetxService {
       final accessToken = storage.read('access_token');
 
       print(
-        'Calling delivered orders API: ${_societyDio.options.baseUrl}/delivered-order',
+        'Calling delivered orders API: ${_societyDio.options
+            .baseUrl}/delivered-order',
       );
 
       final response = await _societyDio.get(
@@ -1280,8 +1252,6 @@ class ApiService extends GetxService {
   }
 
 
-
-
   Future<List<dynamic>> checkTrayCount() async {
     try {
       final storage = GetStorage();
@@ -1360,11 +1330,12 @@ class ApiService extends GetxService {
     return '';
   }
 
+
   Future<Map<String, dynamic>> getAppConfig({required int userType}) async {
     try {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
-      
+
       final response = await _societyDio.get(
         '/config',
         options: Options(
@@ -1379,11 +1350,12 @@ class ApiService extends GetxService {
       throw _handleError(e);
     }
   }
+
   Future<List<dynamic>> getBanners() async {
     try {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
-      
+
       final response = await _societyDio.get(
         '/banners',
         options: Options(
@@ -1403,12 +1375,12 @@ class ApiService extends GetxService {
     try {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
-      
+
       final queryParams = <String, dynamic>{};
       if (month != null) {
         queryParams['month'] = month;
       }
-      
+
       final response = await _societyDio.get(
         '/commission-statement',
         queryParameters: queryParams,
@@ -1429,7 +1401,7 @@ class ApiService extends GetxService {
     try {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
-      
+
       final response = await _societyDio.get(
         '/payment-gateways',
         options: Options(
@@ -1451,7 +1423,7 @@ class ApiService extends GetxService {
     try {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
-      
+
       final response = await _societyDio.post(
         '/wallet/create-cashfree-order',
         data: {'amount': amount},
@@ -1474,7 +1446,7 @@ class ApiService extends GetxService {
     try {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
-      
+
       final response = await _societyDio.post(
         '/wallet/verify-cashfree-payment',
         data: {'orderId': orderId},
@@ -1499,7 +1471,7 @@ class ApiService extends GetxService {
     try {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
-      
+
       final response = await _societyDio.post(
         '/wallet/cashfree-payment-failed',
         data: {
@@ -1526,7 +1498,8 @@ class ApiService extends GetxService {
     super.onClose();
   }
 
-  Future<Map<String, dynamic>> submitDailySupplies(Map<String, dynamic> suppliesData) async {
+  Future<Map<String, dynamic>> submitDailySupplies(
+      Map<String, dynamic> suppliesData) async {
     try {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
@@ -1611,4 +1584,134 @@ class ApiService extends GetxService {
     }
     return error.toString();
   }
+
+  //Fleet APIs
+
+  Future<Map<String, dynamic>> getTripSummary(int tripId) async {
+    try {
+      final storage = GetStorage();
+      final accessToken = storage.read('access_token');
+
+      final response = await _societyDio.get(
+        '/trips/$tripId/summary',
+        options: Options(
+          headers: {'Authorization': 'Bearer $accessToken'},
+        ),
+      );
+      return response.data;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> getTrip({int tripId = 0}) async {
+    try {
+      final storage = GetStorage();
+      final accessToken = storage.read('access_token');
+
+      final response = await _societyDio.get(
+        '/trip/$tripId',
+        options: Options(
+            headers: {'Authorization': 'Bearer $accessToken'}),
+      );
+      return response.data;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<void> startTrip(int tripId) async {
+    try {
+      final storage = GetStorage();
+      final accessToken = storage.read('access_token');
+
+      await _societyDio.post(
+        '/trips/$tripId/start',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      );
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<List<dynamic>> getTripBooths(int tripId, String phase) async {
+    try {
+      final storage = GetStorage();
+      final accessToken = storage.read('access_token');
+
+      final response = await _societyDio.post(
+          '/trip/$tripId/booths',
+          queryParameters: {'phase': phase},
+          options: Options(headers: {'Authorization': "Bearer $accessToken"})
+      );
+
+      return response.data as List? ?? [];
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<void> markDelivered(int tripId, int boothId) async {
+    try {
+      final storage = GetStorage();
+      final accessToken = storage.read('access_token');
+
+      await _societyDio.put(
+        '/trip/$tripId/booths/$boothId',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      );
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> getBoothDetails(
+      int tripId, int boothId) async {
+    try {
+      final storage = GetStorage();
+      final accessToken = storage.read('access_token');
+
+      final response = await _societyDio.get(
+        '/trips/$tripId/booths/$boothId',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      );
+
+      return response.data;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<void> startCollection(int tripId) async{
+    try{
+      final storage = GetStorage();
+      final accessToken = storage.read('access_token');
+
+      await _societyDio.post(
+        '/trips/$tripId/collection/start',
+        options: Options(headers:{'Authorization': 'Bearer $accessToken'}),
+      );
+    }catch(e){
+      throw _handleError(e);
+    }
+  }
+
+  Future<void> submitTrayCollection(int tripId, int boothId) async{
+    try{
+      final storage = GetStorage();
+      final accessToken = storage.read('access_token');
+
+      await _societyDio.post(
+        '/trips/$tripId/booths/$boothId/tray-collected',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      );
+    }catch(e){
+      throw _handleError(e);
+    }
+  }
 }
+
+
+
+
+
