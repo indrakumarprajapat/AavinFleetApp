@@ -5,17 +5,14 @@ import '../modules/delivery/controllers/delivery_controller.dart';
 
 class DeliveryCard extends StatelessWidget {
   final DeliveryModel store;
-
+  final DeliveryStatus status;
+  final bool isCollection;
   final int? tray;
   final int? packet;
   final int? tub;
-
-  final DeliveryStatus status;
-
   final int? remainingTray;
-  final bool isCollection;
 
-  const DeliveryCard({
+  DeliveryCard({
     super.key,
     required this.store,
     required this.status,
@@ -26,66 +23,78 @@ class DeliveryCard extends StatelessWidget {
     this.isCollection = false,
   });
 
-  /// 🔹 DYNAMIC VALUES (fallback safe)
   int get totalTray =>
-      tray ??
-          store.products.fold(0, (sum, p) => sum + p.trays);
+      tray ?? store.products.fold(0, (sum, p) => sum + p.trays);
 
   int get totalPacket =>
-      packet ??
-          store.products.fold(0, (sum, p) => sum + p.packets);
+      packet ?? store.products.fold(0, (sum, p) => sum + p.packets);
 
   int get totalTub =>
-      tub ??
-          store.products.fold(0, (sum, p) => sum + p.tubs);
+      tub ?? store.products.fold(0, (sum, p) => sum + p.tubs);
 
   bool get isDelivered => status == DeliveryStatus.delivered;
+
   bool get isCurrent => status == DeliveryStatus.delivering;
 
+  static final Map<DeliveryStatus, Color> statusColors = {
+    DeliveryStatus.delivered: Colors.green,
+    DeliveryStatus.delivering: Colors.blue,
+    DeliveryStatus.pending: Colors.grey,
+  };
+
+  static final Map<DeliveryStatus, String> deliveryText = {
+    DeliveryStatus.delivered: "DELIVERED",
+    DeliveryStatus.delivering: "IN_PROGRESS",
+    DeliveryStatus.pending: "PENDING",
+  };
+
   Color getStatusColor() {
-    switch (status) {
-      case DeliveryStatus.delivered:
-        return Colors.green;
-      case DeliveryStatus.delivering:
-        return Colors.blue;
-      case DeliveryStatus.pending:
-        return Colors.grey;
-    }
+    return statusColors[status] ?? Colors.grey;
   }
 
   String getStatusText() {
     if (isCollection) {
-      switch (status) {
-        case DeliveryStatus.delivered:
-          return "Collected";
-        case DeliveryStatus.delivering:
-          return "Collecting";
-        case DeliveryStatus.pending:
-          return "To Be Collected";
-      }
+      return {
+        DeliveryStatus.delivered: "COLLECTED",
+        DeliveryStatus.delivering: "COLLECTING",
+        DeliveryStatus.pending: "TO BE COLLECTED",
+      }[status] ?? "Unknown";
     }
+    return deliveryText[status] ?? "Unknown";
+  }
 
+
+  DeliveryStatus mapStatus(String? status) {
     switch (status) {
-      case DeliveryStatus.delivered:
-        return "Delivered";
-      case DeliveryStatus.delivering:
-        return "To Deliver";
-      case DeliveryStatus.pending:
-        return "Pending";
+      case "DELIVERED":
+        return DeliveryStatus.delivered;
+      case "IN_PROGRESS":
+        return DeliveryStatus.delivering;
+      case "PENDING":
+        return DeliveryStatus.pending;
+      default:
+        return DeliveryStatus.pending;
     }
   }
 
-  Color getCardColor() {
-    if (status == DeliveryStatus.delivering) return Colors.blue.shade50;
-    if (status == DeliveryStatus.pending) return Colors.grey.shade200;
-    return Colors.white;
-  }
+  //
+  // Color getCardColor(DeliveryModel status) {
+  //   if (status == DeliveryStatus.delivering) return Colors.blue.shade50;
+  //   if (status == DeliveryStatus.pending) return Colors.grey.shade200;
+  //   return Colors.white;
+  // }
 
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<DeliveryController>();
-    final h = MediaQuery.of(context).size.height;
-    final w = MediaQuery.of(context).size.width;
+    final h = MediaQuery
+        .of(context)
+        .size
+        .height;
+    final w = MediaQuery
+        .of(context)
+        .size
+        .width;
 
     return GestureDetector(
       onTap: () {
@@ -95,7 +104,7 @@ class DeliveryCard extends StatelessWidget {
         width: double.infinity,
         padding: EdgeInsets.all(w * 0.04),
         decoration: BoxDecoration(
-          color: getCardColor(),
+          color: isCurrent ? Colors.blue.shade50 : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: isCurrent ? Border.all(color: Colors.blue, width: 1.5) : null,
           boxShadow: const [
@@ -105,8 +114,6 @@ class DeliveryCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
-            /// 🔷 TOP ROW
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -123,7 +130,7 @@ class DeliveryCard extends StatelessWidget {
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
-                      fontSize: w * 0.07,
+                      fontSize: w * 0.06,
                     ),
                   ),
                 ),
@@ -165,7 +172,8 @@ class DeliveryCard extends StatelessWidget {
                       SizedBox(height: h * 0.005),
                       Text(
                         store.address,
-                        style: TextStyle(color: Colors.grey, fontSize: w * 0.035),
+                        style: TextStyle(
+                            color: Colors.grey, fontSize: w * 0.035),
                       ),
                     ],
                   ),
@@ -225,7 +233,8 @@ class DeliveryCard extends StatelessWidget {
                       ],
                     ),
                     Text("$totalTray",
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: w * 0.04)),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: w * 0.04)),
                   ],
                 ),
 
@@ -249,7 +258,8 @@ class DeliveryCard extends StatelessWidget {
                         ],
                       ),
                       Text("$totalPacket",
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: w * 0.04)),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: w * 0.04)),
                     ],
                   ),
                 ],
@@ -275,18 +285,37 @@ class DeliveryCard extends StatelessWidget {
                         ],
                       ),
                       Text("$totalTub",
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: w * 0.04)),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: w * 0.04)),
                     ],
                   ),
                 ],
 
                 /// REMAINING
-                if (isCollection &&
-                    remainingTray != null) ...[
-                  SizedBox(height: h * 0.008),
-                  Text(
-                    "Remaining: $remainingTray trays",
-                    style: TextStyle(fontSize: w * 0.03, color: Colors.grey),
+                if (store.remainingTrays > 0) ...[
+                  SizedBox(height: h * 0.01),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.history,
+                            size: w * 0.045,
+                            color: Colors.orange,
+                          ),
+                          SizedBox(width: w * 0.015),
+                          Text("Previous Remaining",
+                              style: TextStyle(
+                                  fontSize: w * 0.035, color: Colors.orange.shade800)),
+                        ],
+                      ),
+                      Text("${store.remainingTrays}",
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: w * 0.04,
+                              color: Colors.orange.shade800)),
+                    ],
                   ),
                 ],
               ],

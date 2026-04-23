@@ -44,6 +44,10 @@ class DashboardView  extends GetView<DeliveryController> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       body: Obx(() {
+        if (controller.isSummaryLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
         final deliveries = controller.deliveries;
 
 
@@ -58,18 +62,25 @@ class DashboardView  extends GetView<DeliveryController> {
 
         int totalDelivered = 0;
         int totalCollected = 0;
+        int totalRemaining = 0;
 
         for (var d in deliveries) {
-          totalDelivered += d.totalTrays;
-          totalCollected += d.collectedTrays;
+          totalDelivered += (d.totalTrays);
+          totalCollected += (d.collectedTrays);
+          totalRemaining += (d.remainingTrays);
         }
 
-        return SingleChildScrollView(
+        return RefreshIndicator(
+            onRefresh: () async {
+          await controller.loadTripSummary();
+        },
+        child:SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildSummaryCard(w, totalDelivered, totalCollected),
+              _buildSummaryCard(w, totalDelivered, totalCollected, totalRemaining),
 
               const SizedBox(height: 30),
 
@@ -114,6 +125,12 @@ class DashboardView  extends GetView<DeliveryController> {
                           style: const TextStyle(
                               color: Colors.blue, fontSize: 12),
                         ),
+                        if (d.remainingTrays > 0)
+                          Text(
+                            "Remaining: ${d.remainingTrays}",
+                            style: const TextStyle(
+                                color: Colors.orange, fontSize: 12),
+                          ),
                       ],
                     ),
                   );
@@ -121,13 +138,14 @@ class DashboardView  extends GetView<DeliveryController> {
               ),
             ],
           ),
+        ),
         );
       }),
     );
   }
 
   Widget _buildSummaryCard(
-      double w, int totalDelivered, int totalCollected) {
+      double w, int totalDelivered, int totalCollected, int totalRemaining) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -148,6 +166,8 @@ class DashboardView  extends GetView<DeliveryController> {
             children: [
               _buildStat("Delivered", totalDelivered.toString(), Colors.green),
               _buildStat("Collected", totalCollected.toString(), Colors.blue),
+              if (totalRemaining > 0)
+                _buildStat("Remaining", totalRemaining.toString(), Colors.orange),
             ],
           ),
         ],

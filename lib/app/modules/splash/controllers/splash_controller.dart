@@ -38,7 +38,12 @@ class SplashController extends GetxController {
     final shouldUpdate = await _checkForceUpdate();
     if (shouldUpdate) return;
 
-    Get.offAllNamed(Routes.LOGIN);
+    final token = storage.read('access_token');
+    if (token != null && token.toString().isNotEmpty) {
+      Get.offAllNamed(Routes.HOME);
+    } else {
+      Get.offAllNamed(Routes.LOGIN);
+    }
   }
 
   Future<bool> _checkForceUpdate() async {

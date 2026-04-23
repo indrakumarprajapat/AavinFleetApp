@@ -20,10 +20,10 @@ class ProductModel {
   //JSON
   factory ProductModel.fromJson(Map<String, dynamic> json) {
     return ProductModel(
-      name: json['name'],
-      trays: json['trays'],
-      packets: json['packets'],
-      tubs: json['tubs'],
+      name: json['name']?.toString() ?? "Product",
+      trays: json['trays'] ?? 0,
+      packets: json['packets'] ?? 0,
+      tubs: json['tubs'] ?? 0,
     );
   }
 
@@ -45,6 +45,7 @@ class DeliveryModel {
   final DeliveryStatus status;
   final List<ProductModel> products;
   final int collectedTrays;
+  final int remainingTrays; // Historical residue from previous trips
 
   const DeliveryModel({
     required this.id,
@@ -54,6 +55,7 @@ class DeliveryModel {
     required this.status,
     required this.products,
     this.collectedTrays = 0,
+    this.remainingTrays = 0,
   });
 
   //CopyWith
@@ -65,7 +67,7 @@ class DeliveryModel {
     DeliveryStatus? status,
     List<ProductModel>? products,
     int? collectedTrays,
-    int? collectedTubs,
+    int? remainingTrays,
   }) {
     return DeliveryModel(
       id: id ?? this.id,
@@ -75,6 +77,7 @@ class DeliveryModel {
       status: status ?? this.status,
       products: products ?? this.products,
       collectedTrays: collectedTrays ?? this.collectedTrays,
+      remainingTrays: remainingTrays ?? this.remainingTrays,
     );
   }
 
@@ -88,7 +91,8 @@ class DeliveryModel {
   int get totalTubs =>
       products.fold<int>(0, (sum, item) => sum + item.tubs);
 
-  int get remainingTrays => totalTrays - collectedTrays;
+  // Renamed from remainingTrays to avoid conflict with the field
+  int get pendingTrays => totalTrays - collectedTrays;
 
   // Status helpers
   bool get isDelivered => status == DeliveryStatus.delivered;
@@ -100,18 +104,34 @@ class DeliveryModel {
   // JSON
   factory DeliveryModel.fromJson(Map<String, dynamic> json) {
     return DeliveryModel(
-      id: json['id'],
-      number: json['number'],
-      storeName: json['storeName'],
-      address: json['address'],
-      status: DeliveryStatus.values.firstWhere(
-            (e) => e.name == json['status'],
-      ),
-      products: (json['products'] as List)
-          .map((e) => ProductModel.fromJson(e))
-          .toList(),
+      id: json['id']?.toString() ?? "",
+      number: json['number']?.toString() ?? json['boothCode']?.toString() ?? "",
+      storeName: json['storeName']?.toString() ?? json['boothName']?.toString() ?? "Store",
+      address: json['address']?.toString() ?? "Address not available",
+      status: _parseStatus(json['status']?.toString()),
+      products: (json['products'] as List?)
+              ?.map((e) => ProductModel.fromJson(e))
+              .toList() ??
+          [],
       collectedTrays: json['collectedTrays'] ?? 0,
+      remainingTrays: json['remainingTrays'] ?? json['outstandingTrays'] ?? 0,
     );
+  }
+
+  static DeliveryStatus _parseStatus(String? status) {
+    if (status == null) return DeliveryStatus.pending;
+    switch (status.toUpperCase()) {
+      case 'DELIVERED':
+      case 'COMPLETED':
+        return DeliveryStatus.delivered;
+      case 'DELIVERING':
+      case 'IN_PROGRESS':
+      case 'START':
+        return DeliveryStatus.delivering;
+      case 'PENDING':
+      default:
+        return DeliveryStatus.pending;
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -123,6 +143,7 @@ class DeliveryModel {
       'status': status.name,
       'products': products.map((e) => e.toJson()).toList(),
       'collectedTrays': collectedTrays,
+      'remainingTrays': remainingTrays,
     };
   }
 }

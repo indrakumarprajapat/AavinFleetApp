@@ -198,7 +198,9 @@ class DeliveryRouteView extends GetView<DeliveryController> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xff1BA6C8),
                           ),
-                          onPressed: controller.startCollection,
+                          onPressed: () {
+                            controller.initiateCollection();
+                          },
                           child: Text(
                             "Start Collection",
                             style: TextStyle(

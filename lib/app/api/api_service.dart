@@ -1598,6 +1598,35 @@ class ApiService extends GetxService {
           headers: {'Authorization': 'Bearer $accessToken'},
         ),
       );
+      
+      final tripResponse = await getTrip(tripId: tripId);
+      final tripData = tripResponse['data'] ?? tripResponse;
+      
+      if (response.data is Map) {
+        response.data['pdfUrl'] = tripData['pdfUrl'] ?? tripData['routePdf'];
+      }
+
+      return response.data;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> getRouteReport(int shift) async {
+    try {
+      final storage = GetStorage();
+      final accessToken = storage.read('access_token');
+
+      final response = await _societyDio.get(
+        '/route-detail',
+        queryParameters: {
+          'shift': shift, // REQUIRED by backend
+        },
+        options: Options(
+          headers: {'Authorization': 'Bearer $accessToken'},
+        ),
+      );
+
       return response.data;
     } catch (e) {
       throw _handleError(e);
@@ -1610,7 +1639,7 @@ class ApiService extends GetxService {
       final accessToken = storage.read('access_token');
 
       final response = await _societyDio.get(
-        '/trip/$tripId',
+        '/trips/$tripId',
         options: Options(
             headers: {'Authorization': 'Bearer $accessToken'}),
       );
@@ -1639,8 +1668,8 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.post(
-          '/trip/$tripId/booths',
+      final response = await _societyDio.get(
+          '/trips/$tripId/booths',
           queryParameters: {'phase': phase},
           options: Options(headers: {'Authorization': "Bearer $accessToken"})
       );
@@ -1657,7 +1686,7 @@ class ApiService extends GetxService {
       final accessToken = storage.read('access_token');
 
       await _societyDio.put(
-        '/trip/$tripId/booths/$boothId',
+        '/trips/$tripId/booths/$boothId',
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       );
     } catch (e) {
@@ -1696,13 +1725,14 @@ class ApiService extends GetxService {
     }
   }
 
-  Future<void> submitTrayCollection(int tripId, int boothId) async{
+  Future<void> submitTrayCollection(int tripId, int boothId, int trays) async{
     try{
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
       await _societyDio.post(
         '/trips/$tripId/booths/$boothId/tray-collected',
+        data: {'trays': trays},
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       );
     }catch(e){

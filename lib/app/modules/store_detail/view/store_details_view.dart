@@ -162,6 +162,56 @@ class _StoreDetailsScreenState extends State<StoreDetailsView> {
 
                     return Column(
                       children: [
+                        if (s.remainingTrays > 0)
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: w * 0.05, vertical: h * 0.01),
+                            child: Container(
+                              padding: EdgeInsets.all(w * 0.04),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.shade50,
+                                borderRadius: BorderRadius.circular(15),
+                                border: Border.all(color: Colors.orange.shade200),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.history, color: Colors.orange.shade800),
+                                  SizedBox(width: w * 0.03),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Previous Remaining Trays",
+                                          style: TextStyle(
+                                            color: Colors.orange.shade900,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: w * 0.035,
+                                          ),
+                                        ),
+                                        Text(
+                                          "These trays were not collected in the last trip.",
+                                          style: TextStyle(
+                                            color: Colors.orange.shade700,
+                                            fontSize: w * 0.03,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Text(
+                                    "${s.remainingTrays}",
+                                    style: TextStyle(
+                                      color: Colors.orange.shade900,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: w * 0.06,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+
                         if (!isCollection)
                           _buildDeliverySection(s, w, h),
 
@@ -420,10 +470,19 @@ class _StoreDetailsScreenState extends State<StoreDetailsView> {
   }
 
   void _handleDeliveryMark(DeliveryModel store) async {
-    await controller.markDelivered(store);
+    try{
+      await controller.markDelivered(store);
+    }catch(e){
+      Get.snackbar("Error", e.toString());
+    }
+
   }
 
   void _handleCollectionMark(DeliveryModel store, int trays) async {
+    try{
     await controller.markCollected(store, trays);
+  }catch(e){
+    Get.snackbar("Error", e.toString());
   }
+    }
 }
