@@ -1620,7 +1620,7 @@ class ApiService extends GetxService {
       final response = await _societyDio.get(
         '/route-detail',
         queryParameters: {
-          'shift': shift, // REQUIRED by backend
+          'shift': shift,
         },
         options: Options(
           headers: {'Authorization': 'Bearer $accessToken'},

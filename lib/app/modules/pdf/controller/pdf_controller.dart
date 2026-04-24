@@ -25,39 +25,31 @@ class PdfController extends GetxController {
     try {
       isLoading.value = true;
       hasError.value = false;
-
-      /// STEP 1: GET TRIP (to get shift)
-      final tripResponse =
-      await _apiService.getTrip(tripId: tripId.value);
-
-      final tripData = tripResponse['data'] ?? tripResponse;
-
-      if (tripData == null) {
-        hasError.value = true;
-        return;
+      if (shift.value <= 0) {
+        shift.value = 1;
       }
-
-      /// FIX: correct Rx assignment
-      shift.value = int.parse(tripData['shift'].toString());
-
-      print("Trip Data: $tripData");
-      print("Shift: ${shift.value}");
-
-      /// STEP 2: GET ROUTE REPORT (PDF)
       final response = await _apiService.getRouteReport(shift.value);
-
-      print("PDF Controller Response: $response");
-
       final data = response['data'] ?? response;
 
-      final url = data['pdfUrl'] ?? data['routePdf'];
+      if (data != null && data['success'] == true) {
 
-      if (url != null && url.toString().isNotEmpty) {
-        pdfUrl.value = url.toString();
+        if (data['shift'] != null) {
+          shift.value = int.tryParse(data['shift'].toString()) ?? shift.value;
+        }
+
+        final url = data['pdfUrl'] ?? data['routePdf'];
+
+        if (url != null && url.toString().isNotEmpty) {
+          pdfUrl.value = url.toString();
+          print("PDF loaded for Shift ${shift.value}: ${pdfUrl.value}");
+        } else {
+          print("Error: No PDF URL found in Route PDF response");
+          hasError.value = true;
+        }
       } else {
+        print("No PDF found");
         hasError.value = true;
       }
-
     } catch (e) {
       print("PDF ERROR: $e");
       hasError.value = true;

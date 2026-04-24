@@ -41,17 +41,34 @@ class HomeController extends GetxController {
   }
 
   void openPdf() {
+    if (tripId.value == 0) {
+      Get.snackbar(
+        "No Active Trip",
+        "Please wait until a trip is assigned to you.",
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
     Get.toNamed(Routes.PDF, arguments: tripId.value);
   }
 
   Future<void> startDelivery() async {
+    if (tripId.value == 0) {
+      Get.snackbar(
+        "No Active Trip",
+        "You cannot start delivery because no trip is assigned to you yet.",
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
     try {
       isLoading.value = true;
       await apiService.startTrip(tripId.value);
       Get.offNamed(Routes.DELIVERY_ROUTE, arguments: tripId.value);
-    }catch(e){
+    } catch (e) {
       Get.snackbar("Error", e.toString());
-    }finally{
+    } finally {
       isLoading.value = false;
     }
   }
