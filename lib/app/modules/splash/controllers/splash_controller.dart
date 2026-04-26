@@ -34,66 +34,15 @@ class SplashController extends GetxController {
 
   void _checkAutoLogin() async {
     await Future.delayed(const Duration(seconds: 1));
-    
+
     final shouldUpdate = await _checkForceUpdate();
     if (shouldUpdate) return;
 
-    final accessToken = storage.read('access_token');
-
-    if (accessToken != null) {
-      try {
-        final userType = storage.read('user_type') ?? UserType.society.index;
-        LoginResponseModel response;
-        var  deviceInfo = DeviceInfo();
-        var  version = '';
-        try{
-          deviceInfo = await DeviceUtil.getDeviceDetails();
-          version = await DeviceUtil.getAppVersion();
-
-        }catch(err){
-          print(err);
-        }
-
-        // if (userType == UserType.customer.index) {
-        //   response = await apiService.autoLogin(accessToken,deviceInfo,version);
-        //   await storage.write('customer', response.customer ?? {});
-        //   try {
-        //     final configService = Get.find<ConfigService>();
-        //     await configService.fetchConfig();
-        //   } catch (e) {
-        //     print('Config fetch error: $e');
-        //   }
-        //
-        //   Get.offAllNamed(Routes.CUSTOMER_HOME);
-        // } else {
-          response = await apiService.agentAutoLogin(accessToken,deviceInfo,version);
-          await storage.write('agent', response.agent?.toJson() ?? {});
-          await storage.write('societyDetails', response.boothDetails?.toJson() ?? {});
-          await storage.write('razorpay_key', response.agent?.key ?? '');
-          // await storage.write('itemUnitType', response.agent?.itemUnitType);
-          try {
-            final configService = Get.find<ConfigService>();
-            await configService.fetchConfig();
-          } catch (e) {
-            print('Config fetch error: $e');
-          }
-          
-          Get.offAllNamed(Routes.HOME);
-        // }
-      } catch (e) {
-        storage.erase();
-        if(config.name == ClientConfig.CLIENT_CBE){
-          Get.offNamed(Routes.USER_TYPE);
-        }else{
-          Get.offNamed(Routes.LOGIN, arguments: UserType.society);
-        }
-      }
+    final token = storage.read('access_token');
+    if (token != null && token.toString().isNotEmpty) {
+      Get.offAllNamed(Routes.HOME);
     } else {
-      if(config.name == ClientConfig.CLIENT_CBE){
-        Get.offNamed(Routes.USER_TYPE);
-      }else{
-        Get.offNamed(Routes.LOGIN, arguments: UserType.society);
-      }
+      Get.offAllNamed(Routes.LOGIN);
     }
   }
 

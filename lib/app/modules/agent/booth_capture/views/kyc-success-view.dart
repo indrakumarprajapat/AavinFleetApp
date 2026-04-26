@@ -155,17 +155,7 @@ class KycSuccessController extends GetxController {
       if (accessToken != null) {
         final apiService = Get.find<ApiService>();
 
-        var  deviceInfo = DeviceInfo();
-        var  version = '';
-        try{
-          deviceInfo = await DeviceUtil.getDeviceDetails();
-          version = await DeviceUtil.getAppVersion();
-
-        }catch(err){
-          print(err);
-        }
-
-        final response = await apiService.agentAutoLogin(accessToken,deviceInfo,version);
+        final response = await apiService.agentAutoLogin(accessToken);
         
         storage.write('agent', response.agent?.toJson() ?? {});
         storage.write('societyDetails', response.boothDetails?.toJson() ?? {});

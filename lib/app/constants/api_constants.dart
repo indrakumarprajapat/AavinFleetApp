@@ -6,7 +6,7 @@ class ApiConstants {
   ApiConstants._();
   static String get baseUrl =>
       Get.find<ClientConfig>().baseUrl;
-  static const String apiSocietyPrefix = 'sapi';
+  static const String apiSocietyPrefix = 'fapi';
   static const int connectTimeout = 60;
   static const int receiveTimeout = 60;
   static const int maxRetries = 3;

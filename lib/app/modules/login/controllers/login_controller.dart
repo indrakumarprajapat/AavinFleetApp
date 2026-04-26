@@ -1,4 +1,128 @@
-import 'package:aavin/app/models/agent_model.dart';
+import 'package:aavin/app/modules/agent/home/views/home_view.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../../../constants/app_enums.dart';
+import '../../../models/DeviceInfo.dart';
+import '../../../models/booth_model.dart';
+import '../../../models/agent_model.dart';
+import '../../../routes/app_pages.dart';
+import '../../../api/api_service.dart';
+import 'package:get_storage/get_storage.dart';
+import '../../../utils/device-util.dart';
+
+class LoginController extends GetxController {
+  final boothCodeController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  /// 🔹 Reactive State
+  final _isLoading = false.obs;
+  final _selectedUserType = UserType.society.obs;
+
+  final apiService = Get.find<ApiService>();
+  final storage = GetStorage();
+
+  /// 🔹 Getters (UI uses these)
+  bool get isLoading => _isLoading.value;
+  UserType get selectedUserType => _selectedUserType.value;
+
+  @override
+  void onInit() {
+    super.onInit();
+    _selectedUserType.value = UserType.society;
+  }
+
+  void setUserType(UserType type) {
+    _selectedUserType.value = type;
+  }
+
+  void resetLoginState() {
+    passwordController.clear();
+    boothCodeController.clear();
+  }
+
+  /// ===========================
+  /// PASSWORD LOGIN (MAIN FLOW)
+  /// ===========================
+  Future<void> loginWithPassword() async {
+    if (boothCodeController.text.isEmpty || passwordController.text.isEmpty) {
+      Get.snackbar('Error', 'Please enter Booth Code and Password');
+      return;
+    }
+
+    _isLoading.value = true;
+
+    try {
+      final response = await apiService.loginWithPassword(
+        boothCodeController.text.trim(),
+        passwordController.text.trim(),
+      );
+
+      /// 🔹 Store token
+      await storage.write('access_token', response['token'] ?? '');
+      await storage.write('user_type', UserType.society.index);
+
+      /// 🔹 Agent Data
+      if (response['societyUser'] != null) {
+        Map<String, dynamic>? societyUserData;
+
+        if (response['societyUser'] is Map &&
+            response['societyUser']['societyUser'] != null) {
+          societyUserData = response['societyUser']['societyUser'];
+        } else {
+          societyUserData = response['societyUser'];
+        }
+
+        if (societyUserData != null) {
+          var agentData = SocietyUser.fromJson(societyUserData);
+
+          await storage.write('agent', agentData.toJson());
+          
+          if (response['societyUser']['key'] != null) {
+            await storage.write('razorpay_key', response['societyUser']['key']);
+          }
+
+          await storage.write(
+              'isAadhaarKycVerified', agentData.isAadhaarKycVerified ?? false);
+          await storage.write(
+              'isPanKycVerified', agentData.isPanKycVerified ?? false);
+          await storage.write('hasBankAccountVerified',
+              agentData.hasBankAccountVerified ?? false);
+        }
+      }
+
+      /// 🔹 Society Data
+      if (response['societyDetails'] != null) {
+        var societyData = Society.fromJson(response['societyDetails']);
+        await storage.write('societyDetails', societyData.toJson());
+      }
+
+      Get.snackbar('Success', response['message'] ?? 'Login successful');
+
+      /// 🔹 Navigate to Home Screen
+      Get.offAllNamed(Routes.HOME);
+
+    } catch (e) {
+      Get.snackbar('Error', e.toString());
+    } finally {
+      _isLoading.value = false;
+    }
+  }
+
+  @override
+  void onClose() {
+    //isDisposed = true;
+    boothCodeController.dispose();
+    passwordController.dispose();
+    super.onClose();
+  }
+}
+
+
+
+//recent commented
+/*
+
+import '../../../../app/modules/delivery/delivery_points_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../constants/app_enums.dart';
@@ -9,6 +133,7 @@ import '../../../routes/app_pages.dart';
 import '../../../api/api_service.dart';
 import '../../../services/config_service.dart';
 import 'package:get_storage/get_storage.dart';
+import '../../../../app/route_assignment(home)/route_assignment_screen.dart';
 
 import '../../../utils/device-util.dart';
 
@@ -75,14 +200,9 @@ class LoginController extends GetxController {
       
       // Store the token from password login response
       print('=== Password Login Response ===');
-      print('Token: ${response['token']}');
-      print('Response keys: ${response.keys}');
-      
       await storage.write('access_token', response['token'] ?? '');
       await storage.write('user_type', UserType.society.index);
       
-      // Store agent and booth data from login response
-      // Handle nested societyUser structure
       if (response['societyUser'] != null) {
         Map<String, dynamic>? societyUserData;
         if (response['societyUser'] is Map && response['societyUser']['societyUser'] != null) {
@@ -92,45 +212,25 @@ class LoginController extends GetxController {
         }
         
         if (societyUserData != null) {
-          print('Raw societyUserData: $societyUserData');
           var agentData = SocietyUser.fromJson(societyUserData);
-          print('Parsed KYC - Aadhaar: ${agentData.isAadhaarKycVerified}, PAN: ${agentData.isPanKycVerified}, Bank: ${agentData.hasBankAccountVerified}');
           await storage.write('agent', agentData.toJson());
           await storage.write('razorpay_key', response['societyUser']['key'] ?? '');
           await storage.write('isAadhaarKycVerified', agentData.isAadhaarKycVerified ?? false);
           await storage.write('isPanKycVerified', agentData.isPanKycVerified ?? false);
           await storage.write('hasBankAccountVerified', agentData.hasBankAccountVerified ?? false);
-          
-          print('KYC Status - Aadhaar: ${agentData.isAadhaarKycVerified}, PAN: ${agentData.isPanKycVerified}, Bank: ${agentData.hasBankAccountVerified}');
         }
       }
-      Society? societyData;
+
       if (response['societyDetails'] != null) {
-        print('=== Raw societyDetails from API ===');
-        print('societyDetails: ${response['societyDetails']}');
-        societyData = Society.fromJson(response['societyDetails']);
-        print('Parsed isLocSubmit: ${societyData.isLocSubmit}');
+        var societyData = Society.fromJson(response['societyDetails']);
         await storage.write('societyDetails', societyData.toJson());
       }
       
       Get.snackbar('Success', response['message'] ?? 'Login successful');
       
-      // Check KYC status and location submit
-      final isAadhaarKycVerified = await storage.read('isAadhaarKycVerified') ?? false;
-      final isPanKycVerified = await storage.read('isPanKycVerified') ?? false;
-      final hasBankAccountVerified = await storage.read('hasBankAccountVerified') ?? false;
-      final isLocSubmit = societyData?.isLocSubmit ?? false;
-      
-      print('KYC - Aadhaar: $isAadhaarKycVerified, PAN: $isPanKycVerified, Bank: $hasBankAccountVerified, LocSubmit: $isLocSubmit');
-      
-      // Priority: KYC details first, then location
-      if (!isAadhaarKycVerified || !isPanKycVerified || !hasBankAccountVerified) {
-        Get.offAllNamed(Routes.BOOTH_CAPTURE);
-      } else if (!isLocSubmit) {
-        Get.offAllNamed(Routes.BOOTH_CAPTURE);
-      } else {
-        Get.offAllNamed(Routes.HOME);
-      }
+      // ✅ NAVIGATE TO FLEET MODULE
+      Get.offAll(() => const RouteAssignmentScreen());
+
     } catch (e) {
       Get.snackbar('Error', e.toString());
     } finally {
@@ -158,20 +258,14 @@ class LoginController extends GetxController {
   }
 
   Future<void> sendOtp() async {
-    // if (phoneController.text.isEmpty || phoneController.text.length != 10) {
-    //   Get.snackbar('Error', 'Please enter valid 10-digit mobile number');
-    //   return;
-    // }
-    
     _isLoading.value = true;
     try {
       if (_selectedUserType.value == UserType.society) {
-        var  deviceInfo = DeviceInfo();
-        var  version = '';
+        var deviceInfo = DeviceInfo();
+        var version = '';
         try{
           deviceInfo = await DeviceUtil.getDeviceDetails();
           version = await DeviceUtil.getAppVersion();
-
         }catch(err){
           print(err);
         }
@@ -185,27 +279,7 @@ class LoginController extends GetxController {
         Get.snackbar('Success', response.message ?? 'OTP sent successfully');
       }
     } catch (e) {
-      String errorMessage = e.toString();
-      if (errorMessage.contains('message:')) {
-        final messageStart = errorMessage.indexOf('message:') + 8;
-        final messageEnd = errorMessage.indexOf('}', messageStart);
-        if (messageEnd != -1) {
-          errorMessage = errorMessage.substring(messageStart, messageEnd).trim();
-        }
-      }
-      Get.dialog(
-        AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Error'),
-          content: Text(errorMessage),
-          actions: [
-            ElevatedButton(
-              onPressed: () => Get.back(),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
+      Get.snackbar('Error', e.toString());
     } finally {
       _isLoading.value = false;
     }
@@ -221,7 +295,6 @@ class LoginController extends GetxController {
     
     try {
       if (_selectedUserType.value == UserType.society) {
-        // Check if this is for password reset
         if (resetToken.value.isNotEmpty) {
           final response = await apiService.verifyResetOtp(
             resetToken.value,
@@ -230,7 +303,6 @@ class LoginController extends GetxController {
           Get.snackbar('Success', response['message'] ?? 'OTP verified successfully');
           Get.toNamed('/reset-password', arguments: resetToken.value);
         } else {
-          // Normal OTP verification for login
           final response = await apiService.agentVerifyOtp(
             _accessToken.value,
             otpController.text
@@ -238,37 +310,15 @@ class LoginController extends GetxController {
           await storage.write('access_token', response.token ?? '');
           await storage.write('agent', response.agent?.toJson() ?? {});
           await storage.write('societyDetails', response.boothDetails?.toJson() ?? {});
-          await storage.write('aadharNumber', response.agent?.aadharNumber ?? '');
-          await storage.write('panNumber', response.agent?.panNumber ?? '');
           await storage.write('isAadhaarKycVerified', response.agent?.isAadhaarKycVerified ?? false);
           await storage.write('isPanKycVerified', response.agent?.isPanKycVerified ?? false);
           await storage.write('hasBankAccountVerified', response.agent?.hasBankAccountVerified ?? false);
-          await storage.write('profilePhotoUrl', response.agent?.profilePhoto ?? '');
-          await storage.write('razorpay_key', response.agent?.key ?? '');
           await storage.write('user_type',UserType.society.index);
-         try {
-            final configService = Get.find<ConfigService>();
-            await configService.fetchConfig();
-          } catch (e) {
-            print('Config fetch error: $e');
-          }
           
           Get.snackbar('Success', response.message ?? 'Login successful');
           
-          // Check KYC status and location submit
-          final isAadhaarKycVerified = response.agent?.isAadhaarKycVerified ?? false;
-          final isPanKycVerified = response.agent?.isPanKycVerified ?? false;
-          final hasBankAccountVerified = response.agent?.hasBankAccountVerified ?? false;
-          final isLocSubmit = response.boothDetails?.isLocSubmit ?? false;
-          
-          // Priority: KYC details first, then location
-          if (!isAadhaarKycVerified || !isPanKycVerified || !hasBankAccountVerified) {
-            Get.offAllNamed(Routes.BOOTH_CAPTURE);
-          } else if (!isLocSubmit) {
-            Get.offAllNamed(Routes.BOOTH_CAPTURE);
-          } else {
-            Get.offAllNamed(Routes.HOME);
-          }
+          // NAVIGATE TO FLEET MODULE
+          Get.offAll(() => const DeliveryPointsScreen());
         }
       }
     } catch (e) {
@@ -278,7 +328,6 @@ class LoginController extends GetxController {
     }
   }
 
-
   bool isDisposed = false;
   
   @override
@@ -287,3 +336,6 @@ class LoginController extends GetxController {
     super.onClose();
   }
 }
+
+
+ */

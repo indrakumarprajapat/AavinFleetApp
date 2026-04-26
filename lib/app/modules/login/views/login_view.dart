@@ -1,4 +1,215 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../../../config/app_config.dart';
+import '../../../constants/app_colors.dart';
+import '../../../api/api_service.dart';
+import '../controllers/login_controller.dart';
+
+class LoginView extends StatefulWidget {
+  const LoginView({Key? key}) : super(key: key);
+
+  @override
+  State<LoginView> createState() => _LoginViewState();
+}
+
+class _LoginViewState extends State<LoginView> {
+  bool _obscurePassword = true;
+  final config = Get.find<ClientConfig>();
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = Get.find<LoginController>();
+
+    return Scaffold(
+      backgroundColor: AppColors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    children: [
+                      _buildHeader(),
+                      const SizedBox(height: 60),
+                      _buildPhoneSection(controller),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            /// Footer
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      launchUrl(Uri.parse(config.privacyPolicyLink));
+                    },
+                    child: const Text(
+                      "Privacy Policy",
+                      style: TextStyle(fontSize: 13),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Text('&'),
+                  TextButton(
+                    onPressed: () {
+                      launchUrl(Uri.parse(config.termAndCondLink));
+                    },
+                    child: const Text(
+                      "Term & Conditions",
+                      style: TextStyle(fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Column(
+      children: [
+        SvgPicture.asset(
+          config.loginLogo,
+          width: 80,
+          height: 80,
+        ),
+        const SizedBox(height: 24),
+        Text(
+          'Aavin',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: AppColors.primary,
+          ),
+        ),
+
+      ],
+    );
+  }
+
+  Widget _buildPhoneSection(LoginController controller) {
+    return Column(
+      children: [
+        /// Booth Code
+        TextField(
+          controller: controller.boothCodeController,
+          maxLength: 20,
+          decoration: InputDecoration(
+            labelText: 'Enter Booth Code',
+            filled: true,
+            fillColor: AppColors.cardBackground,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.primary, width: 2),
+            ),
+            counterText: '',
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        /// Password
+        TextField(
+          controller: controller.passwordController,
+          obscureText: _obscurePassword,
+          decoration: InputDecoration(
+            labelText: 'Enter Password',
+            filled: true,
+            fillColor: AppColors.cardBackground,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.primary, width: 2),
+            ),
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                color: Colors.grey,
+              ),
+              onPressed: () {
+                setState(() {
+                  _obscurePassword = !_obscurePassword;
+                });
+              },
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 40),
+
+        /// Login Button
+        Obx(() => SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: controller.isLoading
+                    ? null
+                    : () {
+                        if (controller.boothCodeController.text.isEmpty ||
+                            controller.passwordController.text.isEmpty) {
+                          Get.snackbar("Error", "All fields are required");
+                          return;
+                        }
+                        controller.loginWithPassword();
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: controller.isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        'Login',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+              ),
+            )),
+      ],
+    );
+  }
+}
+
+
+
+
+
+//recently commented code
+/*
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
@@ -8,6 +219,8 @@ import '../../../constants/app_colors.dart';
 import '../../../constants/app_enums.dart';
 import '../../../api/api_service.dart';
 import '../controllers/login_controller.dart';
+
+
 class LoginView extends StatefulWidget {
   const LoginView({Key? key}) : super(key: key);
 
@@ -524,6 +737,9 @@ class _LoginViewState extends State<LoginView> {
       }),
     );
   }
+  */
+
+  ///Already commented code
 
   // Widget _buildRegistrationForm() {
   //   return Column(
@@ -685,4 +901,3 @@ class _LoginViewState extends State<LoginView> {
   //     ],
   //   );
   // }
-}
