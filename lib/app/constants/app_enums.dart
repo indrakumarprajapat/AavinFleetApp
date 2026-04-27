@@ -1,4 +1,4 @@
-enum UserType { none, customer, agent, society }
+enum UserType { none, customer, agent, society,fleetUser }
 
 
 enum AppState {

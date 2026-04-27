@@ -58,7 +58,7 @@ class LoginController extends GetxController {
 
   Future<void> loginWithPassword() async {
     if (phoneController.text.isEmpty || passwordController.text.isEmpty) {
-      Get.snackbar('Error', 'Please enter booth code and password');
+      Get.snackbar('Error', 'Please enter Route Id/Username and password');
       return;
     }
 
@@ -69,25 +69,22 @@ class LoginController extends GetxController {
           passwordController.text
       );
 
-      if (response['isForcePasswordReset'] == true) {
-        await forgotPassword();
-        return;
-      }
+      // if (response['isForcePasswordReset'] == true) {
+      //   await forgotPassword();
+      //   return;
+      // }
 
       // Store the token from password login response
-      await storage.write('access_token', response['token'] ?? '');
+      await storage.write('access_token', response.accessToken ?? '');
       await storage.write('user_type', UserType.agent.index);
 
       // Store agent and booth data from login response
-      if (response['agent'] != null) {
-        await storage.write('agent', response['agent']);
-        await storage.write('razorpay_key', response['agent']['key'] ?? '');
-      }
-      if (response['boothDetails'] != null) {
-        await storage.write('boothDetails', response['boothDetails']);
+      if (response.data != null) {
+        await storage.write('fleetUser', response.data);
+        // await storage.write('razorpay_key', response.data['key'] ?? '');
       }
 
-      Get.snackbar('Success', response['message'] ?? 'Login successful');
+      Get.snackbar('Success', response.message ?? 'Login successful');
       Get.offAllNamed(Routes.HOME);
     } catch (e) {
       Get.snackbar('Error', e.toString());
@@ -98,7 +95,7 @@ class LoginController extends GetxController {
 
   Future<void> forgotPassword() async {
     if (phoneController.text.isEmpty) {
-      Get.snackbar('Error', 'Please enter booth code');
+      Get.snackbar('Error', 'Please enter route id/username');
       return;
     }
 
@@ -135,10 +132,10 @@ class LoginController extends GetxController {
         }
 
         // final response = await apiService.agentLogin(phoneController.text,deviceInfo,version);
-        final response = await apiService.agentLogin(phoneController.text);
+        final response = await apiService.loginWithOtp(phoneController.text);
         _accessToken.value = response.accessToken ?? '';
         tempToken.value = response.accessToken ?? '';
-        _customerId.value = response.agentId ?? 0;
+        // _customerId.value = response.agentId ?? 0;
 
         _isOtpSent.value = true;
         Get.snackbar('Success', response.message ?? 'OTP sent successfully');
@@ -195,14 +192,14 @@ class LoginController extends GetxController {
               otpController.text
           );
           await storage.write('access_token', response.token ?? '');
-          await storage.write('agent', response.agent ?? {});
-          await storage.write('boothDetails', response.boothDetails?.toJson() ?? {});
-          await storage.write('aadharNumber', response.agent?.aadharNumber ?? '');
-          await storage.write('panNumber', response.agent?.panNumber ?? '');
-          await storage.write('isAadhaarKycVerified', response.agent?.isAadhaarKycVerified ?? false);
-          await storage.write('isPanKycVerified', response.agent?.isPanKycVerified ?? false);
-          await storage.write('profilePhotoUrl', response.agent?.profilePhoto ?? '');
-          await storage.write('razorpay_key', response.agent?.key ?? '');
+          await storage.write('fleetUser', response.fleetUser ?? {});
+          // await storage.write('boothDetails', response.boothDetails?.toJson() ?? {});
+          await storage.write('aadharNumber', response.fleetUser?.aadharNumber ?? '');
+          await storage.write('panNumber', response.fleetUser?.panNumber ?? '');
+          await storage.write('isAadhaarKycVerified', response.fleetUser?.isAadhaarKycVerified ?? false);
+          await storage.write('isPanKycVerified', response.fleetUser?.isPanKycVerified ?? false);
+          await storage.write('profilePhotoUrl', response.fleetUser?.profilePhoto ?? '');
+          await storage.write('razorpay_key', response.fleetUser?.key ?? '');
           await storage.write('user_type',UserType.agent.index);
           try {
             final configService = Get.find<ConfigService>();

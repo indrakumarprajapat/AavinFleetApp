@@ -47,8 +47,8 @@ class UserTypeView extends StatelessWidget {
               SizedBox(height: 20),
               _buildUserTypeCard(
                 controller: controller,
-                type: UserType.society,
-                title: 'Society',
+                type: UserType.fleetUser,
+                title: 'Fleet User',
                 iconPath: 'assets/icons/agent_icon.svg',
                 screenWidth: screenWidth,
               ),

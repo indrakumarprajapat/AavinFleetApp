@@ -139,7 +139,7 @@ class _LoginViewState extends State<LoginView> {
                 FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
               ],
               decoration: InputDecoration(
-                labelText: 'Enter Booth Code',
+                labelText: 'Enter Route ID or Username',
                 filled: true,
                 fillColor: AppColors.cardBackground,
                 border: OutlineInputBorder(
@@ -242,64 +242,64 @@ class _LoginViewState extends State<LoginView> {
           ),
         )),
 
-        if (config.name != ClientConfig.CLIENT_NILGIRIS) ...[
-          const SizedBox(height: 35),
-          Row(
-            children: [
-              Expanded(child: Divider(color: Colors.grey.shade300)),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  'OR',
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-              Expanded(child: Divider(color: Colors.grey.shade300)),
-            ],
-          ),
-          const SizedBox(height: 35),
-          Obx(() => Container(
-            width: double.infinity,
-            height: 48,
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: AppColors.primary,
-                width: 1.5,
-              ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: TextButton(
-              onPressed: controller.toggleLoginMethod,
-              style: TextButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    controller.isPasswordLogin ? Icons.sms : Icons.lock,
-                    color: AppColors.primary,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    controller.isPasswordLogin ? 'Login with OTP' : 'Login with Password',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          )),
-        ],
+        // if (config.name != ClientConfig.CLIENT_NILGIRIS) ...[
+        //   const SizedBox(height: 35),
+          // Row(
+          //   children: [
+          //     Expanded(child: Divider(color: Colors.grey.shade300)),
+          //     Padding(
+          //       padding: const EdgeInsets.symmetric(horizontal: 16),
+          //       child: Text(
+          //         'OR',
+          //         style: TextStyle(
+          //           color: AppColors.textSecondary,
+          //           fontSize: 14,
+          //         ),
+          //       ),
+          //     ),
+          //     Expanded(child: Divider(color: Colors.grey.shade300)),
+          //   ],
+          // ),
+          // const SizedBox(height: 35),
+          // Obx(() => Container(
+          //   width: double.infinity,
+          //   height: 48,
+          //   decoration: BoxDecoration(
+          //     border: Border.all(
+          //       color: AppColors.primary,
+          //       width: 1.5,
+          //     ),
+          //     borderRadius: BorderRadius.circular(12),
+          //   ),
+          //   child: TextButton(
+          //     onPressed: controller.toggleLoginMethod,
+          //     style: TextButton.styleFrom(
+          //       shape: RoundedRectangleBorder(
+          //         borderRadius: BorderRadius.circular(12),
+          //       ),
+          //     ),
+          //     child: Row(
+          //       mainAxisAlignment: MainAxisAlignment.center,
+          //       children: [
+          //         Icon(
+          //           controller.isPasswordLogin ? Icons.sms : Icons.lock,
+          //           color: AppColors.primary,
+          //           size: 20,
+          //         ),
+          //         const SizedBox(width: 8),
+          //         Text(
+          //           controller.isPasswordLogin ? 'Login with OTP' : 'Login with Password',
+          //           style: TextStyle(
+          //             color: AppColors.primary,
+          //             fontSize: 16,
+          //             fontWeight: FontWeight.w500,
+          //           ),
+          //         ),
+          //       ],
+          //     ),
+          //   ),
+          // )),
+        // ],
       ],
     );
   }

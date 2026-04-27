@@ -21,7 +21,7 @@ class HomeController extends GetxController {
   final _isAadhaarKycVerified = false.obs;
   final _isPanKycVerified = false.obs;
   final _boothDetails = Rxn<Society>();
-  final _agent = Rxn<SocietyUser>();
+  final _agent = Rxn<FleetUser>();
 
   int get selectedIndex => _selectedIndex.value;
   // UserType get userType => _userType.value;
@@ -32,7 +32,7 @@ class HomeController extends GetxController {
   bool get isAadhaarKycVerified => _isAadhaarKycVerified.value;
   bool get isPanKycVerified => _isPanKycVerified.value;
   Society? get boothDetails => _boothDetails.value;
-  SocietyUser? get agent => _agent.value;
+  FleetUser? get agent => _agent.value;
   String get agentName => _agent.value?.name ?? '';
   String get aadhaarNumber => _agent.value?.aadharNumber ?? '';
   String get panName => _agent.value?.panNumber ?? '';
@@ -113,15 +113,15 @@ class HomeController extends GetxController {
 
   void loadKycStatus() {
       final storage = GetStorage();
-      var agentData = storage.read('agent');
+      var agentData = storage.read('fleetUser');
       var boothData = storage.read('societyDetails');
 
        if (agentData != null) {
         try {
           if (agentData is Map<String, dynamic>) {
-            _agent.value = SocietyUser.fromJson(agentData);
+            _agent.value = FleetUser.fromJson(agentData);
           } else {
-            _agent.value = SocietyUser.fromJson(Map<String, dynamic>.from(agentData));
+            _agent.value = FleetUser.fromJson(Map<String, dynamic>.from(agentData));
           }
           _isAadhaarKycVerified.value = _agent.value?.isAadhaarKycVerified ?? false;
           _isPanKycVerified.value = _agent.value?.isPanKycVerified ?? false;

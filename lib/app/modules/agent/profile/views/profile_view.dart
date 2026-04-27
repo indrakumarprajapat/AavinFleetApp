@@ -16,7 +16,7 @@ class ProfileView extends StatefulWidget {
 }
 
 class _ProfileViewState extends State<ProfileView> {
-  final profileData = Rxn<SocietyUser>();
+  final profileData = Rxn<FleetUser>();
   final isLoading = true.obs;
 
   @override
@@ -64,7 +64,7 @@ class _ProfileViewState extends State<ProfileView> {
       );
     }
 
-    final firstName = profileData.value?.name ?? 'Agent';
+    final firstName = profileData.value?.name ?? 'Fleet';
     final mobileNumber = profileData.value?.mobileNumber ?? '';
     final gender = profileData.value?.gender ?? 'Not provided';
     final aadharNumber = profileData.value?.aadharNumber ?? 'Not provided';
@@ -311,7 +311,7 @@ class _ProfileViewState extends State<ProfileView> {
             onPressed: () {
               final storage = GetStorage();
               storage.erase();
-              Get.toNamed(Routes.LOGIN, arguments: UserType.society);
+              Get.toNamed(Routes.LOGIN, arguments: UserType.fleetUser);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Color(0xFFE74C3C),

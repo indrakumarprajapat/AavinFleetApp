@@ -58,7 +58,7 @@ class _AgentDrawerState extends State<AgentDrawer> {
   @override
   Widget build(BuildContext context) {
     final storage = GetStorage();
-    final agent = storage.read('agent') ?? {};
+    final agent = storage.read('fleetUser') ?? {};
     final firstName = agent['name']?.toString() ?? '';
     final mobileNumber = agent['mobileNumber']?.toString() ?? '';
     final storedUrl = storage.read('profilePhotoUrl');
@@ -681,7 +681,7 @@ class _AgentDrawerState extends State<AgentDrawer> {
               if(config.name == ClientConfig.CLIENT_CBE){
                 Get.offAllNamed(Routes.USER_TYPE);
               }else{
-                Get.offAllNamed(Routes.LOGIN, arguments: UserType.society);
+                Get.offAllNamed(Routes.LOGIN, arguments: UserType.fleetUser);
               }
             },
             style: ElevatedButton.styleFrom(

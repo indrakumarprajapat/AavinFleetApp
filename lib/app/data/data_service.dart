@@ -52,13 +52,13 @@ class DataService extends GetxService {
   Future<void> clearCustomerModel() async {
     await _box.remove(_kCustomerModel);
   }
-  Future<void> saveAgentModel(SocietyUser user) async {
+  Future<void> saveAgentModel(FleetUser user) async {
     await _box.write(_kAgentModel, user.toJson());
   }
 
-  SocietyUser? get agentModel {
+  FleetUser? get agentModel {
     final data = _box.read(_kAgentModel);
-    return data != null ? SocietyUser.fromJson(data) : null;
+    return data != null ? FleetUser.fromJson(data) : null;
   }
 
   Future<void> clearAgentModel() async {

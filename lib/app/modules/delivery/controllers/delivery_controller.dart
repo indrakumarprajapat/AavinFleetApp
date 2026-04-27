@@ -51,7 +51,7 @@ class DeliveryController extends GetxController {
 
   void _loadUserInfo() {
     try {
-      final agentData = storage.read('agent');
+      final agentData = storage.read('fleetUser');
       if (agentData != null) {
         if (agentData is Map) {
           name.value = agentData['name']?.toString() ?? "Driver";

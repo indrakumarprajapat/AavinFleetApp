@@ -14,7 +14,7 @@ class AddFundsController extends GetxController {
   final TextEditingController amountController = TextEditingController();
   final isLoading = false.obs;
   final storage = GetStorage();
-  final Rx<SocietyUser?> agentData = Rx<SocietyUser?>(null);
+  final Rx<FleetUser?> agentData = Rx<FleetUser?>(null);
   final Rx<Customer?> customerData = Rx<Customer?>(null);
   final isCustomer = false.obs;
   final _isLoading = false.obs;
@@ -28,7 +28,7 @@ class AddFundsController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    final userType = storage.read('user_type') ?? UserType.society.index;
+    final userType = storage.read('user_type') ?? UserType.fleetUser.index;
     isCustomer.value = userType == UserType.customer.index;
     
     // if (isCustomer.value) {
@@ -42,9 +42,9 @@ class AddFundsController extends GetxController {
     //   }
     //   walletController = Get.find<CustomerWalletController>();
     // } else {
-      final agentJson = storage.read('agent');
+      final agentJson = storage.read('fleetUser');
       if (agentJson != null) {
-        agentData.value = SocietyUser.fromJson(agentJson);
+        agentData.value = FleetUser.fromJson(agentJson);
       }
       walletController = Get.find<WalletController>();
     // }
@@ -199,7 +199,7 @@ class AddFundsController extends GetxController {
         userType = UserType.customer.index; // 1: customer
       } else {
         userId = int.tryParse(agentData.value?.id ?? '');
-        userType = UserType.society.index; // 2: agent
+        userType = UserType.fleetUser.index; // 2: agent
       }
       
       if (userId == null) {

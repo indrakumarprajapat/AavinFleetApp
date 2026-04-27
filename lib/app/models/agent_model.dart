@@ -1,6 +1,6 @@
 import '../utils/parse-util.dart';
 
-class SocietyUser {
+class FleetUser {
   final String? id;
   final String? name;
   final String? mobileNumber;
@@ -39,7 +39,21 @@ class SocietyUser {
   final DateTime? lastLoginTime;
   final DateTime? lastAutologinTime;
 
-  SocietyUser(
+  final String? contractReferenceNumber;
+  final DateTime? contractStartDate;
+  final DateTime? contractEndDate;
+  final String? operatorName;
+  final String? operatorMobile;
+  final int? routeId;
+  final int? shift;
+  final String? vehicleRegistrationNumber;
+  final double? vehicleCurbWeight;
+  final double? vehicleOffloadCapacity;
+  final String? username;
+  final String? accessToken;
+  final String? refreshToken;
+
+  FleetUser(
       {this.id,
       this.name,
       this.mobileNumber,
@@ -77,10 +91,23 @@ class SocietyUser {
         this.loginDevice,
         this.lastLoginTime,
         this.lastAutologinTime,
+        this.contractReferenceNumber,
+        this.contractStartDate,
+        this.contractEndDate,
+        this.operatorName,
+        this.operatorMobile,
+        this.routeId,
+        this.shift,
+        this.vehicleRegistrationNumber,
+        this.vehicleCurbWeight,
+        this.vehicleOffloadCapacity,
+        this.username,
+        this.accessToken,
+        this.refreshToken
       });
 
-  factory SocietyUser.fromJson(Map<String, dynamic> json) {
-    return SocietyUser(
+  factory FleetUser.fromJson(Map<String, dynamic> json) {
+    return FleetUser(
       id: json['id']?.toString(),
       name: json['name']?.toString(),
       mobileNumber: json['mobile_number']?.toString() ?? json['mobileNumber']?.toString(),
@@ -106,6 +133,44 @@ class SocietyUser {
       gstRegistered: ParseUtil.parseBool(json['gst_registered'] ?? json['gstRegistered']),
       gstNumber: json['gst_number']?.toString() ?? json['gstNumber']?.toString(),
       key: json['key']?.toString(),
+
+      contractReferenceNumber: json['contract_reference_number']?.toString() ?? json['contractReferenceNumber']?.toString(),
+      contractStartDate: ParseUtil.parseDateTime(
+          json['contract_start_date'] ?? json['contractStartDate']
+      ),
+
+      contractEndDate: ParseUtil.parseDateTime(
+          json['contract_end_date'] ?? json['contractEndDate']
+      ),
+
+      operatorName: json['operator_name']?.toString() ?? json['operatorName']?.toString(),
+
+      operatorMobile: json['operator_mobile']?.toString() ?? json['operatorMobile']?.toString(),
+
+      routeId: ParseUtil.parseInt(
+          json['route_id'] ?? json['routeId']
+      ),
+
+      shift: ParseUtil.parseInt(
+          json['shift']
+      ),
+
+      vehicleRegistrationNumber: json['vehicle_registration_number']?.toString()
+          ?? json['vehicleRegistrationNumber']?.toString(),
+
+      vehicleCurbWeight: ParseUtil.parseDouble(
+          json['vehicle_curb_weight'] ?? json['vehicleCurbWeight']
+      ),
+
+      vehicleOffloadCapacity: ParseUtil.parseDouble(
+          json['vehicle_offload_capacity'] ?? json['vehicleOffloadCapacity']
+      ),
+
+      username: json['username']?.toString(),
+
+      accessToken: json['access_token']?.toString() ?? json['accessToken']?.toString(),
+
+      refreshToken: json['refresh_token']?.toString() ?? json['refreshToken']?.toString(),
     );
   }
 

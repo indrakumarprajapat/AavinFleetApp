@@ -44,7 +44,7 @@ class AgentProfileView extends StatelessWidget {
         );
       }
 
-      final firstName = controller.profileData.value?.name ?? 'Agent';
+      final firstName = controller.profileData.value?.name ?? 'Fleet';
       final mobileNumber = controller.profileData.value?.mobileNumber ?? '';
       final aadharNumber = controller.profileData.value?.aadharNumber ?? 'Not provided';
       final panNumber = controller.profileData.value?.panNumber ?? 'Not provided';
@@ -580,7 +580,7 @@ class AgentProfileView extends StatelessWidget {
 }
 
 class AgentProfileController extends GetxController {
-  final profileData = Rxn<SocietyUser>();
+  final profileData = Rxn<FleetUser>();
   final isLoading = true.obs;
   final profileImage = Rxn<File>();
   final networkImageUrl = RxnString();
@@ -1031,7 +1031,7 @@ class AgentProfileController extends GetxController {
               if( config.name == ClientConfig.CLIENT_CBE){
                 Get.offNamed(Routes.USER_TYPE);
               }else{
-                Get.offAllNamed(Routes.LOGIN, arguments: UserType.society);
+                Get.offAllNamed(Routes.LOGIN, arguments: UserType.fleetUser);
               }
             },
             style: ElevatedButton.styleFrom(

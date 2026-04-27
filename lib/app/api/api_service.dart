@@ -11,12 +11,12 @@ import '../models/models.dart';
 import '../models/razorpay-order-response.dart';
 
 class ApiService extends GetxService {
-  late Dio _societyDio;
+  late Dio _dio;
 
   @override
   void onInit() {
     super.onInit();
-    _societyDio = Dio(
+    _dio = Dio(
       BaseOptions(
         baseUrl: '${ApiConstants.baseUrl}/${ApiConstants.apiSocietyPrefix}',
         connectTimeout: Duration(seconds: ApiConstants.connectTimeout),
@@ -25,14 +25,14 @@ class ApiService extends GetxService {
       ),
     );
 
-    _societyDio.interceptors.add(
+    _dio.interceptors.add(
       LogInterceptor(requestBody: true, responseBody: true, error: true),
     );
   }
 
-  Future<ApiResponseModel> agentLogin(String mobileNumber,) async {
+  Future<ApiResponseModel> loginWithOtp(String mobileNumber,) async {
     try {
-      final response = await _societyDio.post(
+      final response = await _dio.post(
         '/account/login',
         data: {
           'username': mobileNumber,
@@ -43,26 +43,41 @@ class ApiService extends GetxService {
       throw _handleError(e);
     }
   }
-
-  Future<Map<String, dynamic>> loginWithPassword(String username,
-      String password,) async {
+  Future<ApiResponseModel> loginWithPassword(String username,
+  String password) async {
     try {
-      final response = await _societyDio.post(
+      final response = await _dio.post(
         '/account/login',
         data: {
           'username': username,
           'password': password,
         },
       );
-      return response.data;
+      return ApiResponseModel.fromJson(response.data, null);
     } catch (e) {
       throw _handleError(e);
     }
   }
 
+  // Future<Map<String, dynamic>> loginWithPassword(String username,
+  //     String password,) async {
+  //   try {
+  //     final response = await _dio.post(
+  //       '/account/login',
+  //       data: {
+  //         'username': username,
+  //         'password': password,
+  //       },
+  //     );
+  //     return response.data;
+  //   } catch (e) {
+  //     throw _handleError(e);
+  //   }
+  // }
+
   Future<Map<String, dynamic>> agentForgotPassword(String username) async {
     try {
-      final response = await _societyDio.post(
+      final response = await _dio.post(
         '/auth/forgot-password',
         data: {'username': username},
       );
@@ -75,7 +90,7 @@ class ApiService extends GetxService {
   Future<Map<String, dynamic>> verifyResetOtp(String resetToken,
       String otp,) async {
     try {
-      final response = await _societyDio.post(
+      final response = await _dio.post(
         '/auth/verify-reset-otp',
         data: {
           'resetToken': resetToken,
@@ -91,7 +106,7 @@ class ApiService extends GetxService {
   Future<Map<String, dynamic>> resetPassword(String resetToken,
       String newPassword,) async {
     try {
-      final response = await _societyDio.post(
+      final response = await _dio.post(
         '/auth/reset-password',
         data: {
           'resetToken': resetToken,
@@ -107,7 +122,7 @@ class ApiService extends GetxService {
   Future<LoginResponseModel> agentVerifyOtp(String accessToken,
       String otp,) async {
     try {
-      final response = await _societyDio.post(
+      final response = await _dio.post(
         '/auth/verify-otp',
         data: {'accessToken': accessToken, 'otp': otp},
       );
@@ -119,7 +134,7 @@ class ApiService extends GetxService {
 
   Future<Map<String, dynamic>> agentResendOtp(String accessToken) async {
     try {
-      final response = await _societyDio.post(
+      final response = await _dio.post(
         '/auth/resend-otp',
         data: {'accessToken': accessToken},
       );
@@ -131,7 +146,7 @@ class ApiService extends GetxService {
 
   Future<LoginResponseModel> agentAutoLogin(String accessToken,) async {
     try {
-      final response = await _societyDio.post(
+      final response = await _dio.post(
         '/auth/autologin',
         data: {
           'accessToken': accessToken,
@@ -148,7 +163,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.get(
+      final response = await _dio.get(
         '/agent/slots',
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       );
@@ -277,7 +292,7 @@ class ApiService extends GetxService {
       if (bankName != null) data['bankName'] = bankName;
       if (bankBranch != null) data['bankBranch'] = bankBranch;
 
-      final response = await _societyDio.put(
+      final response = await _dio.put(
         '/account/update-details',
         data: data,
         options: Options(
@@ -327,7 +342,7 @@ class ApiService extends GetxService {
       final accessToken = storage.read('access_token');
 
       final data = {'amount': amount};
-      final response = await _societyDio.post(
+      final response = await _dio.post(
         '/orders/razorpay/initiate',
         data: data,
         options: Options(
@@ -372,7 +387,7 @@ class ApiService extends GetxService {
       };
       if (paymentMethod != null) data['paymentMethod'] = paymentMethod;
 
-      final response = await _societyDio.post(
+      final response = await _dio.post(
         '/orders',
         data: data,
         options: Options(
@@ -493,7 +508,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.get(
+      final response = await _dio.get(
         '/orders',
         queryParameters: queryParams,
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
@@ -513,7 +528,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.post(
+      final response = await _dio.post(
         '/auth/change-password',
         data: {
           'oldPassword': oldPassword,
@@ -537,7 +552,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.get(
+      final response = await _dio.get(
         '/orders/$orderId',
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       );
@@ -559,7 +574,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.get(
+      final response = await _dio.get(
         '/categories',
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       );
@@ -577,7 +592,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.get(
+      final response = await _dio.get(
         '/other-products',
         queryParameters: {'categoryId': categoryId},
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
@@ -594,7 +609,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.get(
+      final response = await _dio.get(
         '/popular-products',
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       );
@@ -610,7 +625,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.get(
+      final response = await _dio.get(
         '/products/$productId',
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       );
@@ -625,7 +640,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.get(
+      final response = await _dio.get(
         '/orders-card',
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       );
@@ -641,7 +656,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.put(
+      final response = await _dio.put(
         '/orders-card/$orderId/status',
         data: {'status': status},
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
@@ -652,17 +667,17 @@ class ApiService extends GetxService {
     }
   }
 
-  Future<SocietyUser> getAgentProfile() async {
+  Future<FleetUser> getAgentProfile() async {
     try {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.get(
+      final response = await _dio.get(
         '/account/profile',
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       );
       final responseData = response.data;
-      return SocietyUser.fromJson(responseData['agent'] ?? responseData);
+      return FleetUser.fromJson(responseData['agent'] ?? responseData);
     } catch (e) {
       throw _handleError(e);
     }
@@ -678,7 +693,7 @@ class ApiService extends GetxService {
         'jsondata': '{}',
       });
 
-      final response = await _societyDio.post(
+      final response = await _dio.post(
         '/account/upload-profile-photo',
         data: formData,
         options: Options(
@@ -733,7 +748,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.get(
+      final response = await _dio.get(
         '/wallet/balance',
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       );
@@ -751,7 +766,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.get(
+      final response = await _dio.get(
         '/wallet/transactions',
         queryParameters: {'limit': limit, 'offset': offset},
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
@@ -767,7 +782,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.get(
+      final response = await _dio.get(
         '/wallet/summary',
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       );
@@ -787,7 +802,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.post(
+      final response = await _dio.post(
         '/wallet/add-fund',
         data: {
           'amount': amount,
@@ -820,7 +835,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.post(
+      final response = await _dio.post(
         '/orders/create-razorpay-order',
         data: {
           'orderType': orderType,
@@ -849,7 +864,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.post(
+      final response = await _dio.post(
         '/orders/verify-payment',
         data: {
           'transactionId': transactionId,
@@ -879,7 +894,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.post(
+      final response = await _dio.post(
         '/orders/create-easypay-order',
         data: {
           'orderType': orderType,
@@ -910,7 +925,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.post(
+      final response = await _dio.post(
         '/orders/verify-easypay-payment',
         data: {
           'transactionId': transactionId,
@@ -938,7 +953,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.post(
+      final response = await _dio.post(
         '/orders/create-cashfree-order',
         data: {
           'orderType': orderType,
@@ -966,7 +981,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.post(
+      final response = await _dio.post(
         '/orders/verify-cashfree-payment',
         data: {
           'transactionId': transactionId,
@@ -993,7 +1008,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.post(
+      final response = await _dio.post(
         '/orders/payment-failed',
         data: {'transactionId': transactionId, 'failureReason': failureReason},
         options: Options(
@@ -1020,7 +1035,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.post(
+      final response = await _dio.post(
         '/orders/cashfree-payment-failed',
         data: {
           'transactionId': transactionId,
@@ -1047,7 +1062,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.get(
+      final response = await _dio.get(
         '/credit-outstanding',
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       );
@@ -1075,7 +1090,7 @@ class ApiService extends GetxService {
       if (limit != null) queryParams['limit'] = limit;
       if (offset != null) queryParams['offset'] = offset;
 
-      final response = await _societyDio.get(
+      final response = await _dio.get(
         '/transactions',
         queryParameters: queryParams,
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
@@ -1103,11 +1118,11 @@ class ApiService extends GetxService {
       if (limit != null) queryParams['limit'] = limit;
 
       print(
-        'Claims API call: ${_societyDio.options
+        'Claims API call: ${_dio.options
             .baseUrl}/claims with params: $queryParams',
       );
 
-      final response = await _societyDio.get(
+      final response = await _dio.get(
         '/claims',
         queryParameters: queryParams,
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
@@ -1129,11 +1144,11 @@ class ApiService extends GetxService {
       final accessToken = storage.read('access_token');
 
       print(
-        'Calling delivered orders API: ${_societyDio.options
+        'Calling delivered orders API: ${_dio.options
             .baseUrl}/delivered-order',
       );
 
-      final response = await _societyDio.get(
+      final response = await _dio.get(
         '/delivered-order',
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       );
@@ -1151,7 +1166,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.get(
+      final response = await _dio.get(
         '/claims/$claimId',
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       );
@@ -1189,7 +1204,7 @@ class ApiService extends GetxService {
       };
       formData.fields.add(MapEntry('jsondata', jsonEncode(jsonData)));
 
-      final response = await _societyDio.post(
+      final response = await _dio.post(
         '/orders/$orderId/claims',
         data: formData,
         options: Options(
@@ -1215,7 +1230,7 @@ class ApiService extends GetxService {
       final accessToken = storage.read('access_token');
 
       print(
-        'Update claim API call: ${_societyDio.options.baseUrl}/claims/$claimId',
+        'Update claim API call: ${_dio.options.baseUrl}/claims/$claimId',
       );
       print('Images count: ${images?.length ?? 0}');
 
@@ -1232,7 +1247,7 @@ class ApiService extends GetxService {
       final jsonData = description != null ? {'description': description} : {};
       formData.fields.add(MapEntry('jsondata', jsonEncode(jsonData)));
 
-      final response = await _societyDio.put(
+      final response = await _dio.put(
         '/claims/$claimId',
         data: formData,
         options: Options(
@@ -1257,7 +1272,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.get(
+      final response = await _dio.get(
         '/check-tray-count',
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       );
@@ -1272,7 +1287,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.delete(
+      final response = await _dio.delete(
         '/cart/clear',
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       );
@@ -1287,7 +1302,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.put(
+      final response = await _dio.put(
         '/orders/$orderId/cancel',
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       );
@@ -1299,7 +1314,7 @@ class ApiService extends GetxService {
 
   Future<Map<String, dynamic>> checkAppVersion() async {
     try {
-      final response = await _societyDio.get('/app-version');
+      final response = await _dio.get('/app-version');
       return response.data;
     } catch (e) {
       throw _handleError(e);
@@ -1311,7 +1326,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.get('/google-api-key',
+      final response = await _dio.get('/google-api-key',
         options: Options(
           headers: {
             'Authorization': 'Bearer $accessToken',
@@ -1336,7 +1351,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.get(
+      final response = await _dio.get(
         '/config',
         options: Options(
           headers: {
@@ -1356,7 +1371,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.get(
+      final response = await _dio.get(
         '/banners',
         options: Options(
           headers: {
@@ -1381,7 +1396,7 @@ class ApiService extends GetxService {
         queryParams['month'] = month;
       }
 
-      final response = await _societyDio.get(
+      final response = await _dio.get(
         '/commission-statement',
         queryParameters: queryParams,
         options: Options(
@@ -1402,7 +1417,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.get(
+      final response = await _dio.get(
         '/payment-gateways',
         options: Options(
           headers: {
@@ -1424,7 +1439,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.post(
+      final response = await _dio.post(
         '/wallet/create-cashfree-order',
         data: {'amount': amount},
         options: Options(
@@ -1447,7 +1462,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.post(
+      final response = await _dio.post(
         '/wallet/verify-cashfree-payment',
         data: {'orderId': orderId},
         options: Options(
@@ -1472,7 +1487,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.post(
+      final response = await _dio.post(
         '/wallet/cashfree-payment-failed',
         data: {
           'orderId': orderId,
@@ -1494,7 +1509,7 @@ class ApiService extends GetxService {
 
   @override
   void onClose() {
-    _societyDio.close();
+    _dio.close();
     super.onClose();
   }
 
@@ -1504,7 +1519,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
       print('suppliesData: $suppliesData');
-      final response = await _societyDio.post(
+      final response = await _dio.post(
         '/milk-supplies',
         data: suppliesData,
         options: Options(
@@ -1525,7 +1540,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.get(
+      final response = await _dio.get(
         '/milk-supplies',
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       );
@@ -1540,7 +1555,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.get(
+      final response = await _dio.get(
         '/milk-supplies/$id',
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       );
@@ -1592,7 +1607,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.get(
+      final response = await _dio.get(
         '/trips/$tripId/summary',
         options: Options(
           headers: {'Authorization': 'Bearer $accessToken'},
@@ -1617,7 +1632,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.get(
+      final response = await _dio.get(
         '/route-detail',
         queryParameters: {
           'shift': shift,
@@ -1638,7 +1653,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.get(
+      final response = await _dio.get(
         '/trips/$tripId',
         options: Options(
             headers: {'Authorization': 'Bearer $accessToken'}),
@@ -1654,7 +1669,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      await _societyDio.post(
+      await _dio.post(
         '/trips/$tripId/start',
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       );
@@ -1668,7 +1683,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.get(
+      final response = await _dio.get(
           '/trips/$tripId/booths',
           queryParameters: {'phase': phase},
           options: Options(headers: {'Authorization': "Bearer $accessToken"})
@@ -1685,7 +1700,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      await _societyDio.put(
+      await _dio.put(
         '/trips/$tripId/booths/$boothId',
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       );
@@ -1700,7 +1715,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _societyDio.get(
+      final response = await _dio.get(
         '/trips/$tripId/booths/$boothId',
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       );
@@ -1716,7 +1731,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      await _societyDio.post(
+      await _dio.post(
         '/trips/$tripId/collection/start',
         options: Options(headers:{'Authorization': 'Bearer $accessToken'}),
       );
@@ -1730,7 +1745,7 @@ class ApiService extends GetxService {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      await _societyDio.post(
+      await _dio.post(
         '/trips/$tripId/booths/$boothId/tray-collected',
         data: {'trays': trays},
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),

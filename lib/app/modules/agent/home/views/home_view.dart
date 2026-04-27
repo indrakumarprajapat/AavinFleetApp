@@ -941,8 +941,8 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, Ticker
                 }
                 // final autoLoginResponse = await apiService.agentAutoLogin(accessToken, deviceInfo, version);
                 final autoLoginResponse = await apiService.agentAutoLogin(accessToken);
-                storage.write('agent', autoLoginResponse.agent?.toJson() ?? {});
-                storage.write('societyDetails', autoLoginResponse.boothDetails?.toJson() ?? {});
+                storage.write('fleetUser', autoLoginResponse.fleetUser?.toJson() ?? {});
+                // storage.write('societyDetails', autoLoginResponse.boothDetails?.toJson() ?? {});
 
                 controller.loadKycStatus();
 
@@ -1101,8 +1101,8 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, Ticker
                 // final autoLoginResponse = await apiService.agentAutoLogin(accessToken,deviceInfo,version);
                 final autoLoginResponse = await apiService.agentAutoLogin(accessToken);
 
-                storage.write('agent', autoLoginResponse.agent?.toJson() ?? {});
-                storage.write('societyDetails', autoLoginResponse.boothDetails?.toJson() ?? {});
+                storage.write('fleetUser', autoLoginResponse.fleetUser?.toJson() ?? {});
+                // storage.write('societyDetails', autoLoginResponse.boothDetails?.toJson() ?? {});
 
                 controller.loadKycStatus();
 

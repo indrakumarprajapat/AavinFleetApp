@@ -157,9 +157,9 @@ class KycSuccessController extends GetxController {
 
         final response = await apiService.agentAutoLogin(accessToken);
         
-        storage.write('agent', response.agent?.toJson() ?? {});
-        storage.write('societyDetails', response.boothDetails?.toJson() ?? {});
-        storage.write('profilePhotoUrl', response.agent?.profilePhoto??'');
+        storage.write('fleetUser', response.fleetUser?.toJson() ?? {});
+        // storage.write('societyDetails', response.boothDetails?.toJson() ?? {});
+        storage.write('profilePhotoUrl', response.fleetUser?.profilePhoto??'');
       }
     } catch (e) {
       print('Auto-login failed: $e');

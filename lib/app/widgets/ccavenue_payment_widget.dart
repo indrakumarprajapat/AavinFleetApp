@@ -61,7 +61,7 @@ class _CCavenuePaymentWidgetState extends State<CCavenuePaymentWidget> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('User Type:'),
-                      Text(widget.userType == 1 ? 'Customer' : 'Agent'),
+                      Text(widget.userType == 1 ? 'Customer' : 'Fleet'),
                     ],
                   ),
                 ],

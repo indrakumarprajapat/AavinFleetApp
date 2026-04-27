@@ -23,4 +23,39 @@ class ParseUtil {
     }
     return 0.0;
   }
+  static DateTime? parseDateTime(dynamic value) {
+    if (value == null) return null;
+
+    // Already a DateTime
+    if (value is DateTime) return value;
+
+    // If it's a timestamp (milliseconds)
+    if (value is int) {
+      try {
+        return DateTime.fromMillisecondsSinceEpoch(value);
+      } catch (_) {
+        return null;
+      }
+    }
+
+    // If it's a string
+    if (value is String) {
+      if (value.trim().isEmpty) return null;
+
+      // Try ISO format first (most common)
+      try {
+        return DateTime.parse(value);
+      } catch (_) {}
+
+      // Try parsing as int timestamp string
+      final intVal = int.tryParse(value);
+      if (intVal != null) {
+        try {
+          return DateTime.fromMillisecondsSinceEpoch(intVal);
+        } catch (_) {}
+      }
+    }
+
+    return null;
+  }
 }

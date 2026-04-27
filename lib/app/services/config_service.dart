@@ -24,7 +24,7 @@ class ConfigService extends GetxService {
   
   String get countryRestriction => config.value?['map_settings']?['country_restriction'] ?? 'in';
   int get searchRadius => config.value?['map_settings']?['search_radius'] ?? 500000;
-  late final userType = _storage.read('user_type') ?? UserType.society.index;
+  late final userType = _storage.read('user_type') ?? UserType.fleetUser.index;
   @override
   void onInit() {
     super.onInit();
