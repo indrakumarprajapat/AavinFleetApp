@@ -3,7 +3,7 @@ part of 'app_pages.dart';
 abstract class Routes {
   Routes._();
   static const SPLASH = _Paths.SPLASH;
-  // static const USER_TYPE = _Paths.USER_TYPE;
+  static const USER_TYPE = _Paths.USER_TYPE;
    static const LOGIN = _Paths.LOGIN;
    static const HOME = _Paths.HOME;
    static const DELIVERY_ROUTE = _Paths.DELIVERY_ROUTE;
@@ -15,14 +15,14 @@ abstract class Routes {
   // static const MAIN_NAVIGATION = _Paths.MAIN_NAVIGATION;
   // static const ORDER = _Paths.ORDER;
   // static const ORDER_DETAILS = _Paths.ORDER_DETAILS;
-  // static const BOOTH_CAPTURE = _Paths.BOOTH_CAPTURE;
+  static const BOOTH_CAPTURE = _Paths.BOOTH_CAPTURE;
   // static const CART = _Paths.CART;
   // static const CUSTOMER_LOGIN = _Paths.CUSTOMER_LOGIN;
   // static const CUSTOMER_PROFILE = _Paths.CUSTOMER_PROFILE;
   // static const CUSTOMER_ORDER = _Paths.CUSTOMER_ORDER;
   // static const CUSTOMER_ORDERS = _Paths.CUSTOMER_ORDERS;
   // static const BOOTH_SELECTION = _Paths.BOOTH_SELECTION;
-  // static const EASYPAY_WEBVIEW = _Paths.EASYPAY_WEBVIEW;
+  static const EASYPAY_WEBVIEW = _Paths.EASYPAY_WEBVIEW;
   // static const CLAIMS = _Paths.CLAIMS;
   // static const CREATE_CLAIM = _Paths.CREATE_CLAIM;
   // static const CLAIM_DETAILS = _Paths.CLAIM_DETAILS;
@@ -42,7 +42,7 @@ abstract class Routes {
   // static const ORDER_SUCCESS = _Paths.ORDER_SUCCESS;
   // static const PRODUCT_SELECTION = _Paths.PRODUCT_SELECTION;
   // static const COMMISSION_STATEMENT = _Paths.COMMISSION_STATEMENT;
-  // static const CHANGE_PASSWORD = _Paths.CHANGE_PASSWORD;
+  static const CHANGE_PASSWORD = _Paths.CHANGE_PASSWORD;
   // static const PDF = _Paths.PDF;
 }
 
@@ -55,20 +55,20 @@ abstract class _Paths {
   static const STORE_DETAILS = '/store-details-view';
   static const DASHBOARD = '/dashboard-view';
   static const PDF = '/pdf';
-// static const USER_TYPE = '/user-type';
+static const USER_TYPE = '/user-type';
   // static const HOME = '/home';
   // static const CUSTOMER_HOME = '/customer-home';
   // static const MAIN_NAVIGATION = '/main-navigation';
   // static const ORDER = '/order';
   // static const CUSTOMER_ORDERS = '/customer-orders';
   // static const ORDER_DETAILS = '/order-details';
-  // static const BOOTH_CAPTURE = '/booth-capture';
+  static const BOOTH_CAPTURE = '/booth-capture';
   // static const CART = '/cart';
   // static const CUSTOMER_LOGIN = '/customer-login';
   // static const CUSTOMER_PROFILE = '/customer-profile';
   // static const CUSTOMER_ORDER = '/customer-order';
   // static const BOOTH_SELECTION = '/booth-selection';
-  // static const EASYPAY_WEBVIEW = '/easypay-webview';
+  static const EASYPAY_WEBVIEW = '/easypay-webview';
   // static const CLAIMS = '/claims';
   // static const CREATE_CLAIM = '/create-claim';
   // static const CLAIM_DETAILS = '/claim-details';
@@ -88,6 +88,6 @@ abstract class _Paths {
   // static const PRODUCT_SELECTION = '/product-selection';
   // static const COMMISSION_STATEMENT = '/commission-statement';
   // static const MONTHLY_STATEMENTS = '/monthly-statement';
-  // static const CHANGE_PASSWORD = '/change-password';
+  static const CHANGE_PASSWORD = '/change-password';
   // static const PDF = '/pdf';
 }

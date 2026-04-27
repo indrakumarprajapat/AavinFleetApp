@@ -34,7 +34,7 @@ const Map<String, ClientConfig> clientConfigs = {
   "namakkal": ClientConfig(
     name:  ClientConfig.CLIENT_NAMAKKAL,
     app_title: "ddProcure.Ai",
-    loginLogo: "assets/svg/aavinnamakkallogo.svg",
+    loginLogo: "assets/images/logo_namakkal.svg",
     enableReports: true,
     enablePayments: false,
     // baseUrl: "https://api.aavinnamakkal.in/",
@@ -46,7 +46,7 @@ const Map<String, ClientConfig> clientConfigs = {
   "cbe": ClientConfig(
     name: ClientConfig.CLIENT_CBE,
     app_title: "Aavin Coimbatore",
-    loginLogo: "assets/svg/aavinnamakkallogo.svg",
+    loginLogo: "assets/images/logo_cbe.svg",
     enableReports: true,
     enablePayments: true,
     // baseUrl: "https://api.aavincbe.cwitch.tech/",

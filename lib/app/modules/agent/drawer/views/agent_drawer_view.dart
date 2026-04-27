@@ -9,7 +9,7 @@ import '../../home/controllers/home_controller.dart';
 import '../../monthly-statements/views/monthly_statement_view.dart';
 import '../../profile/views/agent_profile_view.dart';
 import '../../wallet_statements/views/wallet_statements_view.dart';
-import '../../earnings/views/earnings_view.dart';
+// import '../../earnings/views/earnings_view.dart';
 
 class AgentDrawer extends StatefulWidget {
   final VoidCallback? onClose;
@@ -343,11 +343,11 @@ class _AgentDrawerState extends State<AgentDrawer> {
   }
 
   Widget _buildBoothDetailsCard() {
-    final homeController = Get.find<HomeController>();
-    final boothName = homeController.boothDetails?.societyName?.toString() ?? 'N/A';
-    final boothCode = homeController.boothDetails?.societyCode?.toString() ?? 'N/A';
-    final address = homeController.boothDetails?.address?.toString() ?? 'N/A';
-    
+    // final homeController = Get.find<HomeController>();
+    final boothName = '';//homeController.boothDetails?.societyName?.toString() ?? 'N/A';
+    final boothCode = '';//homeController.boothDetails?.societyCode?.toString() ?? 'N/A';
+    final address = '';//homeController.boothDetails?.address?.toString() ?? 'N/A';
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -451,7 +451,7 @@ class _AgentDrawerState extends State<AgentDrawer> {
   }
 
   Widget _buildQuickActions() {
-    final homeController = Get.find<HomeController>();
+    // final homeController = Get.find<HomeController>();
     final isLocationSubmitted = true ;//homeController.boothDetails?.isLocSubmit == true;
     
     return Column(

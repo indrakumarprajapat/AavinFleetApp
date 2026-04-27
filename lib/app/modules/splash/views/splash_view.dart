@@ -12,14 +12,14 @@ class SplashView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final config = Get.find<ClientConfig>();
-
-    switch (config.name) {
-      case ClientConfig.CLIENT_NAMAKKAL:
-      case ClientConfig.CLIENT_CBE:
-        return const SplashViewNamakkal();
-      case ClientConfig.CLIENT_NILGIRIS:
-      default:
-        return const SplashViewCBE();
-    }
+    return const SplashViewCBE();
+    // switch (config.name) {
+    //   case ClientConfig.CLIENT_NAMAKKAL:
+    //     return const SplashViewNamakkal();
+    //   case ClientConfig.CLIENT_CBE:
+    //   case ClientConfig.CLIENT_NILGIRIS:
+    //   default:
+    //     return const SplashViewCBE();
+    // }
   }
 }

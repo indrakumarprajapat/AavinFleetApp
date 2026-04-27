@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import '../modules/agent/product_selection/controllers/product_selection_controller.dart';
-import 'others_content_widget.dart';
+// import 'others_content_widget.dart';
 import 'wallet_content_widget.dart';
 import 'milk_content_widget.dart';
 import 'claims_content_widget.dart';
@@ -84,21 +84,21 @@ class GlobalBottomNav extends StatelessWidget {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            Expanded(child: OthersContentWidget()),
+            // Expanded(child: OthersContentWidget()),
           ],
         ),
       ),
       isScrollControlled: true,
     ).then((_) {
       if (Get.currentRoute.contains('product-selection')) {
-        try {
-          final controller = Get.find<ProductSelectionController>();
-          final arguments = Get.arguments as Map<String, dynamic>? ?? {};
-          final shiftType = arguments['shift'] ?? 1;
-          controller.globalCartService.refreshCartEstimate();
-        } catch (e) {
-
-        }
+        // try {
+        //   final controller = Get.find<ProductSelectionController>();
+        //   final arguments = Get.arguments as Map<String, dynamic>? ?? {};
+        //   final shiftType = arguments['shift'] ?? 1;
+        //   controller.globalCartService.refreshCartEstimate();
+        // } catch (e) {
+        //
+        // }
       }
     });
   }
