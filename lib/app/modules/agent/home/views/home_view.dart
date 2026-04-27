@@ -252,7 +252,6 @@ class HomeView extends GetView<HomeController>  {
 
     return Column(
       children: [
-        const SizedBox(height: 20),
 
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -269,27 +268,6 @@ class HomeView extends GetView<HomeController>  {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                /// 🔵 DATE HEADER (UNCHANGED)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.calendar_today,
-                      color: Colors.blue,
-                      size: w * 0.05, // fixed size
-                    ),
-                    SizedBox(width: w * 0.03),
-                    Text(
-                      "Date : ${controller.getTodayDate()}",
-                      style: TextStyle(
-                        fontSize: w * 0.045,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-
-                SizedBox(height: h * 0.04),
 
                 /// 🔥 PDF SECTION (UPDATED)
                 Obx(() {
@@ -354,7 +332,6 @@ class HomeView extends GetView<HomeController>  {
                             ),
                           ),
                           onPressed: () {
-                            Get.to(() => FullPdfViewPage(url: pdfUrl));
                           },
                           icon: const Icon(
                             Icons.open_in_full,
@@ -413,46 +390,49 @@ class HomeView extends GetView<HomeController>  {
   }
 
   Widget _buildCustomHeader(
-    bool isLocationSubmitted,
-    String societyName,
-    String regNumber,
-  ) {
+      bool isLocationSubmitted,
+      String societyName,
+      String regNumber,
+      ) {
+    final now = DateTime.now();
+    final dateText = "${now.day}-${now.month}-${now.year}";
 
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        /// Gradient Backgroundo
         Container(
-          height:  Get.height * 0.23,
+          height: Get.height * 0.24,
           padding: const EdgeInsets.only(top: 60, left: 20, right: 20),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
+            gradient: const LinearGradient(
               colors: [Color(0xFF00ADD3), Color(0xFF007EA7), Color(0xFF005F7A)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.only(
+            borderRadius: const BorderRadius.only(
               bottomLeft: Radius.circular(35),
               bottomRight: Radius.circular(35),
             ),
           ),
+
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              /// Top Bar
+
+              /// 🔹 TOP BAR
               Row(
                 children: [
                   GestureDetector(
                     onTap: () {
                       _scaffoldKey.currentState?.openDrawer();
                     },
-                    child: Icon(Icons.menu, color: Colors.white, size: 26),
+                    child: const Icon(Icons.menu, color: Colors.white, size: 26),
                   ),
                   Expanded(
                     child: Center(
                       child: Text(
                         config.app_title,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -464,43 +444,73 @@ class HomeView extends GetView<HomeController>  {
                   isLocationSubmitted
                       ? _buildCartIcon()
                       : CircleAvatar(
-                          radius: 18,
-                          backgroundColor: Colors.white.withOpacity(0.2),
-                          child: Icon(Icons.person, color: Colors.white),
-                        ),
+                    radius: 18,
+                    backgroundColor: Colors.white.withOpacity(0.2),
+                    child: const Icon(Icons.person, color: Colors.white),
+                  ),
                 ],
               ),
 
-              SizedBox(height: 15),
+              const SizedBox(height: 15),
 
-              /// Society Name
+              /// 🔹 ROUTE NAME
               Text(
-                'Route: Z - PAPPAMPATTI' + societyName,
-                style: TextStyle(
+                'Route: $societyName',
+                style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
               ),
 
-              SizedBox(height: 6),
+              const SizedBox(height: 8),
 
-              /// Registration Badge
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.18),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  "Vehicle Number: $regNumber",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
+              Row(children: [
+                /// 🔹 VEHICLE NUMBER
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.18),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    "Vehicle: $regNumber",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
-              ),
+                Spacer(),
+                /// 🔥 DATE CHIP (NEW)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.18),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.calendar_today,
+                          size: 14, color: Colors.white),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Date: '+dateText,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+              ],)
+
+
             ],
           ),
         ),

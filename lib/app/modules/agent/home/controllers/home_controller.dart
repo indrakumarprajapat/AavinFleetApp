@@ -1,21 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-
-import '../../../../constants/app_enums.dart';
-import '../../../../models/DeviceInfo.dart';
 import '../../../../models/agent_model.dart';
 import '../../../../models/booth_model.dart';
 import '../../../../models/slot_model.dart';
 import '../../../../api/api_service.dart';
 import '../../../../routes/app_pages.dart';
 import '../../../../services/global_cart_service.dart';
-import '../../../../utils/device-util.dart';
-import '../../../agent/claims/controllers/claims_controller.dart';
+
 
 class HomeController extends GetxController with GetSingleTickerProviderStateMixin {
+  final storage = GetStorage();
   final _selectedIndex = 0.obs;
-  // final _userType = UserType.customer.obs;
   final apiService = Get.find<ApiService>();
   final globalCartService = Get.find<GlobalCartService>();
   final _slots = <SlotModel>[].obs;
@@ -25,9 +21,6 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
   final _boothDetails = Rxn<Society>();
   final _fleetUser = Rxn<FleetUser>();
   int get selectedIndex => _selectedIndex.value;
-  // UserType get userType => _userType.value;
-  // bool get isCustomer => _userType.value == UserType.customer;
-  // bool get isDealer => _userType.value == UserType.agent;
   List<SlotModel> get slots => _slots;
   bool get isLoading => _isLoading.value;
   bool get isAadhaarKycVerified => _isAadhaarKycVerified.value;
@@ -54,10 +47,10 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
     tabController = TabController(length: 4, vsync: this);
     pageController = PageController();
 
-    /// Delay loading
-    Future.delayed(const Duration(seconds: 1), () {
-      isInitialLoading.value = false;
-    });
+    final agentJson = storage.read('fleetUser');
+    if (agentJson != null) {
+      setFleetUser(agentJson);
+    }
 
     loadRouteDetails();
   }

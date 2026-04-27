@@ -874,7 +874,7 @@ class AgentProfileController extends GetxController {
       loadProfile();
 
       final storage = GetStorage();
-      final photoUrl = response.data?['profilePhoto'] ?? '';
+      final photoUrl = response.fleetUser?.profilePhoto ?? '';
       print('Updating profilePhotoUrl: $photoUrl');
       storage.write('profilePhotoUrl', photoUrl);
       storage.write('profileUpdated', DateTime.now().millisecondsSinceEpoch);

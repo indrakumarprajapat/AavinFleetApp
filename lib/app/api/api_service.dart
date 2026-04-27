@@ -56,7 +56,7 @@ class ApiService extends GetxService {
     storage.write('access_token', token);
   }
 
-  Future<ApiResponseModel> loginWithPassword(String username,
+  Future<LoginResponseModel> loginWithPassword(String username,
       String password) async {
     try {
       final response = await _dio.post(
@@ -66,7 +66,7 @@ class ApiService extends GetxService {
           'password': password,
         },
       );
-      return ApiResponseModel.fromJson(response.data, null);
+      return LoginResponseModel.fromJson(response.data);
     } catch (e) {
       throw _handleError(e);
     }
@@ -114,7 +114,7 @@ class ApiService extends GetxService {
    * OLD APIS
    */
 
-  Future<ApiResponseModel> loginWithOtp(String mobileNumber,) async {
+  Future<LoginResponseModel> loginWithOtp(String mobileNumber,) async {
     try {
       final response = await _dio.post(
         '/account/login',
@@ -122,7 +122,7 @@ class ApiService extends GetxService {
           'username': mobileNumber,
         },
       );
-      return ApiResponseModel.fromJson(response.data, null);
+      return LoginResponseModel.fromJson(response.data);
     } catch (e) {
       throw _handleError(e);
     }
@@ -223,7 +223,7 @@ class ApiService extends GetxService {
     }
   }
 
-  Future<ApiResponseModel> verifyKyc({
+  Future<LoginResponseModel> verifyKyc({
     bool? isAadhaarKycVerified,
     bool? isPanKycVerified,
     bool? hasBankAccountVerified,
@@ -257,13 +257,13 @@ class ApiService extends GetxService {
           },
         ),
       );
-      return ApiResponseModel.fromJson(response.data, null);
+      return LoginResponseModel.fromJson(response.data);
     } catch (e) {
       throw _handleError(e);
     }
   }
 
-  Future<ApiResponseModel> updateBoothLocation({
+  Future<LoginResponseModel> updateBoothLocation({
     required File file,
     required double lat,
     required double lng,
@@ -300,14 +300,14 @@ class ApiService extends GetxService {
           },
         ),
       );
-      return ApiResponseModel.fromJson(response.data, null);
+      return LoginResponseModel.fromJson(response.data);
     } catch (e) {
       print('Booth location update error: $e');
       throw _handleError(e);
     }
   }
 
-  Future<ApiResponseModel> updateAgentDetails({
+  Future<LoginResponseModel> updateAgentDetails({
     String? name,
     String? aadharNumber,
     String? panNumber,
@@ -343,7 +343,7 @@ class ApiService extends GetxService {
           },
         ),
       );
-      return ApiResponseModel.fromJson(response.data, null);
+      return LoginResponseModel.fromJson(response.data);
     } catch (e) {
       throw _handleError(e);
     }
@@ -724,7 +724,7 @@ class ApiService extends GetxService {
     }
   }
 
-  Future<ApiResponseModel> uploadProfilePhoto(File file) async {
+  Future<LoginResponseModel> uploadProfilePhoto(File file) async {
     try {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
@@ -745,7 +745,7 @@ class ApiService extends GetxService {
         ),
       );
 
-      return ApiResponseModel.fromJson(response.data, null);
+      return LoginResponseModel.fromJson(response.data);
     } catch (e) {
       throw _handleError(e);
     }

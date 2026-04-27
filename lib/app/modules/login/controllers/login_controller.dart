@@ -75,12 +75,12 @@ class LoginController extends GetxController {
       // }
 
       // Store the token from password login response
-      await storage.write('access_token', response.accessToken ?? '');
+      await storage.write('access_token', response.fleetUser?.accessToken ?? '');
       await storage.write('user_type', UserType.fleetUser.index);
 
       // Store agent and booth data from login response
-      if (response.data != null) {
-        await storage.write('fleetUser', response.data);
+      if (response.fleetUser != null) {
+        await storage.write('fleetUser', response.fleetUser);
         // await storage.write('razorpay_key', response.data['key'] ?? '');
       }
 
@@ -133,8 +133,8 @@ class LoginController extends GetxController {
 
         // final response = await apiService.agentLogin(phoneController.text,deviceInfo,version);
         final response = await apiService.loginWithOtp(phoneController.text);
-        _accessToken.value = response.accessToken ?? '';
-        tempToken.value = response.accessToken ?? '';
+        _accessToken.value = response.fleetUser?.accessToken ?? '';
+        tempToken.value = response.fleetUser?.accessToken ?? '';
         // _customerId.value = response.agentId ?? 0;
 
         _isOtpSent.value = true;

@@ -104,6 +104,7 @@ class SplashController extends GetxController {
         if (response.fleetUser != null) {
           await storage.write('fleetUser', response.fleetUser);
           await storage.write('user_type', UserType.fleetUser.index);
+
         }
 
         return true;

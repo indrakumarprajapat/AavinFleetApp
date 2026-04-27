@@ -6,8 +6,7 @@ import '../../../../config/app_config.dart';
 import '../../../../constants/app_enums.dart';
 import '../../../../routes/app_pages.dart';
 import '../../home/controllers/home_controller.dart';
-import '../../monthly-statements/views/monthly_statement_view.dart';
-import '../../profile/views/agent_profile_view.dart';
+ import '../../profile/views/agent_profile_view.dart';
 import '../../wallet_statements/views/wallet_statements_view.dart';
 // import '../../earnings/views/earnings_view.dart';
 

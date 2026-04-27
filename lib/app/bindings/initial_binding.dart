@@ -13,7 +13,7 @@ class InitialBinding extends Bindings {
   void dependencies() {
     Get.lazyPut<ConnectivityService>(() => ConnectivityService(), fenix: true);
     Get.lazyPut<ApiService>(() => ApiService(), fenix: true);
-    Get.lazyPut<AgentApiService>(() => AgentApiService(), fenix: true);
+    // Get.lazyPut<AgentApiService>(() => AgentApiService(), fenix: true);
     Get.lazyPut<ConfigService>(() => ConfigService(), fenix: true);
     Get.lazyPut<CashfreeService>(() => CashfreeService(), fenix: true);
     Get.lazyPut<GlobalCartService>(() => GlobalCartService(), fenix: true);
