@@ -76,7 +76,7 @@ class LoginController extends GetxController {
 
       // Store the token from password login response
       await storage.write('access_token', response.accessToken ?? '');
-      await storage.write('user_type', UserType.agent.index);
+      await storage.write('user_type', UserType.fleetUser.index);
 
       // Store agent and booth data from login response
       if (response.data != null) {
@@ -120,7 +120,7 @@ class LoginController extends GetxController {
 
     _isLoading.value = true;
     try {
-      if (_selectedUserType.value == UserType.agent) {
+      if (_selectedUserType.value == UserType.fleetUser) {
         var  deviceInfo = DeviceInfo();
         var  version = '';
         try{
@@ -176,7 +176,7 @@ class LoginController extends GetxController {
     _isLoading.value = true;
 
     try {
-      if (_selectedUserType.value == UserType.agent) {
+      if (_selectedUserType.value == UserType.fleetUser) {
         // Check if this is for password reset
         if (resetToken.value.isNotEmpty) {
           final response = await apiService.verifyResetOtp(
@@ -200,7 +200,7 @@ class LoginController extends GetxController {
           await storage.write('isPanKycVerified', response.fleetUser?.isPanKycVerified ?? false);
           await storage.write('profilePhotoUrl', response.fleetUser?.profilePhoto ?? '');
           await storage.write('razorpay_key', response.fleetUser?.key ?? '');
-          await storage.write('user_type',UserType.agent.index);
+          await storage.write('user_type',UserType.fleetUser.index);
           try {
             final configService = Get.find<ConfigService>();
             await configService.fetchConfig();

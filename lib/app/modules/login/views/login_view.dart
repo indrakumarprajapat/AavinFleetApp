@@ -42,7 +42,7 @@ class _LoginViewState extends State<LoginView> {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<LoginController>();
-    final userType = UserType.agent;
+    final userType = UserType.fleetUser;
     controller.setUserType(userType);
     return _buildScaffold(context, controller);
   }
