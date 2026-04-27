@@ -28,81 +28,29 @@ class UpperCaseTextFormatter extends TextInputFormatter {
   }
 }
 
-class HomeView extends StatefulWidget {
-  const HomeView({Key? key}) : super(key: key);
+class HomeView extends GetView<HomeController>  {
+  HomeView({Key? key}) : super(key: key);
 
-  @override
-  State<HomeView> createState() => _HomeViewState();
-}
-
-class _HomeViewState extends State<HomeView>
-    with WidgetsBindingObserver, TickerProviderStateMixin {
-  TabController? _tabController;
-  PageController? _pageController;
-  final _currentIndex = 0.obs;
-  final _verificationStep = 1.obs; // 1: KYC verification, 2: Bank verification
+   final _currentIndex = 0.obs;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final _isInitialLoading = true.obs;
   final config = Get.find<ClientConfig>();
-  final controller = Get.find<HomeController>();
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _tabController = TabController(length: 4, vsync: this);
-    _pageController = PageController();
 
-    Future.delayed(Duration(seconds: 1), () {
-      _isInitialLoading.value = false;
-    });
+  // void _onPageChanged(int index) {
+  //   _currentIndex.value = index;
+  //   _tabController?.animateTo(index);
+  // }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final args = Get.arguments;
-      if (args != null && args['tab'] != null) {
-        final tabIndex = args['tab'] as int;
-        _currentIndex.value = tabIndex;
-        _pageController?.animateToPage(
-          tabIndex,
-          duration: Duration(milliseconds: 300),
-          curve: Curves.ease,
-        );
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _tabController?.dispose();
-    _pageController?.dispose();
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      try {
-        final globalCartService = Get.find<GlobalCartService>();
-        globalCartService.refreshCartEstimate();
-      } catch (e) {}
-    }
-  }
-
-  void _onPageChanged(int index) {
-    _currentIndex.value = index;
-    _tabController?.animateTo(index);
-  }
-
-  void _onTabTapped(int index) {
-    _currentIndex.value = index;
-    // _pageController?.animateToPage(index, duration: Duration(milliseconds: 300), curve: Curves.ease);
-    // if( config.name == ClientConfig.CLIENT_CBE ||  config.name == ClientConfig.CLIENT_NAMAKKAL){
-    //   if(_currentIndex.value == 1){
-    //     Get.find<ClaimsController>().loadClaims();
-    //   }
-    // }
-  }
+  // void _onTabTapped(int index) {
+  //   _currentIndex.value = index;
+  //   // _pageController?.animateToPage(index, duration: Duration(milliseconds: 300), curve: Curves.ease);
+  //   // if( config.name == ClientConfig.CLIENT_CBE ||  config.name == ClientConfig.CLIENT_NAMAKKAL){
+  //   //   if(_currentIndex.value == 1){
+  //   //     Get.find<ClaimsController>().loadClaims();
+  //   //   }
+  //   // }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -114,15 +62,7 @@ class _HomeViewState extends State<HomeView>
         drawer: AgentDrawer(),
         body: Stack(
           children: [
-            GestureDetector(
-              child: _pageController != null && isLocationSubmitted
-                  ? PageView(
-                      controller: _pageController!,
-                      onPageChanged: _onPageChanged,
-                      children: [_buildHomeContent(controller)],
-                    )
-                  : _buildHomeContent(controller),
-            ),
+            _buildHomeContent(controller),
             _buildCustomHeader(
               isLocationSubmitted,
               controller.fleetUser?.routeName ?? '',
@@ -130,7 +70,7 @@ class _HomeViewState extends State<HomeView>
             ),
           ],
         ),
-        bottomNavigationBar: _buildBottomNav(),
+        // bottomNavigationBar: _buildBottomNav(),
       );
     });
   }
@@ -157,7 +97,7 @@ class _HomeViewState extends State<HomeView>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(height: MediaQuery.of(context).size.height * 0.32),
+            SizedBox(height: Get.height * 0.32),
 
             /// Body Container
             Container(
@@ -307,8 +247,8 @@ class _HomeViewState extends State<HomeView>
   }
 
   Widget _buildRouteView() {
-    final h = MediaQuery.of(context).size.height;
-    final w = MediaQuery.of(context).size.width;
+    final h = Get.height;
+    final w = Get.width;
 
     return Column(
       children: [
@@ -477,14 +417,13 @@ class _HomeViewState extends State<HomeView>
     String societyName,
     String regNumber,
   ) {
-    String greeting = "Welcome ";
 
     return Stack(
       clipBehavior: Clip.none,
       children: [
         /// Gradient Backgroundo
         Container(
-          height: MediaQuery.of(context).size.height * 0.23,
+          height:  Get.height * 0.23,
           padding: const EdgeInsets.only(top: 60, left: 20, right: 20),
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -618,73 +557,73 @@ class _HomeViewState extends State<HomeView>
     );
   }
 
-  Widget _buildBottomNav() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.2),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        selectedItemColor: Color(0xFF1976D2),
-        unselectedItemColor: Colors.grey,
-        elevation: 0,
-        currentIndex: _currentIndex.value,
-        onTap: _onTabTapped,
-        items: [
-          BottomNavigationBarItem(
-            icon: SvgPicture.asset(
-              'assets/icons/homeIcon.svg',
-              width: 21.21,
-              height: 22,
-            ),
-            label: 'Home',
-          ),
-          if (config.name == ClientConfig.CLIENT_CBE ||
-              config.name == ClientConfig.CLIENT_NAMAKKAL)
-            BottomNavigationBarItem(
-              icon: SvgPicture.asset(
-                'assets/icons/cardMilk.svg',
-                width: 13.71,
-                height: 19.41,
-              ),
-              label: 'Claims',
-            ),
-          // BottomNavigationBarItem(
-          //   icon: SvgPicture.asset(
-          //     'assets/icons/cardMilk.svg',
-          //     width: 13.71,
-          //     height: 19.41,
-          //   ),
-          //   label: 'Card Milk',
-          // ),
-          BottomNavigationBarItem(
-            icon: SvgPicture.asset(
-              'assets/icons/otherIcon.svg',
-              width: 18.39,
-              height: 21.67,
-            ),
-            label: 'Others',
-          ),
-          BottomNavigationBarItem(
-            icon: SvgPicture.asset(
-              'assets/icons/walletIcon.svg',
-              width: 22.44,
-              height: 19.17,
-            ),
-            label: 'Wallet',
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildBottomNav() {
+  //   return Container(
+  //     decoration: BoxDecoration(
+  //       color: Colors.white,
+  //       boxShadow: [
+  //         BoxShadow(
+  //           color: Colors.grey.withValues(alpha: 0.2),
+  //           blurRadius: 10,
+  //           offset: const Offset(0, -2),
+  //         ),
+  //       ],
+  //     ),
+  //     child: BottomNavigationBar(
+  //       type: BottomNavigationBarType.fixed,
+  //       backgroundColor: Colors.white,
+  //       selectedItemColor: Color(0xFF1976D2),
+  //       unselectedItemColor: Colors.grey,
+  //       elevation: 0,
+  //       currentIndex: _currentIndex.value,
+  //       // onTap: _onTabTapped,
+  //       items: [
+  //         BottomNavigationBarItem(
+  //           icon: SvgPicture.asset(
+  //             'assets/icons/homeIcon.svg',
+  //             width: 21.21,
+  //             height: 22,
+  //           ),
+  //           label: 'Home',
+  //         ),
+  //         if (config.name == ClientConfig.CLIENT_CBE ||
+  //             config.name == ClientConfig.CLIENT_NAMAKKAL)
+  //           BottomNavigationBarItem(
+  //             icon: SvgPicture.asset(
+  //               'assets/icons/cardMilk.svg',
+  //               width: 13.71,
+  //               height: 19.41,
+  //             ),
+  //             label: 'Claims',
+  //           ),
+  //         // BottomNavigationBarItem(
+  //         //   icon: SvgPicture.asset(
+  //         //     'assets/icons/cardMilk.svg',
+  //         //     width: 13.71,
+  //         //     height: 19.41,
+  //         //   ),
+  //         //   label: 'Card Milk',
+  //         // ),
+  //         BottomNavigationBarItem(
+  //           icon: SvgPicture.asset(
+  //             'assets/icons/otherIcon.svg',
+  //             width: 18.39,
+  //             height: 21.67,
+  //           ),
+  //           label: 'Others',
+  //         ),
+  //         BottomNavigationBarItem(
+  //           icon: SvgPicture.asset(
+  //             'assets/icons/walletIcon.svg',
+  //             width: 22.44,
+  //             height: 19.17,
+  //           ),
+  //           label: 'Wallet',
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   String _calculateRemainingTime(String slotDate, String cutoffTime) {
     try {

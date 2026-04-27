@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:aavin/app/modules/agent/home/controllers/home_controller.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -101,8 +102,10 @@ class SplashController extends GetxController {
         final response = await apiService.agentAutoLogin(accessToken,deviceInfo,version);
 
         if (response.fleetUser != null) {
-          await storage.write('fleetUser', response.fleetUser?.toJson() ?? {});
+          await storage.write('fleetUser', response.fleetUser);
+          await storage.write('user_type', UserType.fleetUser.index);
         }
+
         return true;
       } catch (e) {
         print('Agent auto-login failed: $e');

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 
@@ -12,7 +13,7 @@ import '../../../../services/global_cart_service.dart';
 import '../../../../utils/device-util.dart';
 import '../../../agent/claims/controllers/claims_controller.dart';
 
-class HomeController extends GetxController {
+class HomeController extends GetxController with GetSingleTickerProviderStateMixin {
   final _selectedIndex = 0.obs;
   // final _userType = UserType.customer.obs;
   final apiService = Get.find<ApiService>();
@@ -23,7 +24,6 @@ class HomeController extends GetxController {
   final _isPanKycVerified = false.obs;
   final _boothDetails = Rxn<Society>();
   final _fleetUser = Rxn<FleetUser>();
-
   int get selectedIndex => _selectedIndex.value;
   // UserType get userType => _userType.value;
   // bool get isCustomer => _userType.value == UserType.customer;
@@ -41,11 +41,64 @@ class HomeController extends GetxController {
   var tripId = 0.obs;
   var pdfUrl = "".obs;
 
+  late TabController tabController;
+  late PageController pageController;
 
+
+  final currentIndex = 0.obs;
+  final isInitialLoading = true.obs;
   @override
   void onInit() {
     super.onInit();
+    /// Init controllers
+    tabController = TabController(length: 4, vsync: this);
+    pageController = PageController();
+
+    /// Delay loading
+    Future.delayed(const Duration(seconds: 1), () {
+      isInitialLoading.value = false;
+    });
+
     loadRouteDetails();
+  }
+
+  @override
+  void onReady() {
+    super.onReady();
+
+    /// Equivalent of addPostFrameCallback
+    final args = Get.arguments;
+    if (args != null && args['tab'] != null) {
+      final tabIndex = args['tab'] as int;
+
+      currentIndex.value = tabIndex;
+
+      pageController.animateToPage(
+        tabIndex,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.ease,
+      );
+    }
+  }
+
+  @override
+  void onClose() {
+    tabController.dispose();
+    pageController.dispose();
+    super.onClose();
+  }
+
+  /// 🔥 Lifecycle handling (replacement of WidgetsBindingObserver)
+  @override
+  void onResumed() {
+    try {
+      final globalCartService = Get.find<GlobalCartService>();
+      globalCartService.refreshCartEstimate();
+    } catch (_) {}
+  }
+
+  void setFleetUser(FleetUser? user) {
+    _fleetUser.value = user;
   }
 
   void changeTabIndex(int index) {
