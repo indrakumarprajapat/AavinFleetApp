@@ -139,7 +139,7 @@ class BoothCaptureController extends GetxController {
       );
 
       if (response.success) {
-        Get.off(() => const KycSuccessView());
+        // Get.off(() => const KycSuccessView());
       } else {
         Get.snackbar("Error", response.message ?? "Failed to submit booth data");
       }

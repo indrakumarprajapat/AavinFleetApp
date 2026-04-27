@@ -22,26 +22,26 @@ class SplashController extends GetxController {
   void onInit() {
     super.onInit();
 
+    // we are already calling startSplashFlow(); in separate flow in namakkal
     if(config.name != ClientConfig.CLIENT_NAMAKKAL){
-      _checkAutoLogin();
+      startSplashFlow();
     }
   }
 
   /// call this manually AFTER animation
-  void startSplashFlow() {
+  Future<void> startSplashFlow() async {
+    // await Future.delayed(const Duration(seconds: 1));
+    final shouldUpdate = await _checkForceUpdate();
+    if (shouldUpdate) return;
+
     _checkAutoLogin();
   }
 
   void _checkAutoLogin() async {
-    await Future.delayed(const Duration(seconds: 1));
-
-    final shouldUpdate = await _checkForceUpdate();
-    if (shouldUpdate) return;
-
-    final token = storage.read('access_token');
-    if (token != null && token.toString().isNotEmpty) {
+    final isLoggedIn = await _autoLoginCall();
+    if (isLoggedIn){
       Get.offAllNamed(Routes.HOME);
-    } else {
+    }else{
       Get.offAllNamed(Routes.LOGIN);
     }
   }
@@ -80,6 +80,35 @@ class SplashController extends GetxController {
       
       if (currentPart < latestPart) return true;
       if (currentPart > latestPart) return false;
+    }
+    return false;
+  }
+
+  _autoLoginCall() async {
+    final storage = GetStorage();
+    final accessToken = storage.read('access_token');
+
+    if (accessToken != null) {
+      try {
+        var  deviceInfo = DeviceInfo();
+        var  version = '';
+        try{
+          deviceInfo = await DeviceUtil.getDeviceDetails();
+          version = await DeviceUtil.getAppVersion();
+        }catch(err){
+          print(err);
+        }
+        final response = await apiService.agentAutoLogin(accessToken,deviceInfo,version);
+
+        if (response.fleetUser != null) {
+          await storage.write('fleetUser', response.fleetUser?.toJson() ?? {});
+        }
+        return true;
+      } catch (e) {
+        print('Agent auto-login failed: $e');
+        storage.erase();
+        Get.offAllNamed('/login');
+      }
     }
     return false;
   }

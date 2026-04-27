@@ -60,13 +60,21 @@ class ApiService extends GetxService {
       String password) async {
     try {
       final response = await _dio.post(
-        '/account/login',
+        '/auth/login',
         data: {
           'username': username,
           'password': password,
         },
       );
       return ApiResponseModel.fromJson(response.data, null);
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+  Future<Map<String, dynamic>> checkAppVersion() async {
+    try {
+      final response = await _dio.get('/app-version');
+      return response.data;
     } catch (e) {
       throw _handleError(e);
     }
@@ -81,6 +89,27 @@ class ApiService extends GetxService {
     }
   }
 
+  Future<LoginResponseModel> agentAutoLogin(String accessToken,    DeviceInfo deviceInfo,
+      String versionStr,
+      ) async {
+    try {
+      final response = await _dio.post(
+        '/auth/autologin',
+        data: {
+          'accessToken': accessToken,
+           "login_device": deviceInfo.loginDevice,
+          "d_os_api": deviceInfo.dOsApi,
+          "d_manufacture": deviceInfo.dManufacture,
+          "d_model": deviceInfo.dModel,
+          "d_os_version": deviceInfo.dOsVersion,
+          "app_cur_version": versionStr
+        },
+      );
+      return LoginResponseModel.fromJson(response.data);
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
   /*
    * OLD APIS
    */
@@ -99,21 +128,6 @@ class ApiService extends GetxService {
     }
   }
 
-  // Future<Map<String, dynamic>> loginWithPassword(String username,
-  //     String password,) async {
-  //   try {
-  //     final response = await _dio.post(
-  //       '/account/login',
-  //       data: {
-  //         'username': username,
-  //         'password': password,
-  //       },
-  //     );
-  //     return response.data;
-  //   } catch (e) {
-  //     throw _handleError(e);
-  //   }
-  // }
 
   Future<Map<String, dynamic>> agentForgotPassword(String username) async {
     try {
@@ -184,19 +198,6 @@ class ApiService extends GetxService {
     }
   }
 
-  Future<LoginResponseModel> agentAutoLogin(String accessToken,) async {
-    try {
-      final response = await _dio.post(
-        '/auth/autologin',
-        data: {
-          'accessToken': accessToken,
-        },
-      );
-      return LoginResponseModel.fromJson(response.data);
-    } catch (e) {
-      throw _handleError(e);
-    }
-  }
 
   Future<List<SlotModel>> getAgentSlots() async {
     try {
@@ -1352,14 +1353,6 @@ class ApiService extends GetxService {
     }
   }
 
-  Future<Map<String, dynamic>> checkAppVersion() async {
-    try {
-      final response = await _dio.get('/app-version');
-      return response.data;
-    } catch (e) {
-      throw _handleError(e);
-    }
-  }
 
   fetchGoogleApiKey() async {
     try {

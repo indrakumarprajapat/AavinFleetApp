@@ -1,21 +1,16 @@
+import 'package:aavin/app/modules/agent/home/views/full_pdfview_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
+
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import '../../../../config/app_config.dart';
-import '../../../../config/app_initializer.dart';
-import '../../../../models/DeviceInfo.dart';
+
 import '../../../../models/slot_model.dart';
-import '../../../../api/api_service.dart';
-import '../../../../routes/app_pages.dart';
+
 import '../../../../services/global_cart_service.dart';
-import '../../../../utils/device-util.dart';
-import '../../../../widgets/claims_content_widget.dart';
-import '../../../../widgets/milk_content_widget.dart';
-// import '../../../../widgets/others_content_widget.dart';
-import '../../../../widgets/wallet_content_widget.dart';
-import '../../claims/controllers/claims_controller.dart';
+
 import '../../../../widgets/daily_supplies_form_dialog.dart';
 import '../controllers/home_controller.dart';
 import '../../drawer/views/agent_drawer_view.dart';
@@ -40,7 +35,8 @@ class HomeView extends StatefulWidget {
   State<HomeView> createState() => _HomeViewState();
 }
 
-class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, TickerProviderStateMixin {
+class _HomeViewState extends State<HomeView>
+    with WidgetsBindingObserver, TickerProviderStateMixin {
   TabController? _tabController;
   PageController? _pageController;
   final _currentIndex = 0.obs;
@@ -66,7 +62,11 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, Ticker
       if (args != null && args['tab'] != null) {
         final tabIndex = args['tab'] as int;
         _currentIndex.value = tabIndex;
-        _pageController?.animateToPage(tabIndex, duration: Duration(milliseconds: 300), curve: Curves.ease);
+        _pageController?.animateToPage(
+          tabIndex,
+          duration: Duration(milliseconds: 300),
+          curve: Curves.ease,
+        );
       }
     });
   }
@@ -85,8 +85,7 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, Ticker
       try {
         final globalCartService = Get.find<GlobalCartService>();
         globalCartService.refreshCartEstimate();
-      } catch (e) {
-      }
+      } catch (e) {}
     }
   }
 
@@ -107,7 +106,6 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, Ticker
 
   @override
   Widget build(BuildContext context) {
-
     return Obx(() {
       final isLocationSubmitted = controller.boothDetails?.isLocSubmit == true;
       return Scaffold(
@@ -117,28 +115,22 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, Ticker
         body: Stack(
           children: [
             GestureDetector(
-              // onPanUpdate: isLocationSubmitted ? (details) {
-              //   if (details.delta.dx < 0) {
-              //     Get.toNamed('/cart');
-              //   }
-              // } : null,
               child: _pageController != null && isLocationSubmitted
                   ? PageView(
-                controller: _pageController!,
-                onPageChanged: _onPageChanged,
-                children: [
-                  _buildHomeContent(controller),
-                  // if( config.name == ClientConfig.CLIENT_CBE ||  config.name == ClientConfig.CLIENT_NAMAKKAL) _buildClaimsContent(),
-                  // _buildOthersContent(),
-                  // _buildWalletContent(),
-                ],
-              )
+                      controller: _pageController!,
+                      onPageChanged: _onPageChanged,
+                      children: [_buildHomeContent(controller)],
+                    )
                   : _buildHomeContent(controller),
             ),
-            _buildCustomHeader(isLocationSubmitted,controller.fleetUser?.routeName ??'' ,controller.fleetUser?.vehicleRegistrationNumber ??''),
+            _buildCustomHeader(
+              isLocationSubmitted,
+              controller.fleetUser?.routeName ?? '',
+              controller.fleetUser?.vehicleRegistrationNumber ?? '',
+            ),
           ],
         ),
-        // bottomNavigationBar: isLocationSubmitted ? _buildBottomNav() : SizedBox.shrink(),
+        bottomNavigationBar: _buildBottomNav(),
       );
     });
   }
@@ -146,7 +138,8 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, Ticker
   Widget _buildHomeContent(HomeController controller) {
     final isLocationSubmitted = controller.boothDetails?.isLocSubmit == true;
     final isBankVerified = controller.fleetUser?.hasBankAccountVerified == true;
-    final allVerified = controller.isAadhaarKycVerified &&
+    final allVerified =
+        controller.isAadhaarKycVerified &&
         controller.isPanKycVerified &&
         isBankVerified &&
         isLocationSubmitted;
@@ -170,9 +163,7 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, Ticker
             Container(
               decoration: const BoxDecoration(
                 color: Color(0xFFF4F6F9),
-                borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(30),
-                ),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
               ),
               padding: const EdgeInsets.fromLTRB(20, 30, 20, 30),
               child: Obx(() {
@@ -191,6 +182,7 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, Ticker
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildRouteView(),
+
                     // if (!allVerified) _buildVerificationCard(),
 
                     // if (allVerified) ...[
@@ -198,7 +190,6 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, Ticker
                     //   const SizedBox(height: 20),
                     //   _buildOrderCardsModern(controller),
                     // ],
-
                     const SizedBox(height: 30),
                   ],
                 );
@@ -209,6 +200,7 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, Ticker
       ),
     );
   }
+
   Widget _buildOrderCardsModern(HomeController controller) {
     if (controller.slots.isEmpty) {
       return SizedBox(
@@ -242,17 +234,21 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, Ticker
     required Color color,
     required SlotModel slot,
   }) {
-    final remainingTime =
-    _calculateRemainingTime(slot.createdAt ?? '', slot.cutoffTime ?? '');
+    final remainingTime = _calculateRemainingTime(
+      slot.createdAt ?? '',
+      slot.cutoffTime ?? '',
+    );
 
     return GestureDetector(
       onTap: () {
-        Get.to(() => DailySuppliesFormDialog(
-          slotId: slot.id ?? 1,
-          shift: slot.shift ?? 1,
-          slotDate: slot.slotDate ?? '',
-          shiftName: title,
-        ));
+        Get.to(
+          () => DailySuppliesFormDialog(
+            slotId: slot.id ?? 1,
+            shift: slot.shift ?? 1,
+            slotDate: slot.slotDate ?? '',
+            shiftName: title,
+          ),
+        );
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 18),
@@ -297,16 +293,13 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, Ticker
                   const SizedBox(height: 4),
                   Text(
                     "Cutoff in $remainingTime",
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                   ),
                 ],
               ),
             ),
 
-            const Icon(Icons.arrow_forward_ios_rounded, size: 16)
+            const Icon(Icons.arrow_forward_ios_rounded, size: 16),
           ],
         ),
       ),
@@ -314,39 +307,36 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, Ticker
   }
 
   Widget _buildRouteView() {
-        final h = MediaQuery.of(context).size.height;
+    final h = MediaQuery.of(context).size.height;
     final w = MediaQuery.of(context).size.width;
-    final paddingTop = MediaQuery.of(context).padding.top;
-    final config = Get.find<ClientConfig>();
 
     return Column(
       children: [
-        SizedBox(height: 20),
+        const SizedBox(height: 20),
+
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Container(
-            padding: EdgeInsets.all(20),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
-                BoxShadow(
-                  blurRadius: 20,
-                  color: Colors.black.withOpacity(0.1),
-                ),
+                BoxShadow(blurRadius: 20, color: Colors.black.withOpacity(0.1)),
               ],
             ),
 
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                /// 🔵 DATE HEADER (UNCHANGED)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
                       Icons.calendar_today,
                       color: Colors.blue,
-                      size: 2,
+                      size: w * 0.05, // fixed size
                     ),
                     SizedBox(width: w * 0.03),
                     Text(
@@ -361,93 +351,120 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, Ticker
 
                 SizedBox(height: h * 0.04),
 
-                Obx(() => GestureDetector(
-                  onTap: controller.isLoading ? null : controller.openPdf,
-                  child: Container(
-                    height: h * 0.2,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.blueAccent),
-                      borderRadius: BorderRadius.circular(w * 0.03),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.picture_as_pdf,
-                          size: w * 0.12,
-                          color: Colors.red,
+                /// 🔥 PDF SECTION (UPDATED)
+                Obx(() {
+                  final pdfUrl = controller.pdfUrl.value;
+
+                  if (controller.isLoading) {
+                    return SizedBox(
+                      height: h * 0.25,
+                      child: const Center(child: CircularProgressIndicator()),
+                    );
+                  }
+
+                  /// ❌ No PDF
+                  if (pdfUrl.isEmpty) {
+                    return Container(
+                      height: h * 0.2,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(w * 0.03),
+                      ),
+                      child: Center(
+                        child: Text(
+                          "No Route PDF Available",
+                          style: TextStyle(color: Colors.grey),
                         ),
-                        SizedBox(height: h * 0.015),
-                        Text(
-                          "Assigned Route PDF",
-                          style: TextStyle(fontSize: w * 0.045),
+                      ),
+                    );
+                  }
+
+                  /// ✅ PDF Preview + Button
+                  return Column(
+                    children: [
+                      Container(
+                        height: h * 0.35,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(w * 0.03),
+                          border: Border.all(color: Colors.blueAccent),
                         ),
-                        SizedBox(height: h * 0.01),
-                        Text(
-                          controller.isLoading ? "Loading..." : "Tap to view",
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontSize: w * 0.035,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(w * 0.03),
+                          child: SfPdfViewer.network(
+                            controller.pdfUrl.value,
+                            canShowScrollHead: false,
+                            canShowScrollStatus: false,
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                )),
+                      ),
+
+                      SizedBox(height: h * 0.02),
+
+                      /// 🔘 OPEN FULL SCREEN BUTTON
+                      SizedBox(
+                        width: double.infinity,
+                        height: h * 0.055,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blueAccent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(w * 0.03),
+                            ),
+                          ),
+                          onPressed: () {
+                            Get.to(() => FullPdfViewPage(url: pdfUrl));
+                          },
+                          icon: const Icon(
+                            Icons.open_in_full,
+                            color: Colors.white,
+                          ),
+                          label: const Text(
+                            "OPEN FULL PDF",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                }),
 
                 SizedBox(height: h * 0.05),
 
-                Obx(() => SizedBox(
-                  width: double.infinity,
-                  height: h * 0.065,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xff1BA6C8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(w * 0.03),
+                /// 🟢 START DELIVERY BUTTON (UNCHANGED)
+                Obx(
+                  () => SizedBox(
+                    width: double.infinity,
+                    height: h * 0.065,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xff1BA6C8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(w * 0.03),
+                        ),
                       ),
-                    ),
-                    onPressed: controller.isLoading ? null : controller.startDelivery,
-                    child: controller.isLoading
-                        ? const Center(child: CircularProgressIndicator(color: Colors.white))
-                        : Text(
-                      "START DELIVERY",
-                      style: TextStyle(
-                        fontSize: w * 0.045,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      onPressed: controller.isLoading
+                          ? null
+                          : controller.startDelivery,
+                      child: controller.isLoading
+                          ? const Center(
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text(
+                              "START DELIVERY",
+                              style: TextStyle(
+                                fontSize: w * 0.045,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
                   ),
-                )),
+                ),
               ],
-
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSectionHeader(String title) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
-        ),
-        Obx(()=>
-           Text(
-             controller.suppliesDate.value,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
             ),
           ),
         ),
@@ -456,11 +473,10 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, Ticker
   }
 
   Widget _buildCustomHeader(
-      bool isLocationSubmitted,
-      String societyName,
-      String regNumber,
-      ) {
-
+    bool isLocationSubmitted,
+    String societyName,
+    String regNumber,
+  ) {
     String greeting = "Welcome ";
 
     return Stack(
@@ -472,11 +488,7 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, Ticker
           padding: const EdgeInsets.only(top: 60, left: 20, right: 20),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                Color(0xFF00ADD3),
-                Color(0xFF007EA7),
-                Color(0xFF005F7A),
-              ],
+              colors: [Color(0xFF00ADD3), Color(0xFF007EA7), Color(0xFF005F7A)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -513,29 +525,18 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, Ticker
                   isLocationSubmitted
                       ? _buildCartIcon()
                       : CircleAvatar(
-                    radius: 18,
-                    backgroundColor: Colors.white.withOpacity(0.2),
-                    child: Icon(Icons.person, color: Colors.white),
-                  ),
+                          radius: 18,
+                          backgroundColor: Colors.white.withOpacity(0.2),
+                          child: Icon(Icons.person, color: Colors.white),
+                        ),
                 ],
               ),
-              //
-              // SizedBox(height: 30),
-              //
-              // /// Greeting
-              // Text(
-              //   "$greeting 👋",
-              //   style: TextStyle(
-              //     fontSize: 15,
-              //     color: Colors.white.withOpacity(0.9),
-              //   ),
-              // ),
 
               SizedBox(height: 15),
 
               /// Society Name
               Text(
-                'Route: '+societyName,
+                'Route: ' + societyName,
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -564,18 +565,16 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, Ticker
             ],
           ),
         ),
-
-
       ],
     );
   }
-
 
   Widget _buildCartIcon() {
     return Stack(
       children: [
         Obx(() {
-          final isLocationSubmitted = controller.boothDetails?.isLocSubmit == true;
+          final isLocationSubmitted =
+              controller.boothDetails?.isLocSubmit == true;
           return IconButton(
             onPressed: isLocationSubmitted ? () => Get.toNamed('/cart') : null,
             icon: Icon(
@@ -599,10 +598,7 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, Ticker
                     color: Colors.red,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  constraints: BoxConstraints(
-                    minWidth: 16,
-                    minHeight: 16,
-                  ),
+                  constraints: BoxConstraints(minWidth: 16, minHeight: 16),
                   child: Text(
                     '$totalItems',
                     style: TextStyle(
@@ -615,8 +611,7 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, Ticker
                 ),
               );
             }
-          } catch (e) {
-          }
+          } catch (e) {}
           return SizedBox.shrink();
         }),
       ],
@@ -629,7 +624,7 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, Ticker
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withValues(alpha:0.2),
+            color: Colors.grey.withValues(alpha: 0.2),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -652,14 +647,16 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, Ticker
             ),
             label: 'Home',
           ),
-          if( config.name == ClientConfig.CLIENT_CBE ||  config.name == ClientConfig.CLIENT_NAMAKKAL) BottomNavigationBarItem(
-            icon: SvgPicture.asset(
-              'assets/icons/cardMilk.svg',
-              width: 13.71,
-              height: 19.41,
+          if (config.name == ClientConfig.CLIENT_CBE ||
+              config.name == ClientConfig.CLIENT_NAMAKKAL)
+            BottomNavigationBarItem(
+              icon: SvgPicture.asset(
+                'assets/icons/cardMilk.svg',
+                width: 13.71,
+                height: 19.41,
+              ),
+              label: 'Claims',
             ),
-            label: 'Claims',
-          ),
           // BottomNavigationBarItem(
           //   icon: SvgPicture.asset(
           //     'assets/icons/cardMilk.svg',
