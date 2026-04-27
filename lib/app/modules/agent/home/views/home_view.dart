@@ -135,7 +135,7 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, Ticker
               )
                   : _buildHomeContent(controller),
             ),
-            _buildCustomHeader(isLocationSubmitted,controller.boothDetails?.societyName??'' ,controller.boothDetails?.societyCode??''),
+            _buildCustomHeader(isLocationSubmitted,controller.fleetUser?.routeName ??'' ,controller.fleetUser?.vehicleRegistrationNumber ??''),
           ],
         ),
         // bottomNavigationBar: isLocationSubmitted ? _buildBottomNav() : SizedBox.shrink(),
@@ -145,7 +145,7 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, Ticker
 
   Widget _buildHomeContent(HomeController controller) {
     final isLocationSubmitted = controller.boothDetails?.isLocSubmit == true;
-    final isBankVerified = controller.agent?.hasBankAccountVerified == true;
+    final isBankVerified = controller.fleetUser?.hasBankAccountVerified == true;
     final allVerified = controller.isAadhaarKycVerified &&
         controller.isPanKycVerified &&
         isBankVerified &&
@@ -190,13 +190,14 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, Ticker
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (!allVerified) _buildVerificationCard(),
+                    _buildRouteView(),
+                    // if (!allVerified) _buildVerificationCard(),
 
-                    if (allVerified) ...[
-                      _buildSectionHeader("Submit Supplies"),
-                      const SizedBox(height: 20),
-                      _buildOrderCardsModern(controller),
-                    ],
+                    // if (allVerified) ...[
+                    //   _buildSectionHeader("Submit Supplies"),
+                    //   const SizedBox(height: 20),
+                    //   _buildOrderCardsModern(controller),
+                    // ],
 
                     const SizedBox(height: 30),
                   ],
@@ -312,6 +313,122 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, Ticker
     );
   }
 
+  Widget _buildRouteView() {
+        final h = MediaQuery.of(context).size.height;
+    final w = MediaQuery.of(context).size.width;
+    final paddingTop = MediaQuery.of(context).padding.top;
+    final config = Get.find<ClientConfig>();
+
+    return Column(
+      children: [
+        SizedBox(height: 20),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20),
+          child: Container(
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  blurRadius: 20,
+                  color: Colors.black.withOpacity(0.1),
+                ),
+              ],
+            ),
+
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.calendar_today,
+                      color: Colors.blue,
+                      size: 2,
+                    ),
+                    SizedBox(width: w * 0.03),
+                    Text(
+                      "Date : ${controller.getTodayDate()}",
+                      style: TextStyle(
+                        fontSize: w * 0.045,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: h * 0.04),
+
+                Obx(() => GestureDetector(
+                  onTap: controller.isLoading ? null : controller.openPdf,
+                  child: Container(
+                    height: h * 0.2,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.blueAccent),
+                      borderRadius: BorderRadius.circular(w * 0.03),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.picture_as_pdf,
+                          size: w * 0.12,
+                          color: Colors.red,
+                        ),
+                        SizedBox(height: h * 0.015),
+                        Text(
+                          "Assigned Route PDF",
+                          style: TextStyle(fontSize: w * 0.045),
+                        ),
+                        SizedBox(height: h * 0.01),
+                        Text(
+                          controller.isLoading ? "Loading..." : "Tap to view",
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: w * 0.035,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )),
+
+                SizedBox(height: h * 0.05),
+
+                Obx(() => SizedBox(
+                  width: double.infinity,
+                  height: h * 0.065,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xff1BA6C8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(w * 0.03),
+                      ),
+                    ),
+                    onPressed: controller.isLoading ? null : controller.startDelivery,
+                    child: controller.isLoading
+                        ? const Center(child: CircularProgressIndicator(color: Colors.white))
+                        : Text(
+                      "START DELIVERY",
+                      style: TextStyle(
+                        fontSize: w * 0.045,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                )),
+              ],
+
+            ),
+          ),
+        ),
+      ],
+    );
+  }
   Widget _buildVerificationCard() {
     return Container(
       padding: const EdgeInsets.all(18),
@@ -376,7 +493,7 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, Ticker
       children: [
         /// Gradient Backgroundo
         Container(
-          height: MediaQuery.of(context).size.height * 0.28,
+          height: MediaQuery.of(context).size.height * 0.23,
           padding: const EdgeInsets.only(top: 60, left: 20, right: 20),
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -427,23 +544,23 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, Ticker
                   ),
                 ],
               ),
+              //
+              // SizedBox(height: 30),
+              //
+              // /// Greeting
+              // Text(
+              //   "$greeting 👋",
+              //   style: TextStyle(
+              //     fontSize: 15,
+              //     color: Colors.white.withOpacity(0.9),
+              //   ),
+              // ),
 
-              SizedBox(height: 30),
-
-              /// Greeting
-              Text(
-                "$greeting 👋",
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Colors.white.withOpacity(0.9),
-                ),
-              ),
-
-              SizedBox(height: 6),
+              SizedBox(height: 15),
 
               /// Society Name
               Text(
-                societyName,
+                'Route: '+societyName,
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -461,7 +578,7 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, Ticker
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  "Society Code: $regNumber",
+                  "Vehicle Number: $regNumber",
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 13,
@@ -620,7 +737,7 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, Ticker
           final bothVerified = controller.isAadhaarKycVerified && controller.isPanKycVerified;
           final isLocationSubmitted = controller.boothDetails?.isLocSubmit == true;
 
-          final isBankVerified = controller.agent?.hasBankAccountVerified == true;
+          final isBankVerified = controller.fleetUser?.hasBankAccountVerified == true;
           final allVerified = controller.isAadhaarKycVerified && controller.isPanKycVerified && isBankVerified && isLocationSubmitted;
           final kycVerified = controller.isAadhaarKycVerified && controller.isPanKycVerified;
 
@@ -986,24 +1103,24 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver, Ticker
     return Column(
       children: [
         Obx(() {
-          final isBankVerified = controller.agent?.hasBankAccountVerified == true;
+          final isBankVerified = controller.fleetUser?.hasBankAccountVerified == true;
           return Column(
             children: [
-              _buildCardView("Account Holder", controller.agent?.accountHolderName ?? 'N/A', isBankVerified),
+              _buildCardView("Account Holder", controller.fleetUser?.accountHolderName ?? 'N/A', isBankVerified),
               const SizedBox(height: 20),
-              _buildCardView("Account Number", controller.agent?.accountNumber ?? 'N/A', isBankVerified),
+              _buildCardView("Account Number", controller.fleetUser?.accountNumber ?? 'N/A', isBankVerified),
               const SizedBox(height: 20),
-              _buildCardView("Bank Name", controller.agent?.bankName ?? 'N/A', isBankVerified),
+              _buildCardView("Bank Name", controller.fleetUser?.bankName ?? 'N/A', isBankVerified),
               const SizedBox(height: 20),
-              _buildCardView("Branch", controller.agent?.bankBranch ?? 'N/A', isBankVerified),
+              _buildCardView("Branch", controller.fleetUser?.bankBranch ?? 'N/A', isBankVerified),
               const SizedBox(height: 20),
-              _buildCardView("IFSC Code", controller.agent?.ifscCode ?? 'N/A', isBankVerified),
+              _buildCardView("IFSC Code", controller.fleetUser?.ifscCode ?? 'N/A', isBankVerified),
             ],
           );
         }),
         const SizedBox(height: 30),
         Obx(() {
-          final isBankVerified = controller.agent?.hasBankAccountVerified == true;
+          final isBankVerified = controller.fleetUser?.hasBankAccountVerified == true;
 
           if (isBankVerified) {
             final isLocationSubmitted = controller.boothDetails?.isLocSubmit == true;

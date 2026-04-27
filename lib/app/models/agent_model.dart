@@ -45,6 +45,7 @@ class FleetUser {
   final String? operatorName;
   final String? operatorMobile;
   final int? routeId;
+  final String? routeName;
   final int? shift;
   final String? vehicleRegistrationNumber;
   final double? vehicleCurbWeight;
@@ -97,6 +98,7 @@ class FleetUser {
         this.operatorName,
         this.operatorMobile,
         this.routeId,
+        this.routeName,
         this.shift,
         this.vehicleRegistrationNumber,
         this.vehicleCurbWeight,
@@ -147,9 +149,12 @@ class FleetUser {
 
       operatorMobile: json['operator_mobile']?.toString() ?? json['operatorMobile']?.toString(),
 
-      routeId: ParseUtil.parseInt(
-          json['route_id'] ?? json['routeId']
-      ),
+        routeId: ParseUtil.parseInt(
+            json['route_id'] ?? json['routeId']
+        ),
+      routeName:
+            json['route_name'] ?? json['route_name'],
+
 
       shift: ParseUtil.parseInt(
           json['shift']

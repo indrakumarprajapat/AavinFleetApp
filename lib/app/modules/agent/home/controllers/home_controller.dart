@@ -7,6 +7,7 @@ import '../../../../models/agent_model.dart';
 import '../../../../models/booth_model.dart';
 import '../../../../models/slot_model.dart';
 import '../../../../api/api_service.dart';
+import '../../../../routes/app_pages.dart';
 import '../../../../services/global_cart_service.dart';
 import '../../../../utils/device-util.dart';
 import '../../../agent/claims/controllers/claims_controller.dart';
@@ -21,7 +22,7 @@ class HomeController extends GetxController {
   final _isAadhaarKycVerified = false.obs;
   final _isPanKycVerified = false.obs;
   final _boothDetails = Rxn<Society>();
-  final _agent = Rxn<FleetUser>();
+  final _fleetUser = Rxn<FleetUser>();
 
   int get selectedIndex => _selectedIndex.value;
   // UserType get userType => _userType.value;
@@ -32,14 +33,72 @@ class HomeController extends GetxController {
   bool get isAadhaarKycVerified => _isAadhaarKycVerified.value;
   bool get isPanKycVerified => _isPanKycVerified.value;
   Society? get boothDetails => _boothDetails.value;
-  FleetUser? get agent => _agent.value;
-  String get agentName => _agent.value?.name ?? '';
-  String get aadhaarNumber => _agent.value?.aadharNumber ?? '';
-  String get panName => _agent.value?.panNumber ?? '';
+  FleetUser? get fleetUser => _fleetUser.value;
+  String get agentName => _fleetUser.value?.name ?? '';
+  String get aadhaarNumber => _fleetUser.value?.aadharNumber ?? '';
+  String get panName => _fleetUser.value?.panNumber ?? '';
   var suppliesDate = ''.obs;
+   var tripId = 0.obs;
 
   void changeTabIndex(int index) {
     _selectedIndex.value = index;
+  }
+
+  String getTodayDate() {
+    final now = DateTime.now();
+    return "${now.day}-${now.month}-${now.year}";
+  }
+
+  Future<void> fetchActiveTrip() async {
+    try {
+      _isLoading.value = true;
+      final response = await apiService.getTrip(tripId: 0);
+
+      // Handle nested response data
+      final data = response['data'] ?? response;
+
+      if (data != null && data['id'] != null) {
+        tripId.value = int.tryParse(data['id'].toString()) ?? 0;
+        print("Active Trip found: ${tripId.value}");
+      }
+    } catch (e) {
+      print("Error fetching active trip: $e");
+    } finally {
+      _isLoading.value = false;
+    }
+  }
+
+  void openPdf() {
+    if (tripId.value == 0) {
+      Get.snackbar(
+        "No Active Trip",
+        "Please wait until a trip is assigned to you.",
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+    Get.toNamed(Routes.PDF, arguments: tripId.value);
+  }
+
+  Future<void> startDelivery() async {
+    if (tripId.value == 0) {
+      Get.snackbar(
+        "No Active Trip",
+        "You cannot start delivery because no trip is assigned to you yet.",
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    try {
+      _isLoading.value = true;
+      await apiService.startTrip(tripId.value);
+      Get.offNamed(Routes.DELIVERY_ROUTE, arguments: tripId.value);
+    } catch (e) {
+      Get.snackbar("Error", e.toString());
+    } finally {
+      _isLoading.value = false;
+    }
   }
 
   // void setUserType(UserType type) {
@@ -119,20 +178,20 @@ class HomeController extends GetxController {
        if (agentData != null) {
         try {
           if (agentData is Map<String, dynamic>) {
-            _agent.value = FleetUser.fromJson(agentData);
+            _fleetUser.value = FleetUser.fromJson(agentData);
           } else {
-            _agent.value = FleetUser.fromJson(Map<String, dynamic>.from(agentData));
+            _fleetUser.value = FleetUser.fromJson(Map<String, dynamic>.from(agentData));
           }
-          _isAadhaarKycVerified.value = _agent.value?.isAadhaarKycVerified ?? false;
-          _isPanKycVerified.value = _agent.value?.isPanKycVerified ?? false;
+          _isAadhaarKycVerified.value = _fleetUser.value?.isAadhaarKycVerified ?? false;
+          _isPanKycVerified.value = _fleetUser.value?.isPanKycVerified ?? false;
         } catch (e) {
           print('Error parsing agent data: $e');
-          _agent.value = null;
+          _fleetUser.value = null;
           _isAadhaarKycVerified.value = false;
           _isPanKycVerified.value = false;
         }
       } else {
-        _agent.value = null;
+        _fleetUser.value = null;
         _isAadhaarKycVerified.value = false;
         _isPanKycVerified.value = false;
       }

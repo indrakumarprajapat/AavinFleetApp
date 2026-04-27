@@ -1,11 +1,13 @@
 import 'package:get/get.dart';
 
+import '../modules/agent/home/bindings/home_binding.dart';
 import '../modules/dashboard/binding/dashboard_binding.dart';
 import '../modules/dashboard/view/dashboard_view.dart';
 import '../modules/delivery/binding/delivery_binding.dart';
 import '../modules/delivery/view/delivery_route_view.dart';
-import '../modules/home/binding/home_binding.dart';
-import '../modules/home/view/home_view.dart';
+// import '../modules/home/binding/home_binding.dart';
+// import '../modules/home/view/home_view.dart';
+import '../modules/agent/home/views/home_view.dart';
 import '../modules/login/bindings/login_binding.dart';
 import '../modules/login/views/login_view.dart';
 import '../modules/pdf/binding/pdf_binding.dart';

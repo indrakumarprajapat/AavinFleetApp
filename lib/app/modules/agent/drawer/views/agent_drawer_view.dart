@@ -517,17 +517,17 @@ class _AgentDrawerState extends State<AgentDrawer> {
           //   isSvg: 0,
           // ),
           const SizedBox(height: 12),
-          _buildActionItem(
-            icon: Icons.water_drop,
-            iconColor: Color(0xFF2196F3),
-            title: 'Milk Supplies',
-            subtitle: 'View milk supplies',
-            onTap: () {
-              Navigator.of(context).pop();
-              Get.toNamed('/milk-supplies');
-            },
-            isSvg: 0,
-          ),
+          // _buildActionItem(
+          //   icon: Icons.water_drop,
+          //   iconColor: Color(0xFF2196F3),
+          //   title: 'Milk Supplies',
+          //   subtitle: 'View milk supplies',
+          //   onTap: () {
+          //     Navigator.of(context).pop();
+          //     Get.toNamed('/milk-supplies');
+          //   },
+          //   isSvg: 0,
+          // ),
           const SizedBox(height: 12),
           _buildActionItem(
             isSvg: 0,
