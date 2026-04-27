@@ -38,7 +38,15 @@ class HomeController extends GetxController {
   String get aadhaarNumber => _fleetUser.value?.aadharNumber ?? '';
   String get panName => _fleetUser.value?.panNumber ?? '';
   var suppliesDate = ''.obs;
-   var tripId = 0.obs;
+  var tripId = 0.obs;
+  var pdfUrl = "".obs;
+
+
+  @override
+  void onInit() {
+    super.onInit();
+    loadRouteDetails();
+  }
 
   void changeTabIndex(int index) {
     _selectedIndex.value = index;
@@ -101,26 +109,16 @@ class HomeController extends GetxController {
     }
   }
 
-  // void setUserType(UserType type) {
-  //   _userType.value = type;
-  // }
-
   void setKycStatus(bool aadhaarVerified, bool panVerified) {
     _isAadhaarKycVerified.value = aadhaarVerified;
     _isPanKycVerified.value = panVerified;
   }
 
-  Future<void> loadAgentSlots() async {
+  loadRouteDetails() async {
     try {
       _isLoading.value = true;
-       final slots = await apiService.getAgentSlots();
-       _slots.value = slots;
-
-       if(slots.isNotEmpty){
-         final slotDateTime = DateTime.parse(slots[0].slotDate ?? '');
-         suppliesDate("${slotDateTime.day}/${slotDateTime.month}/${slotDateTime.year}");
-       }
-
+      final reportDetails = await apiService.getRouteDetails( );
+       pdfUrl(reportDetails.mainRouteUrl.toString());
     } catch (e) {
       print('Error loading slots: $e');
     } finally {
@@ -128,90 +126,4 @@ class HomeController extends GetxController {
     }
   }
 
-  @override
-  void onInit() {
-    super.onInit();
-    Get.put(ClaimsController());
-    // _checkAutoLogin();
-    loadAgentSlots();
-    loadKycStatus();
-  }
-
-  // Future<void> _checkAutoLogin() async {
-  //   final storage = GetStorage();
-  //   final accessToken = storage.read('access_token');
-  //   final userType = storage.read('user_type') ?? UserType.society.index;
-  //
-  //   if (accessToken != null && userType == UserType.society.index) {
-  //     try {
-  //        var  deviceInfo = DeviceInfo();
-  //       var  version = '';
-  //       try{
-  //         deviceInfo = await DeviceUtil.getDeviceDetails();
-  //         version = await DeviceUtil.getAppVersion();
-  //
-  //       }catch(err){
-  //         print(err);
-  //       }
-  //
-  //       final response = await apiService.agentAutoLogin(accessToken,deviceInfo,version);
-  //
-  //       if (response.agent != null) {
-  //         await storage.write('agent', response.agent?.toJson() ?? {});
-  //         await storage.write('societyDetails', response.boothDetails ?? {});
-  //         print('Agent auto-login successful');
-  //         loadKycStatus();
-  //       }
-  //     } catch (e) {
-  //       print('Agent auto-login failed: $e');
-  //       storage.erase();
-  //       Get.offAllNamed('/login');
-  //     }
-  //   }
-  // }
-
-  void loadKycStatus() {
-      final storage = GetStorage();
-      var agentData = storage.read('fleetUser');
-      var boothData = storage.read('societyDetails');
-
-       if (agentData != null) {
-        try {
-          if (agentData is Map<String, dynamic>) {
-            _fleetUser.value = FleetUser.fromJson(agentData);
-          } else {
-            _fleetUser.value = FleetUser.fromJson(Map<String, dynamic>.from(agentData));
-          }
-          _isAadhaarKycVerified.value = _fleetUser.value?.isAadhaarKycVerified ?? false;
-          _isPanKycVerified.value = _fleetUser.value?.isPanKycVerified ?? false;
-        } catch (e) {
-          print('Error parsing agent data: $e');
-          _fleetUser.value = null;
-          _isAadhaarKycVerified.value = false;
-          _isPanKycVerified.value = false;
-        }
-      } else {
-        _fleetUser.value = null;
-        _isAadhaarKycVerified.value = false;
-        _isPanKycVerified.value = false;
-      }
-
-      if (boothData != null) {
-        try {
-          if (boothData is Society) {
-            _boothDetails.value = boothData;
-          } else if (boothData is Map<String, dynamic>) {
-            _boothDetails.value = Society.fromJson(boothData);
-          } else {
-            _boothDetails.value = Society.fromJson(Map<String, dynamic>.from(boothData));
-          }
-        } catch (e) {
-          print('Error parsing booth data: $e');
-          _boothDetails.value = null;
-        }
-      } else {
-        print('Booth data is null');
-        _boothDetails.value = null;
-      }
-  }
 }

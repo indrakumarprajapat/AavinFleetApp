@@ -9,13 +9,18 @@ import '../models/DeviceInfo.dart';
 import '../models/credit_outstanding_model.dart';
 import '../models/models.dart';
 import '../models/razorpay-order-response.dart';
+import '../models/route_detail.dart';
 
 class ApiService extends GetxService {
   late Dio _dio;
+  String? _accessToken;
 
   @override
   void onInit() {
     super.onInit();
+    final storage = GetStorage();
+    _accessToken = storage.read('access_token');
+
     _dio = Dio(
       BaseOptions(
         baseUrl: '${ApiConstants.baseUrl}/${ApiConstants.apiSocietyPrefix}',
@@ -24,18 +29,41 @@ class ApiService extends GetxService {
         headers: {'Content-Type': 'application/json'},
       ),
     );
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          // 👇 Only attach token for protected APIs
+          if (_accessToken != null && !_isPreLoginApi(options.path)) {
+            options.headers['Authorization'] = 'Bearer $_accessToken';
+          }
+          handler.next(options);
+        },
+      ),
+    );
 
     _dio.interceptors.add(
       LogInterceptor(requestBody: true, responseBody: true, error: true),
     );
   }
+  bool _isPreLoginApi(String path) {
+    return path.contains('/auth/');
+  }
+  void setAccessToken(String token) {
+    _accessToken = token;
 
-  Future<ApiResponseModel> loginWithOtp(String mobileNumber,) async {
+    // Optional: also persist
+    final storage = GetStorage();
+    storage.write('access_token', token);
+  }
+
+  Future<ApiResponseModel> loginWithPassword(String username,
+      String password) async {
     try {
       final response = await _dio.post(
         '/account/login',
         data: {
-          'username': mobileNumber,
+          'username': username,
+          'password': password,
         },
       );
       return ApiResponseModel.fromJson(response.data, null);
@@ -43,14 +71,26 @@ class ApiService extends GetxService {
       throw _handleError(e);
     }
   }
-  Future<ApiResponseModel> loginWithPassword(String username,
-  String password) async {
+
+  Future<RouteDetail> getRouteDetails() async {
+    try {
+      final response = await _dio.get('/route-detail', queryParameters: {'shift': 1,});
+      return RouteDetail.fromJson(response.data);
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /*
+   * OLD APIS
+   */
+
+  Future<ApiResponseModel> loginWithOtp(String mobileNumber,) async {
     try {
       final response = await _dio.post(
         '/account/login',
         data: {
-          'username': username,
-          'password': password,
+          'username': mobileNumber,
         },
       );
       return ApiResponseModel.fromJson(response.data, null);
@@ -1627,26 +1667,6 @@ class ApiService extends GetxService {
     }
   }
 
-  Future<Map<String, dynamic>> getRouteReport(int shift) async {
-    try {
-      final storage = GetStorage();
-      final accessToken = storage.read('access_token');
-
-      final response = await _dio.get(
-        '/route-detail',
-        queryParameters: {
-          'shift': shift,
-        },
-        options: Options(
-          headers: {'Authorization': 'Bearer $accessToken'},
-        ),
-      );
-
-      return response.data;
-    } catch (e) {
-      throw _handleError(e);
-    }
-  }
 
   Future<Map<String, dynamic>> getTrip({int tripId = 0}) async {
     try {

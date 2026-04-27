@@ -28,28 +28,28 @@ class PdfController extends GetxController {
       if (shift.value <= 0) {
         shift.value = 1;
       }
-      final response = await _apiService.getRouteReport(shift.value);
-      final data = response['data'] ?? response;
-
-      if (data != null && data['success'] == true) {
-
-        if (data['shift'] != null) {
-          shift.value = int.tryParse(data['shift'].toString()) ?? shift.value;
-        }
-
-        final url = data['pdfUrl'] ?? data['routePdf'];
-
-        if (url != null && url.toString().isNotEmpty) {
-          pdfUrl.value = url.toString();
-          print("PDF loaded for Shift ${shift.value}: ${pdfUrl.value}");
-        } else {
-          print("Error: No PDF URL found in Route PDF response");
-          hasError.value = true;
-        }
-      } else {
-        print("No PDF found");
-        hasError.value = true;
-      }
+      // final response = await _apiService.getRouteReport(1);
+      // final data = response['data'] ?? response;
+      //
+      // if (data != null && data['success'] == true) {
+      //
+      //   if (data['shift'] != null) {
+      //     shift.value = int.tryParse(data['shift'].toString()) ?? shift.value;
+      //   }
+      //
+      //   final url = data['pdfUrl'] ?? data['routePdf'];
+      //
+      //   if (url != null && url.toString().isNotEmpty) {
+      //     pdfUrl.value = url.toString();
+      //     print("PDF loaded for Shift ${shift.value}: ${pdfUrl.value}");
+      //   } else {
+      //     print("Error: No PDF URL found in Route PDF response");
+      //     hasError.value = true;
+      //   }
+      // } else {
+      //   print("No PDF found");
+      //   hasError.value = true;
+      // }
     } catch (e) {
       print("PDF ERROR: $e");
       hasError.value = true;
