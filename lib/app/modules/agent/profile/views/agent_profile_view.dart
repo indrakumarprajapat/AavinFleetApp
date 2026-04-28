@@ -10,7 +10,7 @@ import 'dart:io';
 
 import '../../../../config/app_config.dart';
 import '../../../../constants/app_enums.dart';
-import '../../../../models/agent_model.dart';
+import '../../../../models/fleet_user.dart';
 import '../../../../routes/app_pages.dart';
 import '../../../../api/api_service.dart';
 
@@ -46,16 +46,16 @@ class AgentProfileView extends StatelessWidget {
 
       final firstName = controller.profileData.value?.name ?? 'Fleet';
       final mobileNumber = controller.profileData.value?.mobileNumber ?? '';
-      final aadharNumber = controller.profileData.value?.aadharNumber ?? 'Not provided';
-      final panNumber = controller.profileData.value?.panNumber ?? 'Not provided';
-      final hasAadharVerified = controller.profileData.value?.hasAadharVerified ?? false;
-      final hasPancardVerified = controller.profileData.value?.hasPancardVerified ?? false;
-      final aadharLink = controller.profileData.value?.aadharLink;
-      final panCardLink = controller.profileData.value?.panCardLink;
-      final accountNumber = controller.profileData.value?.accountNumber ?? 'Not provided';
-      final bankName = controller.profileData.value?.bankName ?? 'Not provided';
-      final ifscCode = controller.profileData.value?.ifscCode ?? 'Not provided';
-      final accountHolderName = controller.profileData.value?.accountHolderName ?? 'Not provided';
+      // final aadharNumber = controller.profileData.value?.aadharNumber ?? 'Not provided';
+      // final panNumber = controller.profileData.value?.panNumber ?? 'Not provided';
+      // final hasAadharVerified = controller.profileData.value?.hasAadharVerified ?? false;
+      // final hasPancardVerified = controller.profileData.value?.hasPancardVerified ?? false;
+      // final aadharLink = controller.profileData.value?.aadharLink;
+      // final panCardLink = controller.profileData.value?.panCardLink;
+      // final accountNumber = controller.profileData.value?.accountNumber ?? 'Not provided';
+      // final bankName = controller.profileData.value?.bankName ?? 'Not provided';
+      // final ifscCode = controller.profileData.value?.ifscCode ?? 'Not provided';
+      // final accountHolderName = controller.profileData.value?.accountHolderName ?? 'Not provided';
       controller.networkImageUrl.value = controller.profileData.value?.profilePhoto;
 
       return Scaffold(
@@ -79,17 +79,17 @@ class AgentProfileView extends StatelessWidget {
                     children: [
                       _buildProfileHeader(firstName, mobileNumber, controller),
                       SizedBox(height: 20),
-                      _buildInfoCard('KYC Information', [
-                        _buildKycInfoRow('Aadhaar', _maskAadhaar(aadharNumber), hasAadharVerified, aadharLink, controller, context),
-                        _buildKycInfoRow('PAN', panNumber, hasPancardVerified, panCardLink, controller, context),
-                      ]),
-                      SizedBox(height: 16),
-                      _buildInfoCard('Bank Details', [
-                        _buildInfoRow('Account Holder', accountHolderName),
-                        _buildInfoRow('Account Number', _maskAccount(accountNumber)),
-                        _buildInfoRow('IFSC Code', ifscCode),
-                        _buildInfoRow('Bank Name', bankName),
-                      ]),
+                      // _buildInfoCard('KYC Information', [
+                      //   _buildKycInfoRow('Aadhaar', _maskAadhaar(aadharNumber), hasAadharVerified, aadharLink, controller, context),
+                      //   _buildKycInfoRow('PAN', panNumber, hasPancardVerified, panCardLink, controller, context),
+                      // ]),
+                      // SizedBox(height: 16),
+                      // _buildInfoCard('Bank Details', [
+                      //   _buildInfoRow('Account Holder', accountHolderName),
+                      //   _buildInfoRow('Account Number', _maskAccount(accountNumber)),
+                      //   _buildInfoRow('IFSC Code', ifscCode),
+                      //   _buildInfoRow('Bank Name', bankName),
+                      // ]),
                       SizedBox(height: 16),
                       _buildChangePasswordCard(controller),
                       SizedBox(height: 16),

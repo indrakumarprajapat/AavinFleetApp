@@ -9,7 +9,7 @@ import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:get_storage/get_storage.dart';
 import '../../../models/booth_model.dart';
-import '../../../models/agent_model.dart';
+import '../../../models/fleet_user.dart';
 import '../../../models/delivery_model.dart';
 import '../../../routes/app_pages.dart';
 

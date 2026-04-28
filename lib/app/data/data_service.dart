@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 
-import '../models/agent_model.dart';
+import '../models/fleet_user.dart';
 import '../models/customer_model.dart';
 
 class DataService extends GetxService {

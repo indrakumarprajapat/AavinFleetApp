@@ -5,7 +5,7 @@ import 'package:get_storage/get_storage.dart';
 import '../../../../config/app_config.dart';
 import '../../../../constants/app_enums.dart';
 import '../../../../data/session_manager.dart';
-import '../../../../models/agent_model.dart';
+import '../../../../models/fleet_user.dart';
 import '../../../../routes/app_pages.dart';
 import '../../home/controllers/home_controller.dart';
  import '../../profile/views/agent_profile_view.dart';

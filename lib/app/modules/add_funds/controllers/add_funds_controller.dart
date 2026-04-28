@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import '../../../constants/app_enums.dart';
-import '../../../models/agent_model.dart';
+import '../../../models/fleet_user.dart';
 import '../../../models/customer_model.dart';
 import '../../../routes/app_pages.dart';
 import '../../../api/api_service.dart';

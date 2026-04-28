@@ -189,10 +189,10 @@ class LoginController extends GetxController {
             await session.saveSession(fleetUser);
 
           // await storage.write('boothDetails', response.boothDetails?.toJson() ?? {});
-          await storage.write('aadharNumber', fleetUser.aadharNumber ?? '');
-          await storage.write('panNumber', fleetUser.panNumber ?? '');
-          await storage.write('isAadhaarKycVerified', fleetUser.isAadhaarKycVerified ?? false);
-          await storage.write('isPanKycVerified', fleetUser.isPanKycVerified ?? false);
+          // await storage.write('aadharNumber', fleetUser.aadharNumber ?? '');
+          // await storage.write('panNumber', fleetUser.panNumber ?? '');
+          // await storage.write('isAadhaarKycVerified', fleetUser.isAadhaarKycVerified ?? false);
+          // await storage.write('isPanKycVerified', fleetUser.isPanKycVerified ?? false);
           await storage.write('profilePhotoUrl', fleetUser.profilePhoto ?? '');
           await storage.write('razorpay_key', fleetUser.key ?? '');
           try {

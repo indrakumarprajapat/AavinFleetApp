@@ -1,4 +1,4 @@
-export 'agent_model.dart';
+export 'fleet_user.dart';
 export 'booth_model.dart';
 export 'nearby_booth_model.dart';
 export 'slot_model.dart';

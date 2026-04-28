@@ -77,11 +77,11 @@ class HomeView extends GetView<HomeController>  {
 
   Widget _buildHomeContent(HomeController controller) {
     final isLocationSubmitted = controller.boothDetails?.isLocSubmit == true;
-    final isBankVerified = controller.fleetUser?.hasBankAccountVerified == true;
+    // final isBankVerified = controller.fleetUser?.hasBankAccountVerified == true;
     final allVerified =
         controller.isAadhaarKycVerified &&
         controller.isPanKycVerified &&
-        isBankVerified &&
+        // isBankVerified &&
         isLocationSubmitted;
 
     return RefreshIndicator(

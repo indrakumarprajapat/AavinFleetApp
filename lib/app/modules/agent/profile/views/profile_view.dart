@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 
 import '../../../../constants/app_enums.dart';
-import '../../../../models/agent_model.dart';
+import '../../../../models/fleet_user.dart';
 import '../../../../routes/app_pages.dart';
 import '../../../../api/api_service.dart';
 
@@ -67,10 +67,10 @@ class _ProfileViewState extends State<ProfileView> {
     final firstName = profileData.value?.name ?? 'Fleet';
     final mobileNumber = profileData.value?.mobileNumber ?? '';
     final gender = profileData.value?.gender ?? 'Not provided';
-    final aadharNumber = profileData.value?.aadharNumber ?? 'Not provided';
-    final panNumber = profileData.value?.panNumber ?? 'Not provided';
-    final accountNumber = profileData.value?.accountNumber ?? 'Not provided';
-    final bankName = profileData.value?.bankName ?? 'Not provided';
+    // final aadharNumber = profileData.value?.aadharNumber ?? 'Not provided';
+    // final panNumber = profileData.value?.panNumber ?? 'Not provided';
+    // final accountNumber = profileData.value?.accountNumber ?? 'Not provided';
+    // final bankName = profileData.value?.bankName ?? 'Not provided';
 
     return Scaffold(
       backgroundColor: Color(0xFFF8F8F8),
@@ -98,18 +98,18 @@ class _ProfileViewState extends State<ProfileView> {
           children: [
             _buildProfileHeader(firstName, mobileNumber),
             SizedBox(height: 24),
-            _buildInfoCard('Personal Information', [
-              _buildInfoRow('Name', firstName),
-              _buildInfoRow('Mobile', mobileNumber),
-              _buildInfoRow('Gender', gender),
-              _buildInfoRow('Aadhaar', aadharNumber),
-              _buildInfoRow('PAN', panNumber),
-            ]),
-            SizedBox(height: 16),
-            _buildInfoCard('Bank Details', [
-              _buildInfoRow('Account', accountNumber),
-              _buildInfoRow('Bank', bankName),
-            ]),
+            // _buildInfoCard('Personal Information', [
+            //   _buildInfoRow('Name', firstName),
+            //   _buildInfoRow('Mobile', mobileNumber),
+            //   _buildInfoRow('Gender', gender),
+            //   _buildInfoRow('Aadhaar', aadharNumber),
+            //   _buildInfoRow('PAN', panNumber),
+            // ]),
+            // SizedBox(height: 16),
+            // _buildInfoCard('Bank Details', [
+            //   _buildInfoRow('Account', accountNumber),
+            //   _buildInfoRow('Bank', bankName),
+            // ]),
             SizedBox(height: 16),
             _buildInfoCard('Account Settings', [
               _buildActionRow('Log Out', Icons.logout_outlined, _showLogoutDialog),
