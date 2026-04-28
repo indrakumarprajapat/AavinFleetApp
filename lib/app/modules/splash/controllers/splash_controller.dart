@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 import '../../../config/app_config.dart';
 import '../../../constants/app_enums.dart';
+import '../../../data/session_manager.dart';
 import '../../../models/DeviceInfo.dart';
 import '../../../routes/app_pages.dart';
 import '../../../api/api_service.dart';
@@ -85,11 +86,13 @@ class SplashController extends GetxController {
     return false;
   }
 
-  _autoLoginCall() async {
-    final storage = GetStorage();
-    final accessToken = storage.read('access_token');
 
-    if (accessToken != null) {
+  _autoLoginCall() async {
+    final session = Get.find<SessionManager>();
+    session.loadSession();
+    var fleetUser = session.fleetUser.value;
+
+    if (fleetUser?.accessToken != null) {
       try {
         var  deviceInfo = DeviceInfo();
         var  version = '';
@@ -99,13 +102,10 @@ class SplashController extends GetxController {
         }catch(err){
           print(err);
         }
-        final response = await apiService.agentAutoLogin(accessToken,deviceInfo,version);
+        final responseFleetUser = await apiService.agentAutoLogin(fleetUser?.accessToken ?? '',deviceInfo,version);
 
-        if (response.fleetUser != null) {
-          await storage.write('fleetUser', response.fleetUser);
-          await storage.write('user_type', UserType.fleetUser.index);
-
-        }
+        final session = Get.find<SessionManager>();
+        await session.saveSession(responseFleetUser);
 
         return true;
       } catch (e) {

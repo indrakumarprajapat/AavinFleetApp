@@ -87,17 +87,13 @@ class HomeView extends GetView<HomeController>  {
     return RefreshIndicator(
       onRefresh: () async {
         await controller.loadRouteDetails();
-        try {
-          final globalCartService = Get.find<GlobalCartService>();
-          await globalCartService.refreshCartEstimate();
-        } catch (_) {}
       },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(height: Get.height * 0.32),
+            SizedBox(height: Get.height * 0.25),
 
             /// Body Container
             Container(
@@ -122,15 +118,8 @@ class HomeView extends GetView<HomeController>  {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildRouteView(),
-
-                    // if (!allVerified) _buildVerificationCard(),
-
-                    // if (allVerified) ...[
-                    //   _buildSectionHeader("Submit Supplies"),
-                    //   const SizedBox(height: 20),
-                    //   _buildOrderCardsModern(controller),
-                    // ],
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 20),
+                    _buildFooterView(),
                   ],
                 );
               }),
@@ -245,144 +234,144 @@ class HomeView extends GetView<HomeController>  {
       ),
     );
   }
+ _buildFooterView(){
+   final h = Get.height;
+   final w = Get.width;
 
+   /// 🟢 START DELIVERY BUTTON (UNCHANGED)
+   return Obx(
+         () => SizedBox(
+       width: double.infinity,
+       height: h * 0.065,
+       child: ElevatedButton(
+         style: ElevatedButton.styleFrom(
+           backgroundColor: const Color(0xff1BA6C8),
+           shape: RoundedRectangleBorder(
+             borderRadius: BorderRadius.circular(w * 0.03),
+           ),
+         ),
+         onPressed: controller.isLoading
+             ? null
+             : controller.startDelivery,
+         child: controller.isLoading
+             ? const Center(
+           child: CircularProgressIndicator(
+             color: Colors.white,
+           ),
+         )
+             : Text(
+           "START DELIVERY",
+           style: TextStyle(
+             fontSize: w * 0.045,
+             color: Colors.white,
+             fontWeight: FontWeight.bold,
+           ),
+         ),
+       ),
+     ),
+   );
+ }
   Widget _buildRouteView() {
     final h = Get.height;
     final w = Get.width;
 
     return Column(
       children: [
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(blurRadius: 20, color: Colors.black.withOpacity(0.1)),
+            ],
+          ),
 
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(blurRadius: 20, color: Colors.black.withOpacity(0.1)),
-              ],
-            ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
 
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
+              /// 🔥 PDF SECTION (UPDATED)
+              Obx(() {
+                final pdfUrl = controller.pdfUrl.value;
 
-                /// 🔥 PDF SECTION (UPDATED)
-                Obx(() {
-                  final pdfUrl = controller.pdfUrl.value;
-
-                  if (controller.isLoading) {
-                    return SizedBox(
-                      height: h * 0.25,
-                      child: const Center(child: CircularProgressIndicator()),
-                    );
-                  }
-
-                  /// ❌ No PDF
-                  if (pdfUrl.isEmpty) {
-                    return Container(
-                      height: h * 0.2,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(w * 0.03),
-                      ),
-                      child: Center(
-                        child: Text(
-                          "No Route PDF Available",
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      ),
-                    );
-                  }
-
-                  /// ✅ PDF Preview + Button
-                  return Column(
-                    children: [
-                      Container(
-                        height: h * 0.35,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(w * 0.03),
-                          border: Border.all(color: Colors.blueAccent),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(w * 0.03),
-                          child: SfPdfViewer.network(
-                            controller.pdfUrl.value,
-                            canShowScrollHead: false,
-                            canShowScrollStatus: false,
-                          ),
-                        ),
-                      ),
-
-                      SizedBox(height: h * 0.02),
-
-                      /// 🔘 OPEN FULL SCREEN BUTTON
-                      SizedBox(
-                        width: double.infinity,
-                        height: h * 0.055,
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blueAccent,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(w * 0.03),
-                            ),
-                          ),
-                          onPressed: () {
-                          },
-                          icon: const Icon(
-                            Icons.open_in_full,
-                            color: Colors.white,
-                          ),
-                          label: const Text(
-                            "OPEN FULL PDF",
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ),
-                    ],
+                if (controller.isLoading) {
+                  return SizedBox(
+                    height: h * 0.25,
+                    child: const Center(child: CircularProgressIndicator()),
                   );
-                }),
+                }
 
-                SizedBox(height: h * 0.05),
-
-                /// 🟢 START DELIVERY BUTTON (UNCHANGED)
-                Obx(
-                  () => SizedBox(
+                /// ❌ No PDF
+                if (pdfUrl.isEmpty) {
+                  return Container(
+                    height: h * 0.2,
                     width: double.infinity,
-                    height: h * 0.065,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xff1BA6C8),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(w * 0.03),
-                        ),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(w * 0.03),
+                    ),
+                    child: Center(
+                      child: Text(
+                        "No Route PDF Available",
+                        style: TextStyle(color: Colors.grey),
                       ),
-                      onPressed: controller.isLoading
-                          ? null
-                          : controller.startDelivery,
-                      child: controller.isLoading
-                          ? const Center(
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
+                    ),
+                  );
+                }
+
+                /// ✅ PDF Preview + Button
+                return    Container(
+                  height: h * 0.55,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(w * 0.03),
+                    border: Border.all(color: Colors.blueAccent),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(w * 0.03),
+                    child: Stack(
+                      children: [
+                        /// 📄 PDF VIEW
+                        SfPdfViewer.network(
+                          controller.pdfUrl.value,
+                          canShowScrollHead: false,
+                          canShowScrollStatus: false,
+                        ),
+
+                        /// 🔘 OVERLAY BUTTON (BOTTOM RIGHT)
+                        Positioned(
+                          bottom: 10,
+                          right: 10,
+                          child: GestureDetector(
+                            onTap: () {
+                              Get.to(() => FullPdfViewPage(
+                                url: controller.pdfUrl.value,
+                              ));
+                            },
+                            child: Container(
+                              padding: EdgeInsets.all(w * 0.025),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.5), // transparent
+                                shape: BoxShape.circle,
                               ),
-                            )
-                          : Text(
-                              "START DELIVERY",
-                              style: TextStyle(
-                                fontSize: w * 0.045,
+                              child: Icon(
+                                Icons.open_in_full,
                                 color: Colors.white,
-                                fontWeight: FontWeight.bold,
+                                size: w * 0.06,
                               ),
                             ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ],
-            ),
+                );
+              }),
+
+
+
+            ],
           ),
         ),
       ],

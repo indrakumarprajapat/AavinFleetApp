@@ -5,6 +5,7 @@ import 'package:dio/dio.dart' as dio;
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import '../constants/api_constants.dart';
+import '../data/session_manager.dart';
 import '../models/DeviceInfo.dart';
 import '../models/credit_outstanding_model.dart';
 import '../models/models.dart';
@@ -13,13 +14,11 @@ import '../models/route_detail.dart';
 
 class ApiService extends GetxService {
   late Dio _dio;
-  String? _accessToken;
 
   @override
   void onInit() {
     super.onInit();
     final storage = GetStorage();
-    _accessToken = storage.read('access_token');
 
     _dio = Dio(
       BaseOptions(
@@ -32,9 +31,13 @@ class ApiService extends GetxService {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
+          final session = Get.find<SessionManager>();
+          var fleetUser = session.fleetUser.value;
           // 👇 Only attach token for protected APIs
-          if (_accessToken != null && !_isPreLoginApi(options.path)) {
-            options.headers['Authorization'] = 'Bearer $_accessToken';
+          if (fleetUser?.accessToken != null && !_isPreLoginApi(options.path)) {
+            print('--Read interceptor--');
+            print(fleetUser?.accessToken);
+            options.headers['Authorization'] = 'Bearer ${fleetUser?.accessToken}';
           }
           handler.next(options);
         },
@@ -48,15 +51,15 @@ class ApiService extends GetxService {
   bool _isPreLoginApi(String path) {
     return path.contains('/auth/');
   }
-  void setAccessToken(String token) {
-    _accessToken = token;
+  // void setAccessToken(String token) {
+  //   _accessToken = token;
+  //
+  //   // Optional: also persist
+  //   final storage = GetStorage();
+  //   storage.write('access_token', token);
+  // }
 
-    // Optional: also persist
-    final storage = GetStorage();
-    storage.write('access_token', token);
-  }
-
-  Future<LoginResponseModel> loginWithPassword(String username,
+  Future<FleetUser> loginWithPassword(String username,
       String password) async {
     try {
       final response = await _dio.post(
@@ -66,7 +69,7 @@ class ApiService extends GetxService {
           'password': password,
         },
       );
-      return LoginResponseModel.fromJson(response.data);
+      return FleetUser.fromJson(response.data);
     } catch (e) {
       throw _handleError(e);
     }
@@ -82,14 +85,14 @@ class ApiService extends GetxService {
 
   Future<RouteDetail> getRouteDetails() async {
     try {
-      final response = await _dio.get('/route-detail', queryParameters: {'shift': 1,});
+      final response = await _dio.get('/trips/gate-pass', queryParameters: {'shift': 1,});
       return RouteDetail.fromJson(response.data);
     } catch (e) {
       throw _handleError(e);
     }
   }
 
-  Future<LoginResponseModel> agentAutoLogin(String accessToken,    DeviceInfo deviceInfo,
+  Future<FleetUser> agentAutoLogin(String accessToken,    DeviceInfo deviceInfo,
       String versionStr,
       ) async {
     try {
@@ -105,7 +108,7 @@ class ApiService extends GetxService {
           "app_cur_version": versionStr
         },
       );
-      return LoginResponseModel.fromJson(response.data);
+      return FleetUser.fromJson(response.data);
     } catch (e) {
       throw _handleError(e);
     }
@@ -114,7 +117,7 @@ class ApiService extends GetxService {
    * OLD APIS
    */
 
-  Future<LoginResponseModel> loginWithOtp(String mobileNumber,) async {
+  Future<FleetUser> loginWithOtp(String mobileNumber,) async {
     try {
       final response = await _dio.post(
         '/account/login',
@@ -122,7 +125,7 @@ class ApiService extends GetxService {
           'username': mobileNumber,
         },
       );
-      return LoginResponseModel.fromJson(response.data);
+      return FleetUser.fromJson(response.data);
     } catch (e) {
       throw _handleError(e);
     }
@@ -173,14 +176,14 @@ class ApiService extends GetxService {
     }
   }
 
-  Future<LoginResponseModel> agentVerifyOtp(String accessToken,
+  Future<FleetUser> agentVerifyOtp(String accessToken,
       String otp,) async {
     try {
       final response = await _dio.post(
         '/auth/verify-otp',
         data: {'accessToken': accessToken, 'otp': otp},
       );
-      return LoginResponseModel.fromJson(response.data);
+      return FleetUser.fromJson(response.data);
     } catch (e) {
       throw _handleError(e);
     }
@@ -223,7 +226,7 @@ class ApiService extends GetxService {
     }
   }
 
-  Future<LoginResponseModel> verifyKyc({
+  Future<FleetUser> verifyKyc({
     bool? isAadhaarKycVerified,
     bool? isPanKycVerified,
     bool? hasBankAccountVerified,
@@ -257,13 +260,13 @@ class ApiService extends GetxService {
           },
         ),
       );
-      return LoginResponseModel.fromJson(response.data);
+      return FleetUser.fromJson(response.data);
     } catch (e) {
       throw _handleError(e);
     }
   }
 
-  Future<LoginResponseModel> updateBoothLocation({
+  Future<FleetUser> updateBoothLocation({
     required File file,
     required double lat,
     required double lng,
@@ -300,14 +303,14 @@ class ApiService extends GetxService {
           },
         ),
       );
-      return LoginResponseModel.fromJson(response.data);
+      return FleetUser.fromJson(response.data);
     } catch (e) {
       print('Booth location update error: $e');
       throw _handleError(e);
     }
   }
 
-  Future<LoginResponseModel> updateAgentDetails({
+  Future<FleetUser> updateAgentDetails({
     String? name,
     String? aadharNumber,
     String? panNumber,
@@ -343,7 +346,7 @@ class ApiService extends GetxService {
           },
         ),
       );
-      return LoginResponseModel.fromJson(response.data);
+      return FleetUser.fromJson(response.data);
     } catch (e) {
       throw _handleError(e);
     }
@@ -486,34 +489,34 @@ class ApiService extends GetxService {
     }
   }
 
-  Future<Map<String, dynamic>> getCartEstimate({int? shiftType}) async {
-    try {
-      final storage = GetStorage();
-      final accessToken = storage.read('access_token');
-
-      final dioClient = Dio(
-        BaseOptions(
-          baseUrl: '${ApiConstants.baseUrl}/${ApiConstants.apiSocietyPrefix}',
-          connectTimeout: Duration(seconds: ApiConstants.connectTimeout),
-          receiveTimeout: Duration(seconds: ApiConstants.receiveTimeout),
-        ),
-      );
-
-      final queryParams = <String, dynamic>{};
-      if (shiftType != null) {
-        queryParams['shiftType'] = shiftType;
-      }
-
-      final response = await dioClient.get(
-        '/cart/count',
-        queryParameters: queryParams,
-        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
-      );
-      return response.data;
-    } catch (e) {
-      throw _handleError(e);
-    }
-  }
+  // Future<Map<String, dynamic>> getCartEstimate({int? shiftType}) async {
+  //   try {
+  //     final storage = GetStorage();
+  //     final accessToken = storage.read('access_token');
+  //
+  //     final dioClient = Dio(
+  //       BaseOptions(
+  //         baseUrl: '${ApiConstants.baseUrl}/${ApiConstants.apiSocietyPrefix}',
+  //         connectTimeout: Duration(seconds: ApiConstants.connectTimeout),
+  //         receiveTimeout: Duration(seconds: ApiConstants.receiveTimeout),
+  //       ),
+  //     );
+  //
+  //     final queryParams = <String, dynamic>{};
+  //     if (shiftType != null) {
+  //       queryParams['shiftType'] = shiftType;
+  //     }
+  //
+  //     final response = await dioClient.get(
+  //       '/cart/count',
+  //       queryParameters: queryParams,
+  //       options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+  //     );
+  //     return response.data;
+  //   } catch (e) {
+  //     throw _handleError(e);
+  //   }
+  // }
 
   Future<CartResponseModel> getCartItems({int? shiftType}) async {
     try {
@@ -724,7 +727,7 @@ class ApiService extends GetxService {
     }
   }
 
-  Future<LoginResponseModel> uploadProfilePhoto(File file) async {
+  Future<FleetUser> uploadProfilePhoto(File file) async {
     try {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
@@ -745,7 +748,7 @@ class ApiService extends GetxService {
         ),
       );
 
-      return LoginResponseModel.fromJson(response.data);
+      return FleetUser.fromJson(response.data);
     } catch (e) {
       throw _handleError(e);
     }

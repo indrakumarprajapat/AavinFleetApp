@@ -14,17 +14,17 @@ class GlobalCartService extends GetxService {
   @override
   void onInit() {
     super.onInit();
-    refreshCartEstimate();
+    // refreshCartEstimate();
   }
 
-  Future<void> refreshCartEstimate({int? shiftType}) async {
-    try {
-      final response = await apiService.getCartEstimate(shiftType: shiftType);
-      _cartEstimate.value = response;
-    } catch (e) {
-      print('Failed to refresh cart estimate: $e');
-    }
-  }
+  // Future<void> refreshCartEstimate({int? shiftType}) async {
+  //   try {
+  //     final response = await apiService.getCartEstimate(shiftType: shiftType);
+  //     _cartEstimate.value = response;
+  //   } catch (e) {
+  //     print('Failed to refresh cart estimate: $e');
+  //   }
+  // }
 
   @override
   void onClose() {
@@ -42,7 +42,7 @@ class GlobalCartService extends GetxService {
         orderType: orderType
       );
       if (response.isNotEmpty) {
-        await refreshCartEstimate();
+        // await refreshCartEstimate();
       } else {
         Get.snackbar('Error', response['message'] ?? 'Failed to update cart');
       }

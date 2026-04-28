@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import '../../../../data/session_manager.dart';
 import '../../../../models/agent_model.dart';
 import '../../../../models/booth_model.dart';
 import '../../../../models/slot_model.dart';
@@ -46,12 +47,11 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
     /// Init controllers
     tabController = TabController(length: 4, vsync: this);
     pageController = PageController();
-
-    final agentJson = storage.read('fleetUser');
-    if (agentJson != null) {
-      setFleetUser(agentJson);
+    final session = Get.find<SessionManager>();
+    var fleetUser = session.fleetUser.value;
+    if (fleetUser != null) {
+      setFleetUser(fleetUser);
     }
-
     loadRouteDetails();
   }
 
@@ -85,8 +85,9 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
   @override
   void onResumed() {
     try {
-      final globalCartService = Get.find<GlobalCartService>();
-      globalCartService.refreshCartEstimate();
+      // final globalCartService = Get.find<GlobalCartService>();
+      // globalCartService.refreshCartEstimate();
+      loadRouteDetails();
     } catch (_) {}
   }
 

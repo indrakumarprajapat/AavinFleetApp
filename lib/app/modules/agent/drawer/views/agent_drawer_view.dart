@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import '../../../../config/app_config.dart';
 import '../../../../constants/app_enums.dart';
+import '../../../../data/session_manager.dart';
+import '../../../../models/agent_model.dart';
 import '../../../../routes/app_pages.dart';
 import '../../home/controllers/home_controller.dart';
  import '../../profile/views/agent_profile_view.dart';
@@ -53,18 +55,15 @@ class _AgentDrawerState extends State<AgentDrawer> {
       profilePhotoUrl = storedUrl;
     }
   }
+  final session = Get.find<SessionManager>();
+  FleetUser? get fleetUser => session.fleetUser.value;
 
   @override
   Widget build(BuildContext context) {
-    final storage = GetStorage();
-    final agent = storage.read('fleetUser') ?? {};
-    final firstName = agent['name']?.toString() ?? '';
-    final mobileNumber = agent['mobileNumber']?.toString() ?? '';
-    final storedUrl = storage.read('profilePhotoUrl');
-    if (storedUrl != null) {
-      profilePhotoUrl = storedUrl;
-    }
-    
+    String firstName = fleetUser?.operatorName ?? '';
+    String mobileNumber = fleetUser?.operatorMobile ?? '';
+    profilePhotoUrl = fleetUser?.profilePhoto ?? '';
+
     return Drawer(
       child: SafeArea(
         child: Column(
@@ -107,7 +106,7 @@ class _AgentDrawerState extends State<AgentDrawer> {
                     SizedBox(height: 30),
                     _buildProfileCard(firstName, mobileNumber),
                     const SizedBox(height: 20),
-                    _buildBoothDetailsHeader(),
+                    // _buildBoothDetailsHeader(),
                     if (isBoothDetailsExpanded) ...[
                       const SizedBox(height: 12),
                       _buildBoothDetailsCard(),
@@ -439,7 +438,7 @@ class _AgentDrawerState extends State<AgentDrawer> {
 
   Widget _buildSectionTitle() {
     return Text(
-      'Quick Actions',
+      'Menu',
       style: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w600,
@@ -677,11 +676,7 @@ class _AgentDrawerState extends State<AgentDrawer> {
               final storage = GetStorage();
               await storage.erase();
               Get.deleteAll();
-              if(config.name == ClientConfig.CLIENT_CBE){
-                Get.offAllNamed(Routes.USER_TYPE);
-              }else{
                 Get.offAllNamed(Routes.LOGIN, arguments: UserType.fleetUser);
-              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Color(0xFFE74C3C),

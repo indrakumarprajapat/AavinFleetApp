@@ -157,7 +157,7 @@ class EasyPayWebviewController extends GetxController {
           );
         }
         
-        await globalCartService.refreshCartEstimate();
+        // await globalCartService.refreshCartEstimate();
         Get.offAllNamed('/order-success');
         Get.snackbar('Success', 'Payment completed successfully!', 
           backgroundColor: Colors.green, colorText: Colors.white);

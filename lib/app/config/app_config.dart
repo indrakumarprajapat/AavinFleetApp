@@ -45,12 +45,12 @@ const Map<String, ClientConfig> clientConfigs = {
   ),
   "cbe": ClientConfig(
     name: ClientConfig.CLIENT_CBE,
-    app_title: "Aavin Coimbatore",
+    app_title: "Aavin Fleet",
     loginLogo: "assets/images/logo_cbe.svg",
     enableReports: true,
     enablePayments: true,
     // baseUrl: "https://api.aavincbe.cwitch.tech/",
-    baseUrl: "http://192.168.29.89:3042/",
+    baseUrl: "http://192.168.29.89:3043/",
 
     privacyPolicyLink:'https://www.aavincoimbatore.com/assets/privacy-policy.html',
       termAndCondLink:'https://www.aavincoimbatore.com/assets/terms-and-conditions.html',

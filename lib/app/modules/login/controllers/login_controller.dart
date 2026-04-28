@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../constants/app_enums.dart';
+import '../../../data/session_manager.dart';
 import '../../../models/DeviceInfo.dart';
 import '../../../routes/app_pages.dart';
 import '../../../api/api_service.dart';
@@ -64,7 +65,7 @@ class LoginController extends GetxController {
 
     _isLoading.value = true;
     try {
-      final response = await apiService.loginWithPassword(
+      final fleetUser = await apiService.loginWithPassword(
           phoneController.text,
           passwordController.text
       );
@@ -74,17 +75,9 @@ class LoginController extends GetxController {
       //   return;
       // }
 
-      // Store the token from password login response
-      await storage.write('access_token', response.fleetUser?.accessToken ?? '');
-      await storage.write('user_type', UserType.fleetUser.index);
+      final session = Get.find<SessionManager>();
+      await session.saveSession(fleetUser);
 
-      // Store agent and booth data from login response
-      if (response.fleetUser != null) {
-        await storage.write('fleetUser', response.fleetUser);
-        // await storage.write('razorpay_key', response.data['key'] ?? '');
-      }
-
-      Get.snackbar('Success', response.message ?? 'Login successful');
       Get.offAllNamed(Routes.HOME);
     } catch (e) {
       Get.snackbar('Error', e.toString());
@@ -132,13 +125,13 @@ class LoginController extends GetxController {
         }
 
         // final response = await apiService.agentLogin(phoneController.text,deviceInfo,version);
-        final response = await apiService.loginWithOtp(phoneController.text);
-        _accessToken.value = response.fleetUser?.accessToken ?? '';
-        tempToken.value = response.fleetUser?.accessToken ?? '';
+        final fleetUser = await apiService.loginWithOtp(phoneController.text);
+        _accessToken.value = fleetUser.accessToken ?? '';
+        tempToken.value = fleetUser.accessToken ?? '';
         // _customerId.value = response.agentId ?? 0;
 
         _isOtpSent.value = true;
-        Get.snackbar('Success', response.message ?? 'OTP sent successfully');
+        Get.snackbar('Success', 'OTP sent successfully');
       }
     } catch (e) {
       String errorMessage = e.toString();
@@ -187,20 +180,21 @@ class LoginController extends GetxController {
           Get.toNamed('/reset-password', arguments: resetToken.value);
         } else {
           // Normal OTP verification for login
-          final response = await apiService.agentVerifyOtp(
+          final fleetUser = await apiService.agentVerifyOtp(
               _accessToken.value,
               otpController.text
           );
-          await storage.write('access_token', response.token ?? '');
-          await storage.write('fleetUser', response.fleetUser ?? {});
+
+          final session = Get.find<SessionManager>();
+            await session.saveSession(fleetUser);
+
           // await storage.write('boothDetails', response.boothDetails?.toJson() ?? {});
-          await storage.write('aadharNumber', response.fleetUser?.aadharNumber ?? '');
-          await storage.write('panNumber', response.fleetUser?.panNumber ?? '');
-          await storage.write('isAadhaarKycVerified', response.fleetUser?.isAadhaarKycVerified ?? false);
-          await storage.write('isPanKycVerified', response.fleetUser?.isPanKycVerified ?? false);
-          await storage.write('profilePhotoUrl', response.fleetUser?.profilePhoto ?? '');
-          await storage.write('razorpay_key', response.fleetUser?.key ?? '');
-          await storage.write('user_type',UserType.fleetUser.index);
+          await storage.write('aadharNumber', fleetUser.aadharNumber ?? '');
+          await storage.write('panNumber', fleetUser.panNumber ?? '');
+          await storage.write('isAadhaarKycVerified', fleetUser.isAadhaarKycVerified ?? false);
+          await storage.write('isPanKycVerified', fleetUser.isPanKycVerified ?? false);
+          await storage.write('profilePhotoUrl', fleetUser.profilePhoto ?? '');
+          await storage.write('razorpay_key', fleetUser.key ?? '');
           try {
             final configService = Get.find<ConfigService>();
             await configService.fetchConfig();
@@ -208,7 +202,6 @@ class LoginController extends GetxController {
             print('Config fetch error: $e');
           }
 
-          Get.snackbar('Success', response.message ?? 'Login successful');
           Get.offAllNamed(Routes.HOME);
         }
       }

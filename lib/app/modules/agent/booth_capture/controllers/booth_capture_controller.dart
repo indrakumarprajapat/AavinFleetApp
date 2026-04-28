@@ -132,17 +132,12 @@ class BoothCaptureController extends GetxController {
       isLoading.value = true;
 
       final apiService = Get.find<ApiService>();
-      final response = await apiService.updateBoothLocation(
+       await apiService.updateBoothLocation(
         file: boothImage.value!,
         lat: currentLatLng.value.latitude,
         lng: currentLatLng.value.longitude,
       );
 
-      if (response.success) {
-        // Get.off(() => const KycSuccessView());
-      } else {
-        Get.snackbar("Error", response.message ?? "Failed to submit booth data");
-      }
     } catch (e) {
       Get.snackbar("Error", "Failed to submit booth data: $e");
     }finally {
