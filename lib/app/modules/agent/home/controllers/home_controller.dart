@@ -1,71 +1,94 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
 import '../../../../data/session_manager.dart';
 import '../../../../models/fleet_user.dart';
 import '../../../../models/booth_model.dart';
-import '../../../../models/slot_model.dart';
 import '../../../../api/api_service.dart';
 import '../../../../routes/app_pages.dart';
 import '../../../../services/global_cart_service.dart';
 
-
-class HomeController extends GetxController with GetSingleTickerProviderStateMixin {
-  final storage = GetStorage();
-  final _selectedIndex = 0.obs;
+class HomeController extends GetxController with GetSingleTickerProviderStateMixin, WidgetsBindingObserver {
   final apiService = Get.find<ApiService>();
   final globalCartService = Get.find<GlobalCartService>();
-  final _slots = <SlotModel>[].obs;
+  
   final _isLoading = false.obs;
-  final _isAadhaarKycVerified = false.obs;
-  final _isPanKycVerified = false.obs;
   final _boothDetails = Rxn<Society>();
   final _fleetUser = Rxn<FleetUser>();
-  int get selectedIndex => _selectedIndex.value;
-  List<SlotModel> get slots => _slots;
+  
   bool get isLoading => _isLoading.value;
-  bool get isAadhaarKycVerified => _isAadhaarKycVerified.value;
-  bool get isPanKycVerified => _isPanKycVerified.value;
   Society? get boothDetails => _boothDetails.value;
   FleetUser? get fleetUser => _fleetUser.value;
-  String get agentName => _fleetUser.value?.name ?? '';
-  // String get aadhaarNumber => _fleetUser.value?.aadharNumber ?? '';
-  // String get panName => _fleetUser.value?.panNumber ?? '';
+  
   var suppliesDate = ''.obs;
   var tripId = 0.obs;
   var pdfUrl = "".obs;
+  var products = <dynamic>[].obs;
 
   late TabController tabController;
   late PageController pageController;
 
-
   final currentIndex = 0.obs;
   final isInitialLoading = true.obs;
+
   @override
   void onInit() {
     super.onInit();
-    /// Init controllers
+    WidgetsBinding.instance.addObserver(this);
+
     tabController = TabController(length: 4, vsync: this);
     pageController = PageController();
+
     final session = Get.find<SessionManager>();
-    var fleetUser = session.fleetUser.value;
-    if (fleetUser != null) {
-      setFleetUser(fleetUser);
+    session.loadSession(); 
+    
+    if (session.fleetUser.value != null) {
+      setFleetUser(session.fleetUser.value);
     }
+
     loadRouteDetails();
+    _addSampleData(); 
+  }
+
+  void _addSampleData() {
+    if (_fleetUser.value == null) {
+      _fleetUser.value = FleetUser(
+        name: "Test Agent",
+        routeName: "R-102 (Sample Route)",
+        vehicleRegistrationNumber: "TN-37-CZ-1234",
+      );
+    }
+
+    if (products.isEmpty) {
+      products.value = [
+        {
+          'product_name': 'Standardized Milk (500ml)',
+          'pkt_qty': 120,
+          'litre': 60,
+          'total_tray': 10,
+          'pkt_plus': 2,
+          'pkt_minus': 0,
+          'leakes': 1,
+        },
+        {
+          'product_name': 'Toned Milk (500ml)',
+          'pkt_qty': 84,
+          'litre': 42,
+          'total_tray': 7,
+          'pkt_plus': 0,
+          'pkt_minus': 1,
+          'leakes': 0,
+        },
+      ];
+    }
   }
 
   @override
   void onReady() {
     super.onReady();
-
-    /// Equivalent of addPostFrameCallback
     final args = Get.arguments;
     if (args != null && args['tab'] != null) {
       final tabIndex = args['tab'] as int;
-
       currentIndex.value = tabIndex;
-
       pageController.animateToPage(
         tabIndex,
         duration: const Duration(milliseconds: 300),
@@ -76,60 +99,58 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
 
   @override
   void onClose() {
+    WidgetsBinding.instance.removeObserver(this);
     tabController.dispose();
     pageController.dispose();
     super.onClose();
   }
 
-  /// 🔥 Lifecycle handling (replacement of WidgetsBindingObserver)
   @override
-  void onResumed() {
-    try {
-      // final globalCartService = Get.find<GlobalCartService>();
-      // globalCartService.refreshCartEstimate();
-      loadRouteDetails();
-    } catch (_) {}
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      loadRouteDetails(silent: true);
+    }
   }
 
   void setFleetUser(FleetUser? user) {
     _fleetUser.value = user;
   }
 
-  void changeTabIndex(int index) {
-    _selectedIndex.value = index;
-  }
-
-  String getTodayDate() {
-    final now = DateTime.now();
-    return "${now.day}-${now.month}-${now.year}";
-  }
-
   Future<void> fetchActiveTrip() async {
     try {
       _isLoading.value = true;
       final response = await apiService.getTrip(tripId: 0);
-
-      // Handle nested response data
       final data = response['data'] ?? response;
 
       if (data != null && data['id'] != null) {
         tripId.value = int.tryParse(data['id'].toString()) ?? 0;
-        print("Active Trip found: ${tripId.value}");
+        await fetchTripSummary();
       }
     } catch (e) {
-      print("Error fetching active trip: $e");
+      debugPrint("Error fetching active trip: $e");
     } finally {
       _isLoading.value = false;
     }
   }
 
+  Future<void> fetchTripSummary() async {
+    if (tripId.value == 0) return;
+    try {
+      final summary = await apiService.getTripSummary(tripId.value);
+      final data = summary['data'] ?? summary;
+      if (data != null && data['products'] != null) {
+        products.value = data['products'] as List;
+      } else if (data is List) {
+        products.value = data;
+      }
+    } catch (e) {
+      debugPrint("Error fetching trip summary: $e");
+    }
+  }
+
   void openPdf() {
     if (tripId.value == 0) {
-      Get.snackbar(
-        "No Active Trip",
-        "Please wait until a trip is assigned to you.",
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      Get.snackbar("No Active Trip", "Please wait until a trip is assigned.");
       return;
     }
     Get.toNamed(Routes.PDF, arguments: tripId.value);
@@ -137,11 +158,7 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
 
   Future<void> startDelivery() async {
     if (tripId.value == 0) {
-      Get.snackbar(
-        "No Active Trip",
-        "You cannot start delivery because no trip is assigned to you yet.",
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      Get.snackbar("No Active Trip", "No trip assigned yet.");
       return;
     }
 
@@ -156,21 +173,22 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
     }
   }
 
-  void setKycStatus(bool aadhaarVerified, bool panVerified) {
-    _isAadhaarKycVerified.value = aadhaarVerified;
-    _isPanKycVerified.value = panVerified;
-  }
-
-  loadRouteDetails() async {
+  Future<void> loadRouteDetails({bool silent = false}) async {
     try {
-      _isLoading.value = true;
-      final reportDetails = await apiService.getRouteDetails( );
-       pdfUrl(reportDetails.mainRouteUrl.toString());
+      if (!silent) _isLoading.value = true;
+      await fetchActiveTrip();
+      final reportDetails = await apiService.getRouteDetails();
+      pdfUrl(reportDetails.mainRouteUrl.toString());
+      
+      if (products.isEmpty) {
+        _addSampleData();
+      }
     } catch (e) {
-      print('Error loading slots: $e');
+      debugPrint('Error loading route details: $e');
+      if (products.isEmpty) _addSampleData();
     } finally {
-      _isLoading.value = false;
+      if (!silent) _isLoading.value = false;
+      isInitialLoading.value = false;
     }
   }
-
 }
