@@ -14,9 +14,13 @@ class RouteDetail {
   final DateTime? updatedAt;
   final bool? success;
 
+  final int? gatepassId;
+  final List<dynamic>? products;
+
   RouteDetail({
     this.id,
     this.routeId,
+    this.gatepassId,
     this.shift,
     this.reportDate,
     this.mainRouteUrl,
@@ -27,6 +31,7 @@ class RouteDetail {
     this.createdAt,
     this.updatedAt,
     this.success,
+    this.products,
   });
 
   factory RouteDetail.fromJson(Map<String, dynamic> json) {
@@ -35,6 +40,10 @@ class RouteDetail {
 
       routeId: ParseUtil.parseInt(
         json['route_id'] ?? json['routeId'],
+      ),
+
+      gatepassId: ParseUtil.parseInt(
+        json['gatepass_id'] ?? json['gatepassId'],
       ),
 
       shift: ParseUtil.parseInt(json['shift']),
@@ -70,6 +79,7 @@ class RouteDetail {
       ),
 
       success: ParseUtil.parseBool(json['success']),
+      products: json['products'] as List?,
     );
   }
 

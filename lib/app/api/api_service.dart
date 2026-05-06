@@ -83,14 +83,6 @@ class ApiService extends GetxService {
     }
   }
 
-  Future<RouteDetail> getRouteDetails() async {
-    try {
-      final response = await _dio.get('/trips/gate-pass', queryParameters: {'shift': 1,});
-      return RouteDetail.fromJson(response.data);
-    } catch (e) {
-      throw _handleError(e);
-    }
-  }
 
   Future<FleetUser> agentAutoLogin(String accessToken,    DeviceInfo deviceInfo,
       String versionStr,
@@ -1638,102 +1630,147 @@ class ApiService extends GetxService {
 
   //Fleet APIs
 
-  Future<Map<String, dynamic>> getTripSummary(int tripId) async {
+  // Future<dynamic> getTripSummary(int tripId) async {
+  //   try {
+  //     final storage = GetStorage();
+  //     final accessToken = storage.read('access_token');
+  //
+  //     final response = await _dio.get(
+  //       '/trips/gate-pass/$tripId/summary',
+  //       options: Options(
+  //         headers: {'Authorization': 'Bearer $accessToken'},
+  //       ),
+  //     );
+  //
+  //     final tripResponse = await getTrip(tripId: tripId);
+  //     final tripData = (tripResponse is Map && tripResponse.containsKey('data'))
+  //         ? tripResponse['data']
+  //         : tripResponse;
+  //
+  //     if (response.data is Map) {
+  //       final data = response.data as Map<String, dynamic>;
+  //       if (tripData is Map) {
+  //         data['pdfUrl'] = tripData['pdfUrl'] ?? tripData['routePdf'];
+  //       }
+  //       return data;
+  //     }
+  //
+  //     return response.data;
+  //   } catch (e) {
+  //     throw _handleError(e);
+  //   }
+  // }
+
+  //
+  // Future<dynamic> getTrip({ tripId = 0}) async {
+  //   try {
+  //     final storage = GetStorage();
+  //     final accessToken = storage.read('access_token');
+  //
+  //     final response = await _dio.get(
+  //       '/trips/gate-pass/$tripId',
+  //       options: Options(
+  //           headers: {'Authorization': 'Bearer $accessToken'}),
+  //     );
+  //     return response.data;
+  //   } catch (e) {
+  //     throw _handleError(e);
+  //   }
+  // }
+
+  Future<dynamic> startTrip(int tripId, double lat, double lng) async {
     try {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _dio.get(
-        '/trips/$tripId/summary',
+      final response = await _dio.post(
+        '/trips/$tripId/start',
+        data: {
+          "lat": lat,
+          "lng": lng,
+        },
         options: Options(
-          headers: {'Authorization': 'Bearer $accessToken'},
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+          },
         ),
       );
-      
-      final tripResponse = await getTrip(tripId: tripId);
-      final tripData = tripResponse['data'] ?? tripResponse;
-      
-      if (response.data is Map) {
-        response.data['pdfUrl'] = tripData['pdfUrl'] ?? tripData['routePdf'];
+
+      return response.data;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<dynamic> endTrip(int tripId, double lat, double lng) async {
+    try {
+      final storage = GetStorage();
+      final accessToken = storage.read('access_token');
+
+      final response = await _dio.post(
+        '/trips/$tripId/end',
+        data: {
+          "lat": lat,
+          "lng": lng,
+        },
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+          },
+        ),
+      );
+
+      return response.data;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<List<dynamic>> getTripBooths(int tripId, String s) async {
+    try {
+      final storage = GetStorage();
+      final accessToken = storage.read('access_token');
+
+      final response = await _dio.get(
+        '/trips/$tripId/delivery-booths',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+          },
+        ),
+      );
+
+      if (response.data is List) {
+        return response.data;
       }
 
-      return response.data;
+      return [];
     } catch (e) {
       throw _handleError(e);
     }
   }
 
-
-  Future<Map<String, dynamic>> getTrip({int tripId = 0}) async {
+  Future<dynamic> markDelivered(
+      int tripId,
+      int boothId,
+      double lat,
+      double lng,
+      ) async {
     try {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      final response = await _dio.get(
-        '/trips/$tripId',
+      final response = await _dio.post(
+        '/trips/$tripId/delivery/$boothId',
+        data: {
+          "lat": lat,
+          "lng": lng,
+        },
         options: Options(
-            headers: {'Authorization': 'Bearer $accessToken'}),
-      );
-      return response.data;
-    } catch (e) {
-      throw _handleError(e);
-    }
-  }
-
-  Future<void> startTrip(int tripId) async {
-    try {
-      final storage = GetStorage();
-      final accessToken = storage.read('access_token');
-
-      await _dio.post(
-        '/trips/$tripId/start',
-        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
-      );
-    } catch (e) {
-      throw _handleError(e);
-    }
-  }
-
-  Future<List<dynamic>> getTripBooths(int tripId, String phase) async {
-    try {
-      final storage = GetStorage();
-      final accessToken = storage.read('access_token');
-
-      final response = await _dio.get(
-          '/trips/$tripId/booths',
-          queryParameters: {'phase': phase},
-          options: Options(headers: {'Authorization': "Bearer $accessToken"})
-      );
-
-      return response.data as List? ?? [];
-    } catch (e) {
-      throw _handleError(e);
-    }
-  }
-
-  Future<void> markDelivered(int tripId, int boothId) async {
-    try {
-      final storage = GetStorage();
-      final accessToken = storage.read('access_token');
-
-      await _dio.put(
-        '/trips/$tripId/booths/$boothId',
-        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
-      );
-    } catch (e) {
-      throw _handleError(e);
-    }
-  }
-
-  Future<Map<String, dynamic>> getBoothDetails(
-      int tripId, int boothId) async {
-    try {
-      final storage = GetStorage();
-      final accessToken = storage.read('access_token');
-
-      final response = await _dio.get(
-        '/trips/$tripId/booths/$boothId',
-        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+          },
+        ),
       );
 
       return response.data;
@@ -1742,34 +1779,125 @@ class ApiService extends GetxService {
     }
   }
 
-  Future<void> startCollection(int tripId) async{
-    try{
+  Future<dynamic> markCollected(
+      int tripId,
+      int boothId,
+      int trayCollected,
+      double lat,
+      double lng,
+      ) async {
+    try {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
 
-      await _dio.post(
-        '/trips/$tripId/collection/start',
-        options: Options(headers:{'Authorization': 'Bearer $accessToken'}),
+      final response = await _dio.post(
+        '/trips/$tripId/collection/$boothId',
+        data: {
+          "trayCollected": trayCollected,
+          "lat": lat,
+          "lng": lng,
+        },
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+          },
+        ),
       );
-    }catch(e){
+
+      return response.data;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+  //
+  // Future<Map<String, dynamic>> getBoothDetails(
+  //     int tripId, int boothId) async {
+  //   try {
+  //     final storage = GetStorage();
+  //     final accessToken = storage.read('access_token');
+  //
+  //     final response = await _dio.get(
+  //       '/trips/gate-pass/$tripId/booths/$boothId',
+  //       options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+  //     );
+  //
+  //     return response.data;
+  //   } catch (e) {
+  //     throw _handleError(e);
+  //   }
+  // }
+
+
+  Future<List<dynamic>> getCollectionBooths(int tripId) async {
+    try {
+      final storage = GetStorage();
+      final accessToken = storage.read('access_token');
+
+      final response = await _dio.get(
+        '/trips/$tripId/collection-booths',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+          },
+        ),
+      );
+
+      if (response.data is List) {
+        return response.data;
+      }
+
+      return [];
+    } catch (e) {
       throw _handleError(e);
     }
   }
 
-  Future<void> submitTrayCollection(int tripId, int boothId, int trays) async{
-    try{
-      final storage = GetStorage();
-      final accessToken = storage.read('access_token');
+  // Future<void> startCollection(int tripId) async{
+  //   try{
+  //     final storage = GetStorage();
+  //     final accessToken = storage.read('access_token');
+  //
+  //     await _dio.post(
+  //       '/trips/gate-pass/$tripId/collection/start',
+  //       options: Options(headers:{'Authorization': 'Bearer $accessToken'}),
+  //     );
+  //   }catch(e){
+  //     throw _handleError(e);
+  //   }
+  // }
 
-      await _dio.post(
-        '/trips/$tripId/booths/$boothId/tray-collected',
-        data: {'trays': trays},
-        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+  Future<RouteDetail> getRouteDetails() async {
+    try {
+      final response = await _dio.get(
+        '/trips/gate-pass',
       );
-    }catch(e){
+
+      final data = response.data;
+
+      if (data is List && data.isNotEmpty) {
+        return RouteDetail.fromJson(data[0]);
+      }
+
+      return RouteDetail.fromJson(data);
+    } catch (e) {
       throw _handleError(e);
     }
   }
+
+  // Future<void> submitTrayCollection(int tripId, int boothId, int trays) async{
+  //   try{
+  //     final storage = GetStorage();
+  //     final accessToken = storage.read('access_token');
+  //
+  //     await _dio.post(
+  //       '/trips/gate-pass/$tripId/booths/$boothId/tray-collected',
+  //       data: {'trays': trays},
+  //       options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+  //     );
+  //   }catch(e){
+  //     throw _handleError(e);
+  //   }
+  // }
 }
 
 

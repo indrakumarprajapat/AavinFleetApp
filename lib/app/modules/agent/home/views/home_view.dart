@@ -30,6 +30,7 @@ class HomeView extends GetView<HomeController> {
             ),
           ],
         ),
+        bottomNavigationBar: _buildFooterView(),
       );
     });
   }
@@ -70,7 +71,6 @@ class HomeView extends GetView<HomeController> {
                   children: [
                     _buildRouteView(),
                     const SizedBox(height: 20),
-                    _buildFooterView(),
                   ],
                 );
               }),
@@ -83,33 +83,46 @@ class HomeView extends GetView<HomeController> {
 
   Widget _buildFooterView() {
     return Obx(
-      () => SizedBox(
-        width: double.infinity,
-        height: 55,
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xff1BA6C8),
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
+      () => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 10,
+              offset: Offset(0, -5),
             ),
+          ],
+        ),
+        child: SizedBox(
+          width: double.infinity,
+          height: 55,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xff1BA6C8),
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
+            ),
+            onPressed: controller.isLoading ? null : controller.startDelivery,
+            child: controller.isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                    ),
+                  )
+                : const Text(
+                    "START DELIVERY",
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
           ),
-          onPressed: controller.isLoading ? null : controller.startDelivery,
-          child: controller.isLoading
-              ? const Center(
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                  ),
-                )
-              : const Text(
-                  "START DELIVERY",
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
-                  ),
-                ),
         ),
       ),
     );
@@ -181,15 +194,15 @@ class HomeView extends GetView<HomeController> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: const Color(0xFF007EA7).withValues(alpha: 0.06),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            decoration: const BoxDecoration(
+              color: Color(0xFFE6F7FA), // Light blue background
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
             child: Row(
               children: [
                 // const Icon(Icons.inventory_2_rounded,
                 //     size: 18, color: Color(0xFF007EA7)),
-                const SizedBox(width: 10),
+                // const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     product['product_name']?.toString() ?? 'Unknown Product',
@@ -213,14 +226,14 @@ class HomeView extends GetView<HomeController> {
                   children: [
                     _buildHighlightBox(
                       title: "Packet Qty",
-                      value: "${product['pkt_qty'] ?? 0}",
+                      value: "${product['qty_pkt'] ?? product['pkt_qty'] ?? 0}",
                       color: const Color(0xFF007EA7),
                       icon: Icons.grid_view_rounded,
                     ),
                     const SizedBox(width: 12),
                     _buildHighlightBox(
                       title: "Total Litre",
-                      value: "${product['litre'] ?? 0} L",
+                      value: "${product['qty_ltr'] ?? product['litre'] ?? 0} L",
                       color: const Color(0xFF1BA6C8),
                       icon: Icons.water_drop_rounded,
                     ),
@@ -238,10 +251,10 @@ class HomeView extends GetView<HomeController> {
                   ),
                   child: Row(
                     children: [
-                      _buildStatChip("Tray", "${product['total_tray'] ?? 0}"),
+                      _buildStatChip("Tray", "${product['tray'] ?? product['total_tray'] ?? 0}"),
                       _buildStatChip("+Pkt", "${product['pkt_plus'] ?? 0}", color: Colors.green),
                       _buildStatChip("-Pkt", "${product['pkt_minus'] ?? 0}", color: Colors.orange),
-                      _buildStatChip("Leak", "${product['leakes'] ?? 0}", color: Colors.red),
+                      _buildStatChip("Leak", "${product['leak'] ?? product['leakes'] ?? 0}", color: Colors.red),
                     ],
                   ),
                 ),

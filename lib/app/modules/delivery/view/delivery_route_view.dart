@@ -153,18 +153,16 @@ class DeliveryRouteView extends GetView<DeliveryController> {
                         DeliveryStatus status;
 
                         if (isCollection) {
-                          // In reverse flow:
-                          // index 0 is the last store (Store 6)
-                          // index 5 is the first store (Store 1)
-                          
+                          // Collection logic: Work backwards from last to first
                           final originalIndex = originalDeliveries.indexOf(delivery);
-                          
-                          if (originalIndex > controller.currentCollectingIndex.value) {
-                            status = DeliveryStatus.delivered;
-                          } else if (originalIndex == controller.currentCollectingIndex.value) {
-                            status = DeliveryStatus.delivering;
+                          final currentActive = controller.currentCollectingIndex.value;
+
+                          if (originalIndex > currentActive) {
+                            status = DeliveryStatus.delivered; // Already collected
+                          } else if (originalIndex == currentActive) {
+                            status = DeliveryStatus.delivering; // Currently collecting
                           } else {
-                            status = DeliveryStatus.pending;
+                            status = DeliveryStatus.pending; // To be collected
                           }
                         } else {
                           status = delivery.status;

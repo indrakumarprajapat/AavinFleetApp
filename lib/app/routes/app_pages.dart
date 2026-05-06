@@ -48,11 +48,11 @@ class AppPages {
       page: () => const StoreDetailsView(),
       binding: DeliveryRouteBinding(),
     ),
-    GetPage(
-      name: _Paths.DASHBOARD,
-      page: () => const DashboardView(),
-      binding: DashboardBinding(),
-    ),
+    // GetPage(
+    //   name: _Paths.DASHBOARD,
+    //   page: () => const DashboardView(),
+    //   binding: DashboardBinding(),
+    // ),
     GetPage(
       name: _Paths.PDF,
       page: () => const PdfView(),

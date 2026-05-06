@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import '../constants/app_enums.dart';
 import '../models/models.dart';
+import '../models/fleet_user.dart';
 
 class SessionManager extends GetxService {
   final _storage = GetStorage();

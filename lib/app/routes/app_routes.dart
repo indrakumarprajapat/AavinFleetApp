@@ -8,7 +8,6 @@ abstract class Routes {
    static const HOME = _Paths.HOME;
    static const DELIVERY_ROUTE = _Paths.DELIVERY_ROUTE;
    static const STORE_DETAILS = _Paths.STORE_DETAILS;
-   static const DASHBOARD = _Paths.DASHBOARD;
    static const PDF = _Paths.PDF;
   // static const HOME = _Paths.HOME;
   // static const CUSTOMER_HOME = _Paths.CUSTOMER_HOME;
@@ -53,7 +52,6 @@ abstract class _Paths {
   static const HOME = '/home-view';
   static const DELIVERY_ROUTE = '/delivery-routes';
   static const STORE_DETAILS = '/store-details-view';
-  static const DASHBOARD = '/dashboard-view';
   static const PDF = '/pdf';
 static const USER_TYPE = '/user-type';
   // static const HOME = '/home';

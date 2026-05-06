@@ -6,6 +6,7 @@ import 'package:get_storage/get_storage.dart';
 import 'app/config/app_initializer.dart';
 import 'app/constants/app_colors.dart';
 import 'app/data/data_service.dart';
+import 'app/data/session_manager.dart';
 import 'app/routes/app_pages.dart';
 import 'app/api/api_service.dart';
 
@@ -30,6 +31,7 @@ void main() async {
 
     await GetStorage.init();
     Get.put(GetStorage());
+    Get.put(SessionManager());
     Get.put(ApiService(), permanent: true);
     await Get.putAsync(() => DataService().init());
 
