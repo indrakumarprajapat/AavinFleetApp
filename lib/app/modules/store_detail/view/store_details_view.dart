@@ -54,7 +54,7 @@ class _StoreDetailsScreenState extends State<StoreDetailsView> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(s.storeName, style: TextStyle(fontSize: w * 0.05, fontWeight: FontWeight.w500, color: Colors.white)),
+        title: Text("Booth ${s.number}", style: TextStyle(fontSize: w * 0.05, fontWeight: FontWeight.w500, color: Colors.white)),
         centerTitle: true,
         backgroundColor: const Color(0xff1BA6C8),
         elevation: 0,
@@ -110,7 +110,7 @@ class _StoreDetailsScreenState extends State<StoreDetailsView> {
                                   children: [
                                     Expanded(
                                       child: Text(
-                                        s.storeName,
+                                        "Booth ${s.number}",
                                         style: TextStyle(
                                           fontSize: w * 0.048,
                                           fontWeight: FontWeight.bold,
@@ -127,7 +127,7 @@ class _StoreDetailsScreenState extends State<StoreDetailsView> {
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Text(
-                                        "#${s.number}",
+                                        "#${s.boothId}",
                                         style: TextStyle(
                                           fontSize: w * 0.028,
                                           color: Colors.white,
@@ -227,11 +227,12 @@ class _StoreDetailsScreenState extends State<StoreDetailsView> {
             ),
           ),
 
-          /// STICKY ACTIONS
-          Obx(() {
-            final isCollection = controller.appMode.value == AppMode.collection;
-            return _buildStickyActions(s, w, h, isCollection);
-          }),
+                  /// STICKY ACTIONS
+                  Obx(() {
+                    final isCollection = controller.appMode.value == AppMode.collection;
+                    final isLoading = controller.isLoading.value;
+                    return _buildStickyActions(s, w, h, isCollection, isLoading);
+                  }),
         ],
       ),
     );
@@ -328,7 +329,7 @@ class _StoreDetailsScreenState extends State<StoreDetailsView> {
   }
 
   /// STICKY ACTIONS BAR
-  Widget _buildStickyActions(DeliveryModel s, double w, double h, bool isCollection) {
+  Widget _buildStickyActions(DeliveryModel s, double w, double h, bool isCollection, bool isLoading) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: w * 0.05, vertical: h * 0.03),
       decoration: BoxDecoration(
@@ -370,10 +371,10 @@ class _StoreDetailsScreenState extends State<StoreDetailsView> {
                       elevation: 2,
                       shadowColor: Colors.green.withOpacity(0.3),
                     ),
-                    onPressed: controller.isLoading.value
+                    onPressed: isLoading
                         ? null
                         : () => _handleDeliveryMark(s),
-                    child: controller.isLoading.value
+                    child: isLoading
                         ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
                         : const Text("Mark Delivered", style: TextStyle(fontSize: 17, fontWeight: FontWeight.w500)),
                   ),
@@ -388,7 +389,7 @@ class _StoreDetailsScreenState extends State<StoreDetailsView> {
                       shape: const StadiumBorder(),
                       elevation: 2,
                     ),
-                    onPressed: controller.isLoading.value
+                    onPressed: isLoading
                         ? null
                         : () {
                       if (collectedTraysController.text.trim().isEmpty) {
@@ -416,7 +417,7 @@ class _StoreDetailsScreenState extends State<StoreDetailsView> {
 
                       _handleCollectionMark(s, trays);
                     },
-                    child: controller.isLoading.value
+                    child: isLoading
                         ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
                         : const Text("Mark Collected", style: TextStyle(fontSize: 17, fontWeight: FontWeight.w500)),
                   ),

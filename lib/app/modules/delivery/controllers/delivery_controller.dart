@@ -94,15 +94,25 @@ class DeliveryController extends GetxController {
       final allowed = await LocationUtils.ensureLocationPermission();
       double lat = 0, lng = 0;
       if (allowed) {
-        Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high,
-        );
-        lat = position.latitude;
-        lng = position.longitude;
+        Position? position = await LocationUtils.getCurrentLocation();
+        if (position != null) {
+          lat = position.latitude;
+          lng = position.longitude;
+        }
       }
 
-      int boothId = int.tryParse(store.id.toString()) ?? 0;
-      await api.markDelivered(tripId, boothId, lat, lng);
+      debugPrint("TRIP ID = $tripId");
+      debugPrint("BOOTH ID = ${store.boothId}");
+      
+      try {
+        await api.markDelivered(tripId, store.boothId, lat, lng);
+      } catch (e) {
+        final errorStr = e.toString().toLowerCase();
+        if (!errorStr.contains("already delivered") && !errorStr.contains("already completed")) {
+          rethrow;
+        }
+        debugPrint("Booth already marked delivered on server");
+      }
 
       final index = _getIndexById(store.id);
       if(index == -1) return;
@@ -127,7 +137,7 @@ class DeliveryController extends GetxController {
         Get.back(); // Correctly return to the Route list view
       }
 
-      Get.snackbar("Success", "${store.storeName} delivered ");
+      Get.snackbar("Success", "Booth ${store.number} delivered ");
     } catch (e) {
       Get.snackbar("Error", e.toString());
     } finally {
@@ -254,11 +264,11 @@ class DeliveryController extends GetxController {
       final allowed = await LocationUtils.ensureLocationPermission();
       double lat = 0, lng = 0;
       if (allowed) {
-        Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high,
-        );
-        lat = position.latitude;
-        lng = position.longitude;
+        Position? position = await LocationUtils.getCurrentLocation();
+        if (position != null) {
+          lat = position.latitude;
+          lng = position.longitude;
+        }
       }
       await api.endTrip(tripId, lat, lng);
       
@@ -291,15 +301,27 @@ class DeliveryController extends GetxController {
       final allowed = await LocationUtils.ensureLocationPermission();
       double lat = 0, lng = 0;
       if (allowed) {
-        Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high,
-        );
-        lat = position.latitude;
-        lng = position.longitude;
+        Position? position = await LocationUtils.getCurrentLocation();
+        if (position != null) {
+          lat = position.latitude;
+          lng = position.longitude;
+        }
       }
 
-      int boothId = int.tryParse(store.id.toString()) ?? 0;
-      await api.markCollected(tripId, boothId, trays, lat, lng);
+      debugPrint("TRIP ID = $tripId");
+      debugPrint("BOOTH ID = ${store.boothId}");
+
+      try {
+        await api.markCollected(tripId, store.boothId, trays, lat, lng);
+      } catch (e) {
+        final errorStr = e.toString().toLowerCase();
+        if (!errorStr.contains("already collected") && 
+            !errorStr.contains("already delivered") && 
+            !errorStr.contains("already completed")) {
+          rethrow;
+        }
+        debugPrint("Booth already marked collected/delivered on server");
+      }
 
       final index = _getIndexById(store.id);
       if (index == -1) return;
@@ -311,7 +333,7 @@ class DeliveryController extends GetxController {
         currentCollectingIndex.value = index - 1;
       }
 
-      Get.snackbar("Success", "${store.storeName} collected");
+      Get.snackbar("Success", "Booth ${store.number} collected");
 
       final nextStore = getNextStore(updatedStore);
 

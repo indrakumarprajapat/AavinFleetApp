@@ -38,6 +38,7 @@ class ProductModel {
 }
 
 class DeliveryModel {
+  final int boothId;
   final String id;
   final String number;
   final String storeName;
@@ -48,6 +49,7 @@ class DeliveryModel {
   final int remainingTrays; // Historical residue from previous trips
 
   const DeliveryModel({
+    required this.boothId,
     required this.id,
     required this.number,
     required this.storeName,
@@ -60,6 +62,7 @@ class DeliveryModel {
 
   //CopyWith
   DeliveryModel copyWith({
+    int? boothId,
     String? id,
     String? number,
     String? storeName,
@@ -70,6 +73,7 @@ class DeliveryModel {
     int? remainingTrays,
   }) {
     return DeliveryModel(
+      boothId: boothId ?? this.boothId,
       id: id ?? this.id,
       number: number ?? this.number,
       storeName: storeName ?? this.storeName,
@@ -103,10 +107,15 @@ class DeliveryModel {
 
   // JSON
   factory DeliveryModel.fromJson(Map<String, dynamic> json) {
+    final bId = json['boothId'] ?? json['id'] ?? 0;
+    final bIdStr = bId.toString();
+    final bCode = json['number']?.toString() ?? json['boothCode']?.toString() ?? bIdStr;
+    
     return DeliveryModel(
-      id: json['id']?.toString() ?? "",
-      number: json['number']?.toString() ?? json['boothCode']?.toString() ?? "",
-      storeName: json['storeName']?.toString() ?? json['boothName']?.toString() ?? "Store",
+      boothId: bId is int ? bId : int.tryParse(bId.toString()) ?? 0,
+      id: bIdStr,
+      number: bCode,
+      storeName: "Booth $bCode",
       address: json['address']?.toString() ?? "Address not available",
       status: _parseStatus(json['status']?.toString()),
       products: (json['products'] as List?)
@@ -136,6 +145,7 @@ class DeliveryModel {
 
   Map<String, dynamic> toJson() {
     return {
+      'boothId': boothId,
       'id': id,
       'number': number,
       'storeName': storeName,
