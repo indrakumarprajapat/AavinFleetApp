@@ -14,6 +14,9 @@ class RouteDetail {
   final DateTime? updatedAt;
   final bool? success;
   final int? tripId;
+  final String? routeName;
+  final String? agentName;
+  final String? agentMobile;
 
   final int? gatepassId;
   final List<dynamic>? products;
@@ -34,6 +37,9 @@ class RouteDetail {
     this.success,
     this.products,
     this.tripId,
+    this.routeName,
+    this.agentName,
+    this.agentMobile,
   });
 
   factory RouteDetail.fromJson(Map<String, dynamic> json) {
@@ -87,6 +93,10 @@ class RouteDetail {
       success: ParseUtil.parseBool(json['success']),
 
       products: json['products'] as List?,
+
+      routeName: json['route_name']?.toString() ?? json['routeName']?.toString(),
+      agentName: json['agent_name']?.toString() ?? json['agentName']?.toString(),
+      agentMobile: json['agent_mobile']?.toString() ?? json['agentMobile']?.toString(),
     );
   }
 
@@ -107,6 +117,9 @@ class RouteDetail {
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
       'success': success,
+      'route_name': routeName,
+      'agent_name': agentName,
+      'agent_mobile': agentMobile,
     };
   }
 }

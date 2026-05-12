@@ -5,6 +5,7 @@ import '../../../../utils/location-utils.dart';
 import '../../../../data/session_manager.dart';
 import '../../../../models/fleet_user.dart';
 import '../../../../models/booth_model.dart';
+import '../../../../models/route_detail.dart';
 import '../../../../api/api_service.dart';
 import '../../../../routes/app_pages.dart';
 import '../../../../services/global_cart_service.dart';
@@ -23,8 +24,8 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
 
   var suppliesDate = ''.obs;
   var tripId = 0.obs;
-  var pdfUrl = "".obs;
   var products = <dynamic>[].obs;
+  final routeDetail = Rxn<RouteDetail>();
 
   late TabController tabController;
   late PageController pageController;
@@ -84,14 +85,6 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
     _fleetUser.value = user;
   }
 
-  void openPdf() {
-    if (tripId.value == 0) {
-      Get.snackbar("No Active Trip", "Please wait until a trip is assigned.");
-      return;
-    }
-    Get.toNamed(Routes.PDF, arguments: tripId.value);
-  }
-
   Future<void> startDelivery() async {
     if (tripId.value == 0) {
       Get.snackbar("No Active Trip", "No trip assigned yet.");
@@ -107,8 +100,11 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
       double lng = 0;
 
       if (allowed) {
+        LocationSettings locationSettings = const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        );
         Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high,
+          locationSettings: locationSettings,
         );
 
         lat = position.latitude;
@@ -142,14 +138,13 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
       if (!silent) _isLoading.value = true;
 
       final reportDetails = await apiService.getRouteDetails();
+      routeDetail.value = reportDetails;
 
       final idToUse = reportDetails.tripId ?? reportDetails.id;
       if (idToUse != null) {
         tripId.value = idToUse;
         debugPrint("Loaded Trip ID: ${tripId.value}");
       }
-
-      pdfUrl(reportDetails.mainRouteUrl?.toString() ?? "");
 
       if (reportDetails.products != null) {
         products.value = List<dynamic>.from(reportDetails.products!);

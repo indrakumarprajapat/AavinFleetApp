@@ -17,6 +17,7 @@ void main() async {
     WidgetsFlutterBinding.ensureInitialized();
 
     try {
+      await GetStorage.init();
       AppInitializer.init();
     } catch (e, s) {
       debugPrint("Startup error: $e");
@@ -29,9 +30,7 @@ void main() async {
       debugPrint('Stack Trace: ${details.stack}');
     };
 
-    await GetStorage.init();
     Get.put(GetStorage());
-    Get.put(SessionManager());
     Get.put(ApiService(), permanent: true);
     await Get.putAsync(() => DataService().init());
 

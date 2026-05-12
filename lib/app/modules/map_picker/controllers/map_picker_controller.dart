@@ -57,8 +57,11 @@ class MapPickerController extends GetxController {
       final allowed = await LocationUtils.ensureLocationPermission();
       if (!allowed) return;
 
+      LocationSettings locationSettings = const LocationSettings(
+        accuracy: LocationAccuracy.high,
+      );
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        locationSettings: locationSettings,
       );
       LatLng newLocation = LatLng(position.latitude, position.longitude);
 

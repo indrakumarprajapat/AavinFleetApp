@@ -10,8 +10,6 @@ import '../modules/delivery/view/delivery_route_view.dart';
 import '../modules/agent/home/views/home_view.dart';
 import '../modules/login/bindings/login_binding.dart';
 import '../modules/login/views/login_view.dart';
-import '../modules/pdf/binding/pdf_binding.dart';
-import '../modules/pdf/view/pdf_view.dart';
 import '../modules/splash/bindings/splash_binding.dart';
 import '../modules/splash/views/splash_view.dart';
 import '../modules/store_detail/view/store_details_view.dart';
@@ -47,16 +45,6 @@ class AppPages {
       name: _Paths.STORE_DETAILS,
       page: () => const StoreDetailsView(),
       binding: DeliveryRouteBinding(),
-    ),
-    // GetPage(
-    //   name: _Paths.DASHBOARD,
-    //   page: () => const DashboardView(),
-    //   binding: DashboardBinding(),
-    // ),
-    GetPage(
-      name: _Paths.PDF,
-      page: () => const PdfView(),
-      binding: PdfBinding(),
     ),
   ];
 }

@@ -23,11 +23,13 @@ class HomeView extends GetView<HomeController> {
         body: Stack(
           children: [
             _buildHomeContent(controller),
-            _buildCustomHeader(
+            Obx(() => _buildCustomHeader(
               isLocationSubmitted,
-              controller.fleetUser?.routeName ?? '',
+              controller.routeDetail.value?.routeName ?? 
+                  controller.routeDetail.value?.routeId?.toString() ??
+                  controller.fleetUser?.routeName ?? '',
               controller.fleetUser?.vehicleRegistrationNumber ?? '',
-            ),
+            )),
           ],
         ),
         bottomNavigationBar: _buildFooterView(),
@@ -132,14 +134,6 @@ class HomeView extends GetView<HomeController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // const Text(
-        //   "Trip Summary",
-        //   style: TextStyle(
-        //     fontSize: 18,
-        //     fontWeight: FontWeight.bold,
-        //     color: Color(0xFF005F7A),
-        //   ),
-        // ),
         const SizedBox(height: 15),
         Obx(() {
           if (controller.products.isEmpty) {
@@ -337,10 +331,10 @@ class HomeView extends GetView<HomeController> {
       ),
     );
   }
-
+ 
   Widget _buildCustomHeader(
     bool isLocationSubmitted,
-    String societyName,
+    String routeName,
     String regNumber,
   ) {
     final now = DateTime.now();
@@ -402,7 +396,7 @@ class HomeView extends GetView<HomeController> {
 
               /// 🔹 ROUTE NAME
               Text(
-                'Route: $societyName',
+                'Route: $routeName',
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,

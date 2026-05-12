@@ -153,14 +153,15 @@ class DeliveryRouteView extends GetView<DeliveryController> {
                         DeliveryStatus status;
 
                         if (isCollection) {
-                          // Collection logic: Work backwards from last to first
                           final originalIndex = originalDeliveries.indexOf(delivery);
                           final currentActive = controller.currentCollectingIndex.value;
 
-                          if (originalIndex > currentActive) {
-                            status = DeliveryStatus.delivered; // Already collected
+                          if (delivery.apiIsCollected || delivery.collectedTrays > 0) {
+                             status = DeliveryStatus.delivered;
                           } else if (originalIndex == currentActive) {
                             status = DeliveryStatus.delivering; // Currently collecting
+                          } else if (originalIndex > currentActive && currentActive != -1) {
+                            status = DeliveryStatus.delivered; // Already passed
                           } else {
                             status = DeliveryStatus.pending; // To be collected
                           }

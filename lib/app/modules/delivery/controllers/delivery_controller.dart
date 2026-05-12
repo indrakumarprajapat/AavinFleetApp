@@ -1,17 +1,13 @@
 import 'package:geolocator/geolocator.dart';
 import '../../../data/session_manager.dart';
 import '../../../utils/location-utils.dart';
-import 'dart:convert';
 
 import 'package:aavin/app/api/api_service.dart';
-import 'package:aavin/app/modules/store_detail/view/store_details_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:get_storage/get_storage.dart';
-import '../../../models/booth_model.dart';
-import '../../../models/fleet_user.dart';
 import '../../../models/delivery_model.dart';
 import '../../../routes/app_pages.dart';
 
@@ -43,12 +39,36 @@ class DeliveryController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    
+    // 1. Recover Trip Mode
+    final storedMode = storage.read('app_mode');
+    if (storedMode != null) {
+      appMode.value = storedMode == 'collection' ? AppMode.collection : AppMode.delivery;
+    }
+
+    // 2. Recover Trip ID (from arguments or storage)
     if (Get.arguments != null) {
       tripId = int.tryParse(Get.arguments.toString()) ?? 0;
+    } else {
+      tripId = storage.read('active_trip_id') ?? 0;
     }
+
+    if (tripId != 0) {
+      storage.write('active_trip_id', tripId);
+      debugPrint("DeliveryController: Active Trip ID = $tripId");
+    }
+
+    // 3. Recover User Info
     _loadUserInfo();
+
+    // 4. Recover Collection Index
+    final storedIndex = storage.read('collecting_index_$tripId');
+    if (storedIndex != null) {
+      currentCollectingIndex.value = storedIndex;
+    }
+
+    // 5. Load Data
     fetchRouteBooths();
-    // loadTripSummary();
   }
 
   void _loadUserInfo() {
@@ -69,15 +89,68 @@ class DeliveryController extends GetxController {
   Future<void> fetchRouteBooths() async {
     try {
       isLoading.value = true;
-      final data = (appMode.value == AppMode.delivery) 
+      final data = (appMode.value == AppMode.delivery)
           ? await api.getTripBooths(tripId, "DELIVERY")
           : await api.getCollectionBooths(tripId);
+
+      final initialBooths = data.map<DeliveryModel>((json) {
+        return DeliveryModel.fromJson(json);
+      }).toList();
+      
+      // 1. Initialize statuses based on API and Local Storage
+      final List<dynamic> rawDelivered = storage.read('delivered_booths_$tripId') ?? [];
+      final Set<String> localDeliveredIds = rawDelivered.map((e) => e.toString()).toSet();
+      final List<dynamic> rawCollected = storage.read('collected_booths_$tripId') ?? [];
+      final Set<String> localCollectedIds = rawCollected.map((e) => e.toString()).toSet();
+
+      for (int i = 0; i < initialBooths.length; i++) {
+        final bId = initialBooths[i].boothId.toString();
+        bool isDone = false;
+        
+        if (appMode.value == AppMode.delivery) {
+          isDone = initialBooths[i].apiIsDelivered || localDeliveredIds.contains(bId);
+        } else {
+          isDone = initialBooths[i].apiIsCollected || initialBooths[i].collectedTrays > 0 || localCollectedIds.contains(bId);
+        }
+        
+        if (isDone) {
+          initialBooths[i] = initialBooths[i].copyWith(status: DeliveryStatus.delivered);
+        } else {
+          initialBooths[i] = initialBooths[i].copyWith(status: DeliveryStatus.pending);
+        }
+      }
+      
+      // 2. RESUME LOGIC: Auto-highlight the next available booth (IN_PROGRESS)
+      bool hasInProgress = initialBooths.any((b) => b.status == DeliveryStatus.delivering);
+
+      if (!hasInProgress) {
+        if (appMode.value == AppMode.delivery) {
+          int firstPendingIndex = initialBooths.indexWhere((b) => b.status == DeliveryStatus.pending);
+          if (firstPendingIndex != -1) {
+            initialBooths[firstPendingIndex] = initialBooths[firstPendingIndex].copyWith(status: DeliveryStatus.delivering);
+          }
+        } else if (appMode.value == AppMode.collection) {
+          int nextToCollect = -1;
+          for (int i = initialBooths.length - 1; i >= 0; i--) {
+            if (initialBooths[i].status == DeliveryStatus.pending) {
+              nextToCollect = i;
+              break;
+            }
+          }
           
-      deliveries.assignAll(
-        data.map<DeliveryModel>((json) {
-          return DeliveryModel.fromJson(json);
-        }).toList(),
-      );
+          if (nextToCollect != -1) {
+            currentCollectingIndex.value = nextToCollect;
+            initialBooths[nextToCollect] = initialBooths[nextToCollect].copyWith(status: DeliveryStatus.delivering);
+          } else if (initialBooths.isNotEmpty) {
+            currentCollectingIndex.value = -1;
+          }
+        }
+      } else if (appMode.value == AppMode.collection) {
+        currentCollectingIndex.value = initialBooths.indexWhere((b) => b.status == DeliveryStatus.delivering);
+      }
+      
+      storage.write('collecting_index_$tripId', currentCollectingIndex.value);
+      deliveries.assignAll(initialBooths);
     } catch (e) {
       Get.snackbar("Error", e.toString());
     } finally {
@@ -101,17 +174,26 @@ class DeliveryController extends GetxController {
         }
       }
 
-      debugPrint("TRIP ID = $tripId");
-      debugPrint("BOOTH ID = ${store.boothId}");
-      
       try {
         await api.markDelivered(tripId, store.boothId, lat, lng);
+        
+        // SAVE PERSISTENCE IMMEDIATELY AFTER API SUCCESS
+        List<dynamic> delivered = storage.read('delivered_booths_$tripId') ?? [];
+        if (!delivered.contains(store.boothId)) {
+          delivered.add(store.boothId);
+          storage.write('delivered_booths_$tripId', delivered);
+        }
       } catch (e) {
         final errorStr = e.toString().toLowerCase();
         if (!errorStr.contains("already delivered") && !errorStr.contains("already completed")) {
           rethrow;
         }
-        debugPrint("Booth already marked delivered on server");
+        // Even if server says "already delivered", ensure it's in our local list
+        List<dynamic> delivered = storage.read('delivered_booths_$tripId') ?? [];
+        if (!delivered.contains(store.boothId)) {
+          delivered.add(store.boothId);
+          storage.write('delivered_booths_$tripId', delivered);
+        }
       }
 
       final index = _getIndexById(store.id);
@@ -125,23 +207,34 @@ class DeliveryController extends GetxController {
           deliveries[index + 1] = next.copyWith(status: DeliveryStatus.delivering);
         }
       }
+      Get.snackbar(
+        "Success",
+        "Booth ${store.number} delivered",
+        snackPosition: SnackPosition.TOP,
+      );
+
       final nextStore = getNextStore(updatedStore);
+      isLoading.value = false;
 
-      if (nextStore != null) {
-        Get.offNamed(
-          Routes.STORE_DETAILS,
-          arguments: nextStore,
-          preventDuplicates: false,
-        );
-      } else {
-        Get.back(); // Correctly return to the Route list view
-      }
+      Future.delayed(const Duration(milliseconds: 300), () {
+        FocusManager.instance.primaryFocus?.unfocus();
 
-      Get.snackbar("Success", "Booth ${store.number} delivered ");
+        if (nextStore != null) {
+          Get.offNamed(
+            Routes.STORE_DETAILS,
+            arguments: nextStore,
+            preventDuplicates: false,
+          );
+        } else {
+          Get.back();
+          showCompletionDialog();
+        }
+      });
     } catch (e) {
+      isLoading.value = false;
       Get.snackbar("Error", e.toString());
     } finally {
-      isLoading.value = false;
+      // Handled above to ensure proper timing with navigation
     }
   }
 
@@ -150,11 +243,23 @@ class DeliveryController extends GetxController {
     try {
       isLoading.value = true;
       appMode.value = AppMode.collection;
+      storage.write('app_mode', 'collection');
+      
+      // Refresh booths for collection mode
       await fetchRouteBooths();
       
       if (deliveries.isNotEmpty) {
+        // Start collection from the last delivery booth (reverse order)
         currentCollectingIndex.value = deliveries.length - 1;
-        openStoreDetails(deliveries.last);
+        storage.write('collecting_index_$tripId', currentCollectingIndex.value);
+        
+        if (currentCollectingIndex.value >= 0 && currentCollectingIndex.value < deliveries.length) {
+          final targetStore = deliveries[currentCollectingIndex.value];
+          // Safety delay to allow UI to stabilize before navigation
+          Future.delayed(const Duration(milliseconds: 100), () {
+            openStoreDetails(targetStore);
+          });
+        }
       }
     } catch (e) {
       Get.snackbar("Error", "Failed to start collection: $e");
@@ -272,6 +377,13 @@ class DeliveryController extends GetxController {
       }
       await api.endTrip(tripId, lat, lng);
       
+      // CLEAR PERSISTENCE
+      storage.remove('active_trip_id');
+      storage.remove('app_mode');
+      storage.remove('delivered_booths_$tripId');
+      storage.remove('collected_booths_$tripId');
+      storage.remove('collecting_index_$tripId');
+      
       // Close the app or return to login/home
       SystemNavigator.pop();
     } catch (e) {
@@ -308,11 +420,15 @@ class DeliveryController extends GetxController {
         }
       }
 
-      debugPrint("TRIP ID = $tripId");
-      debugPrint("BOOTH ID = ${store.boothId}");
-
       try {
         await api.markCollected(tripId, store.boothId, trays, lat, lng);
+        
+        // SAVE PERSISTENCE
+        List<dynamic> collected = storage.read('collected_booths_$tripId') ?? [];
+        if (!collected.contains(store.boothId)) {
+          collected.add(store.boothId);
+          storage.write('collected_booths_$tripId', collected);
+        }
       } catch (e) {
         final errorStr = e.toString().toLowerCase();
         if (!errorStr.contains("already collected") && 
@@ -320,37 +436,69 @@ class DeliveryController extends GetxController {
             !errorStr.contains("already completed")) {
           rethrow;
         }
-        debugPrint("Booth already marked collected/delivered on server");
+        // Even on error, if it's already done, mark it locally
+        List<dynamic> collected = storage.read('collected_booths_$tripId') ?? [];
+        if (!collected.contains(store.boothId)) {
+          collected.add(store.boothId);
+          storage.write('collected_booths_$tripId', collected);
+        }
       }
 
       final index = _getIndexById(store.id);
-      if (index == -1) return;
+      debugPrint("MarkCollected: Booth ${store.number} at index $index. Mode: ${appMode.value}");
+      if (index == -1) {
+        debugPrint("Error: Could not find booth in list");
+        return;
+      }
 
-      final updatedStore = store.copyWith(collectedTrays: trays);
+      final updatedStore = store.copyWith(collectedTrays: trays, status: DeliveryStatus.delivered);
       deliveries[index] = updatedStore;
 
-      if (appMode.value == AppMode.collection && index > 0) {
-        currentCollectingIndex.value = index - 1;
+      if (appMode.value == AppMode.collection) {
+        // Move to the previous index for collection (backwards)
+        int nextIndex = index - 1;
+        while (nextIndex >= 0) {
+          if (deliveries[nextIndex].status != DeliveryStatus.delivered) {
+            deliveries[nextIndex] = deliveries[nextIndex].copyWith(status: DeliveryStatus.delivering);
+            currentCollectingIndex.value = nextIndex;
+            break;
+          }
+          nextIndex--;
+        }
+        
+        if (nextIndex < 0) {
+          currentCollectingIndex.value = -1;
+        }
+        storage.write('collecting_index_$tripId', currentCollectingIndex.value);
       }
 
-      Get.snackbar("Success", "Booth ${store.number} collected");
+      Get.snackbar(
+        "Success", 
+        "Booth ${store.number} collected",
+        snackPosition: SnackPosition.TOP,
+      );
 
       final nextStore = getNextStore(updatedStore);
+      isLoading.value = false;
 
-      if (nextStore != null) {
-        Get.offNamed(
-          Routes.STORE_DETAILS,
-          arguments: nextStore,
-          preventDuplicates: false,
-        );
-      } else {
-        Get.back(); // Correctly return to the Route list view
-        showCompletionDialog();
-      }
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (nextStore != null) {
+          Get.offNamed(
+            Routes.STORE_DETAILS,
+            arguments: nextStore,
+            preventDuplicates: false,
+          );
+        } else {
+          Get.back();
+          showCompletionDialog();
+        }
+      });
     } catch (e) {
+      isLoading.value = false;
+      debugPrint("Collection Error: $e");
       Get.snackbar("Error", "Collection failed: $e");
     } finally {
-      isLoading.value = false;
+      // Handled above
     }
   }
 

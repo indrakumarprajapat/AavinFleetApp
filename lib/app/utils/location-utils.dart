@@ -47,9 +47,12 @@ class LocationUtils {
       }
 
       // Otherwise try to get current position with medium accuracy and a timeout
+      LocationSettings locationSettings = const LocationSettings(
+        accuracy: LocationAccuracy.medium,
+        timeLimit: Duration(seconds: 5),
+      );
       return await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.medium,
-        timeLimit: const Duration(seconds: 5),
+        locationSettings: locationSettings,
       );
     } catch (e) {
       print('Error getting location: $e');

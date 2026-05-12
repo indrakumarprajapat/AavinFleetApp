@@ -79,8 +79,11 @@ class BoothCaptureController extends GetxController {
         return;
       }
 
+      LocationSettings locationSettings = const LocationSettings(
+        accuracy: LocationAccuracy.high,
+      );
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        locationSettings: locationSettings,
       );
 
       // LocationPermission permission = await Geolocator.requestPermission();

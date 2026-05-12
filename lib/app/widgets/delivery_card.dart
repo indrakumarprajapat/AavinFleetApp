@@ -9,7 +9,6 @@ class DeliveryCard extends StatelessWidget {
   final bool isCollection;
   final int? tray;
   final int? packet;
-  final int? tub;
   final int? remainingTray;
 
   DeliveryCard({
@@ -18,19 +17,15 @@ class DeliveryCard extends StatelessWidget {
     required this.status,
     this.tray,
     this.packet,
-    this.tub,
     this.remainingTray,
     this.isCollection = false,
   });
 
   int get totalTray =>
-      tray ?? store.products.fold(0, (sum, p) => sum + p.trays);
+      tray ?? store.totalTrays;
 
   int get totalPacket =>
-      packet ?? store.products.fold(0, (sum, p) => sum + p.packets);
-
-  int get totalTub =>
-      tub ?? store.products.fold(0, (sum, p) => sum + p.tubs);
+      packet ?? store.totalPackets;
 
   bool get isDelivered => status == DeliveryStatus.delivered;
 
@@ -264,32 +259,7 @@ class DeliveryCard extends StatelessWidget {
                   ),
                 ],
 
-                SizedBox(height: h * 0.01),
 
-                /// TUB (HIDDEN IN COLLECTION MODE)
-                if (!isCollection) ...[
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.local_mall,
-                            size: w * 0.045,
-                            color: (isDelivered || isCurrent)
-                                ? Colors.green
-                                : Colors.grey,
-                          ),
-                          SizedBox(width: w * 0.015),
-                          Text("Tub", style: TextStyle(fontSize: w * 0.04)),
-                        ],
-                      ),
-                      Text("$totalTub",
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: w * 0.04)),
-                    ],
-                  ),
-                ],
 
                 /// REMAINING
                 if (store.remainingTrays > 0) ...[
@@ -331,7 +301,7 @@ class DeliveryCard extends StatelessWidget {
                   padding: EdgeInsets.symmetric(horizontal: w * 0.03),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: getStatusColor().withOpacity(0.15),
+                    color: getStatusColor().withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -355,7 +325,7 @@ class DeliveryCard extends StatelessWidget {
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: (isCurrent || isDelivered)
-                          ? getStatusColor().withOpacity(0.2)
+                          ? getStatusColor().withValues(alpha: 0.2)
                           : Colors.grey.shade500,
                       borderRadius: BorderRadius.circular(8),
                     ),

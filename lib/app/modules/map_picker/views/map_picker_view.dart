@@ -30,7 +30,7 @@ class MapPickerView extends GetView<MapPickerController> {
               style: TextStyle(
                 color: controller.selectedAddress.value.isNotEmpty
                     ? AppColors.white
-                    : AppColors.white.withOpacity(0.5),
+                    : AppColors.white.withValues(alpha: 0.5),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -77,7 +77,7 @@ class MapPickerView extends GetView<MapPickerController> {
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: Colors.black.withValues(alpha: 0.1),
                               blurRadius: 8,
                               offset: Offset(0, 2),
                             ),
