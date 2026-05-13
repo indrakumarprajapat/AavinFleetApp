@@ -51,7 +51,11 @@ const Map<String, ClientConfig> clientConfigs = {
     enablePayments: true,
     // baseUrl: "https://api.aavincbe.cwitch.tech/",
     // baseUrl: "http://192.168.29.89:3043/",
-    baseUrl: "http://192.168.29.86:3043/",
+    // baseUrl: "http://192.168.29.86:3043/",
+    baseUrl: "http://10.182.13.228:3043/",
+
+    // baseUrl: "http://192.168.1.10:3043/",
+
 
 
 

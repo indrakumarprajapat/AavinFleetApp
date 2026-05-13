@@ -104,49 +104,88 @@ class DeliveryController extends GetxController {
       final Set<String> localCollectedIds = rawCollected.map((e) => e.toString()).toSet();
 
       for (int i = 0; i < initialBooths.length; i++) {
-        final bId = initialBooths[i].boothId.toString();
-        bool isDone = false;
-        
+        final booth = initialBooths[i];
+        final bId = booth.boothId.toString();
+
         if (appMode.value == AppMode.delivery) {
-          isDone = initialBooths[i].apiIsDelivered || localDeliveredIds.contains(bId);
+
+          final isDelivered =
+              booth.apiIsDelivered ||
+                  localDeliveredIds.contains(bId);
+
+          initialBooths[i] = booth.copyWith(
+            status: isDelivered
+                ? DeliveryStatus.delivered
+                : DeliveryStatus.toBeDelivered,
+          );
+
         } else {
-          isDone = initialBooths[i].apiIsCollected || initialBooths[i].collectedTrays > 0 || localCollectedIds.contains(bId);
-        }
-        
-        if (isDone) {
-          initialBooths[i] = initialBooths[i].copyWith(status: DeliveryStatus.delivered);
-        } else {
-          initialBooths[i] = initialBooths[i].copyWith(status: DeliveryStatus.pending);
+
+          final isCollected =
+              booth.apiIsCollected ||
+                  localCollectedIds.contains(bId) ||
+                  booth.collectedTrays >= booth.totalTrays;
+
+          initialBooths[i] = booth.copyWith(
+            status: isCollected
+                ? DeliveryStatus.collected
+                : DeliveryStatus.toBeCollected,
+          );
         }
       }
-      
       // 2. RESUME LOGIC: Auto-highlight the next available booth (IN_PROGRESS)
-      bool hasInProgress = initialBooths.any((b) => b.status == DeliveryStatus.delivering);
-
+      bool hasInProgress = initialBooths.any(
+            (b) =>
+        b.status == DeliveryStatus.delivering ||
+            b.status == DeliveryStatus.collecting,
+      );
       if (!hasInProgress) {
         if (appMode.value == AppMode.delivery) {
-          int firstPendingIndex = initialBooths.indexWhere((b) => b.status == DeliveryStatus.pending);
-          if (firstPendingIndex != -1) {
-            initialBooths[firstPendingIndex] = initialBooths[firstPendingIndex].copyWith(status: DeliveryStatus.delivering);
+
+          final firstPending = initialBooths.indexWhere(
+                (b) => b.status == DeliveryStatus.toBeDelivered,
+          );
+
+          if (firstPending != -1) {
+            initialBooths[firstPending] =
+                initialBooths[firstPending].copyWith(
+                  status: DeliveryStatus.delivering,
+                );
           }
-        } else if (appMode.value == AppMode.collection) {
+
+        } else {
+
           int nextToCollect = -1;
+
           for (int i = initialBooths.length - 1; i >= 0; i--) {
-            if (initialBooths[i].status == DeliveryStatus.pending) {
+
+            if (initialBooths[i].status ==
+                DeliveryStatus.toBeCollected) {
+
               nextToCollect = i;
               break;
             }
           }
-          
+
           if (nextToCollect != -1) {
+
             currentCollectingIndex.value = nextToCollect;
-            initialBooths[nextToCollect] = initialBooths[nextToCollect].copyWith(status: DeliveryStatus.delivering);
-          } else if (initialBooths.isNotEmpty) {
+
+            initialBooths[nextToCollect] =
+                initialBooths[nextToCollect].copyWith(
+                  status: DeliveryStatus.collecting,
+                );
+
+          } else {
+
             currentCollectingIndex.value = -1;
           }
         }
       } else if (appMode.value == AppMode.collection) {
-        currentCollectingIndex.value = initialBooths.indexWhere((b) => b.status == DeliveryStatus.delivering);
+        currentCollectingIndex.value =
+            initialBooths.indexWhere(
+                  (b) => b.status == DeliveryStatus.collecting,
+            );
       }
       
       storage.write('collecting_index_$tripId', currentCollectingIndex.value);
@@ -161,13 +200,18 @@ class DeliveryController extends GetxController {
   //START TRIP
   Future<void> markDelivered(DeliveryModel store) async {
     if (isLoading.value) return;
+
     try {
       isLoading.value = true;
 
       final allowed = await LocationUtils.ensureLocationPermission();
-      double lat = 0, lng = 0;
+
+      double lat = 0;
+      double lng = 0;
+
       if (allowed) {
         Position? position = await LocationUtils.getCurrentLocation();
+
         if (position != null) {
           lat = position.latitude;
           lng = position.longitude;
@@ -175,38 +219,70 @@ class DeliveryController extends GetxController {
       }
 
       try {
-        await api.markDelivered(tripId, store.boothId, lat, lng);
-        
-        // SAVE PERSISTENCE IMMEDIATELY AFTER API SUCCESS
-        List<dynamic> delivered = storage.read('delivered_booths_$tripId') ?? [];
+        await api.markDelivered(
+          tripId,
+          store.boothId,
+          lat,
+          lng,
+        );
+
+        /// SAVE LOCAL
+        List<dynamic> delivered =
+            storage.read('delivered_booths_$tripId') ?? [];
+
         if (!delivered.contains(store.boothId)) {
           delivered.add(store.boothId);
-          storage.write('delivered_booths_$tripId', delivered);
+
+          storage.write(
+            'delivered_booths_$tripId',
+            delivered,
+          );
         }
       } catch (e) {
         final errorStr = e.toString().toLowerCase();
-        if (!errorStr.contains("already delivered") && !errorStr.contains("already completed")) {
+
+        if (!errorStr.contains("already delivered") &&
+            !errorStr.contains("already completed")) {
           rethrow;
         }
-        // Even if server says "already delivered", ensure it's in our local list
-        List<dynamic> delivered = storage.read('delivered_booths_$tripId') ?? [];
+
+        /// SAVE EVEN IF ALREADY DELIVERED
+        List<dynamic> delivered =
+            storage.read('delivered_booths_$tripId') ?? [];
+
         if (!delivered.contains(store.boothId)) {
           delivered.add(store.boothId);
-          storage.write('delivered_booths_$tripId', delivered);
+
+          storage.write(
+            'delivered_booths_$tripId',
+            delivered,
+          );
         }
       }
 
+      /// UPDATE CURRENT STORE STATUS
       final index = _getIndexById(store.id);
-      if(index == -1) return;
-      final updatedStore = store.copyWith(status: DeliveryStatus.delivered);
+
+      if (index == -1) return;
+
+      final updatedStore = store.copyWith(
+        status: DeliveryStatus.delivered,
+      );
+
       deliveries[index] = updatedStore;
 
-      if(index < deliveries.length - 1){
+      /// MOVE NEXT DELIVERY TO IN PROGRESS
+      if (index < deliveries.length - 1) {
         final next = deliveries[index + 1];
-        if(next.status == DeliveryStatus.pending){
-          deliveries[index + 1] = next.copyWith(status: DeliveryStatus.delivering);
+
+        if (next.status == DeliveryStatus.toBeDelivered ||
+            next.status == DeliveryStatus.delivering) {
+          deliveries[index + 1] = next.copyWith(
+            status: DeliveryStatus.delivering,
+          );
         }
       }
+
       Get.snackbar(
         "Success",
         "Booth ${store.number} delivered",
@@ -214,60 +290,112 @@ class DeliveryController extends GetxController {
       );
 
       final nextStore = getNextStore(updatedStore);
+
       isLoading.value = false;
 
-      Future.delayed(const Duration(milliseconds: 300), () {
-        FocusManager.instance.primaryFocus?.unfocus();
+      Future.delayed(
+        const Duration(milliseconds: 300),
+            () async {
+          FocusManager.instance.primaryFocus?.unfocus();
 
-        if (nextStore != null) {
-          Get.offNamed(
-            Routes.STORE_DETAILS,
-            arguments: nextStore,
-            preventDuplicates: false,
-          );
-        } else {
-          Get.back();
-          showCompletionDialog();
-        }
-      });
+          /// NEXT DELIVERY BOOTH
+          if (nextStore != null) {
+            Get.offNamed(
+              Routes.STORE_DETAILS,
+              arguments: nextStore,
+              preventDuplicates: false,
+            );
+
+            return;
+          }
+
+          /// START COLLECTION MODE
+          await initiateCollection();
+
+          /// FIND FIRST COLLECTION BOOTH
+          DeliveryModel? collectionBooth;
+
+          for (int i = deliveries.length - 1; i >= 0; i--) {
+            if (deliveries[i].status != DeliveryStatus.delivered) {
+              collectionBooth = deliveries[i];
+              break;
+            }
+          }
+
+          /// OPEN COLLECTION BOOTH
+          if (collectionBooth != null) {
+            Get.offNamed(
+              Routes.STORE_DETAILS,
+              arguments: collectionBooth,
+              preventDuplicates: false,
+            );
+          } else {
+            Get.back();
+          }
+        },
+      );
     } catch (e) {
       isLoading.value = false;
-      Get.snackbar("Error", e.toString());
-    } finally {
-      // Handled above to ensure proper timing with navigation
+
+      Get.snackbar(
+        "Error",
+        e.toString(),
+      );
     }
   }
-
   //START COLLECTION
   Future<void> initiateCollection() async {
     try {
+
       isLoading.value = true;
+
       appMode.value = AppMode.collection;
+
       storage.write('app_mode', 'collection');
-      
-      // Refresh booths for collection mode
+
       await fetchRouteBooths();
-      
-      if (deliveries.isNotEmpty) {
-        // Start collection from the last delivery booth (reverse order)
-        currentCollectingIndex.value = deliveries.length - 1;
-        storage.write('collecting_index_$tripId', currentCollectingIndex.value);
-        
-        if (currentCollectingIndex.value >= 0 && currentCollectingIndex.value < deliveries.length) {
-          final targetStore = deliveries[currentCollectingIndex.value];
-          // Safety delay to allow UI to stabilize before navigation
-          Future.delayed(const Duration(milliseconds: 100), () {
-            openStoreDetails(targetStore);
-          });
+
+      if (deliveries.isEmpty) return;
+
+      int lastPending = -1;
+
+      for (int i = deliveries.length - 1; i >= 0; i--) {
+
+        if (deliveries[i].status ==
+            DeliveryStatus.toBeCollected) {
+
+          lastPending = i;
+          break;
         }
       }
+
+      if (lastPending != -1) {
+
+        currentCollectingIndex.value = lastPending;
+
+        deliveries[lastPending] =
+            deliveries[lastPending].copyWith(
+              status: DeliveryStatus.collecting,
+            );
+      }
+
+      storage.write(
+        'collecting_index_$tripId',
+        currentCollectingIndex.value,
+      );
+
     } catch (e) {
-      Get.snackbar("Error", "Failed to start collection: $e");
+
+      Get.snackbar(
+        "Error",
+        "Failed to start collection: $e",
+      );
+
     } finally {
+
       isLoading.value = false;
     }
   }
-
   @Deprecated("Use markCollected instead")
   Future<void> startCollection(DeliveryModel store) async {
     // This was previously used for individual store collection start
@@ -394,12 +522,6 @@ class DeliveryController extends GetxController {
   }
 
 
-  @override
-  void onClose() {
-    deliveries.clear();
-    super.onClose();
-  }
-
   int _getIndexById(String id) {
     return deliveries.indexWhere((s) => s.id == id);
   }
@@ -451,27 +573,36 @@ class DeliveryController extends GetxController {
         return;
       }
 
-      final updatedStore = store.copyWith(collectedTrays: trays, status: DeliveryStatus.delivered);
+      final updatedStore = store.copyWith(
+        collectedTrays: trays,
+        status: DeliveryStatus.collected,
+      );
+
       deliveries[index] = updatedStore;
 
       if (appMode.value == AppMode.collection) {
-        // Move to the previous index for collection (backwards)
         int nextIndex = index - 1;
         while (nextIndex >= 0) {
-          if (deliveries[nextIndex].status != DeliveryStatus.delivered) {
-            deliveries[nextIndex] = deliveries[nextIndex].copyWith(status: DeliveryStatus.delivering);
+          if (deliveries[nextIndex].status != DeliveryStatus.collected) {
+            deliveries[nextIndex] =
+                deliveries[nextIndex].copyWith(
+                  status: DeliveryStatus.collecting,
+                );
             currentCollectingIndex.value = nextIndex;
             break;
           }
           nextIndex--;
         }
-        
+
         if (nextIndex < 0) {
           currentCollectingIndex.value = -1;
         }
-        storage.write('collecting_index_$tripId', currentCollectingIndex.value);
-      }
 
+        storage.write(
+          'collecting_index_$tripId',
+          currentCollectingIndex.value,
+        );
+      }
       Get.snackbar(
         "Success", 
         "Booth ${store.number} collected",
@@ -482,6 +613,8 @@ class DeliveryController extends GetxController {
       isLoading.value = false;
 
       Future.delayed(const Duration(milliseconds: 300), () {
+        FocusManager.instance.primaryFocus?.unfocus();
+
         if (nextStore != null) {
           Get.offNamed(
             Routes.STORE_DETAILS,
@@ -489,7 +622,7 @@ class DeliveryController extends GetxController {
             preventDuplicates: false,
           );
         } else {
-          Get.back();
+          // Return to route list when finished
           showCompletionDialog();
         }
       });
@@ -497,8 +630,6 @@ class DeliveryController extends GetxController {
       isLoading.value = false;
       debugPrint("Collection Error: $e");
       Get.snackbar("Error", "Collection failed: $e");
-    } finally {
-      // Handled above
     }
   }
 
@@ -509,12 +640,16 @@ class DeliveryController extends GetxController {
       if (index == -1 || deliveries.isEmpty) return null;
 
       if (appMode.value == AppMode.delivery) {
-        if (index < deliveries.length - 1) {
-          return deliveries[index + 1];
+        for (int i = index + 1; i < deliveries.length; i++) {
+          if (deliveries[i].status != DeliveryStatus.delivered) {
+            return deliveries[i];
+          }
         }
       } else {
-        if (index > 0) {
-          return deliveries[index - 1];
+        for (int i = index - 1; i >= 0; i--) {
+          if (deliveries[i].status != DeliveryStatus.collected) {
+            return deliveries[i];
+          }
         }
       }
 

@@ -34,13 +34,13 @@ class DeliveryCard extends StatelessWidget {
   static final Map<DeliveryStatus, Color> statusColors = {
     DeliveryStatus.delivered: Colors.green,
     DeliveryStatus.delivering: Colors.blue,
-    DeliveryStatus.pending: Colors.grey,
+    DeliveryStatus.toBeDelivered: Colors.grey,
   };
 
   static final Map<DeliveryStatus, String> deliveryText = {
     DeliveryStatus.delivered: "DELIVERED",
     DeliveryStatus.delivering: "IN_PROGRESS",
-    DeliveryStatus.pending: "PENDING",
+    DeliveryStatus.toBeDelivered: "PENDING",
   };
 
   Color getStatusColor() {
@@ -52,7 +52,7 @@ class DeliveryCard extends StatelessWidget {
       return {
         DeliveryStatus.delivered: "COLLECTED",
         DeliveryStatus.delivering: "COLLECTING",
-        DeliveryStatus.pending: "TO BE COLLECTED",
+        DeliveryStatus.toBeCollected: "TO BE COLLECTED",
       }[status] ?? "Unknown";
     }
     return deliveryText[status] ?? "Unknown";
@@ -66,9 +66,9 @@ class DeliveryCard extends StatelessWidget {
       case "IN_PROGRESS":
         return DeliveryStatus.delivering;
       case "PENDING":
-        return DeliveryStatus.pending;
+        return DeliveryStatus.toBeDelivered;
       default:
-        return DeliveryStatus.pending;
+        return DeliveryStatus.toBeDelivered;
     }
   }
 

@@ -163,7 +163,7 @@ class DeliveryRouteView extends GetView<DeliveryController> {
                           } else if (originalIndex > currentActive && currentActive != -1) {
                             status = DeliveryStatus.delivered; // Already passed
                           } else {
-                            status = DeliveryStatus.pending; // To be collected
+                            status = DeliveryStatus.toBeCollected; // To be collected
                           }
                         } else {
                           status = delivery.status;
@@ -187,7 +187,7 @@ class DeliveryRouteView extends GetView<DeliveryController> {
 
                   if (controller.appMode.value == AppMode.delivery &&
                       deliveries.every(
-                              (d) => d.status == DeliveryStatus.delivered))
+                              (d) => d.status == DeliveryStatus.delivered || d.status == DeliveryStatus.collected))
                     Padding(
                       padding: EdgeInsets.all(w * 0.04),
                       child: SizedBox(
@@ -196,12 +196,40 @@ class DeliveryRouteView extends GetView<DeliveryController> {
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xff1BA6C8),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
                           onPressed: () {
                             controller.initiateCollection();
                           },
                           child: Text(
                             "Start Collection",
+                            style: TextStyle(
+                              fontSize: w * 0.045,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  if (controller.appMode.value == AppMode.collection &&
+                      deliveries.every((d) => d.apiIsCollected || d.collectedTrays > 0))
+                    Padding(
+                      padding: EdgeInsets.all(w * 0.04),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: h * 0.065,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          onPressed: () {
+                            controller.showCompletionDialog();
+                          },
+                          child: Text(
+                            "Submit Trip",
                             style: TextStyle(
                               fontSize: w * 0.045,
                               fontWeight: FontWeight.bold,

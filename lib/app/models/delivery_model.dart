@@ -1,26 +1,40 @@
 enum DeliveryStatus {
-  delivered,
+  toBeDelivered,
   delivering,
-  pending,
+  delivered,
+
+  toBeCollected,
+  collecting,
+  collected,
 }
 
 class DeliveryProductModel {
   final String name;
   final int trays;
   final int packets;
+  final int? collectedTrays;
 
   const DeliveryProductModel({
     required this.name,
     required this.trays,
     required this.packets,
+    this.collectedTrays,
   });
 
   // JSON
   factory DeliveryProductModel.fromJson(Map<String, dynamic> json) {
     return DeliveryProductModel(
-      name: json['productName']?.toString() ?? json['name']?.toString() ?? "Product",
-      trays: (json['tray'] as num?)?.toInt() ?? (json['trays'] as num?)?.toInt() ?? 0,
-      packets: (json['loosePackets'] as num?)?.toInt() ?? (json['packets'] as num?)?.toInt() ?? 0,
+      name: json['productName']?.toString() ??
+          json['name']?.toString() ??
+          "Product",
+      trays: (json['tray'] as num?)?.toInt() ??
+          (json['trays'] as num?)?.toInt() ??
+          0,
+      packets: (json['loosePackets'] as num?)?.toInt() ??
+          (json['packets'] as num?)?.toInt() ??
+          0,
+      collectedTrays: (json['collected_trays'] as num?)?.toInt() ??
+          (json['collectedTrays'] as num?)?.toInt(),
     );
   }
 
@@ -29,7 +43,22 @@ class DeliveryProductModel {
       'name': name,
       'trays': trays,
       'packets': packets,
+      'collected_trays': collectedTrays,
     };
+  }
+
+  DeliveryProductModel copyWith({
+    String? name,
+    int? trays,
+    int? packets,
+    int? collectedTrays,
+  }) {
+    return DeliveryProductModel(
+      name: name ?? this.name,
+      trays: trays ?? this.trays,
+      packets: packets ?? this.packets,
+      collectedTrays: collectedTrays ?? this.collectedTrays,
+    );
   }
 }
 
@@ -49,11 +78,11 @@ class DeliveryModel {
   // Calculations
   int get totalTrays => products.isNotEmpty
       ? products.fold<int>(0, (sum, item) => sum + item.trays)
-      : ( _totalTrays > 0 ? _totalTrays : 0);
+      : (_totalTrays > 0 ? _totalTrays : 0);
 
   int get totalPackets => products.isNotEmpty
       ? products.fold<int>(0, (sum, item) => sum + item.packets)
-      : ( _totalPackets > 0 ? _totalPackets : 0);
+      : (_totalPackets > 0 ? _totalPackets : 0);
 
   final int _totalTrays;
   final int _totalPackets;
@@ -103,8 +132,8 @@ class DeliveryModel {
       remainingTrays: remainingTrays ?? this.remainingTrays,
       apiIsDelivered: apiIsDelivered ?? this.apiIsDelivered,
       apiIsCollected: apiIsCollected ?? this.apiIsCollected,
-      totalTrays: totalTrays ?? this._totalTrays,
-      totalPackets: totalPackets ?? this._totalPackets,
+      totalTrays: totalTrays ?? _totalTrays,
+      totalPackets: totalPackets ?? _totalPackets,
     );
   }
 
@@ -113,7 +142,7 @@ class DeliveryModel {
 
   // Status helpers
   bool get isDelivered => status == DeliveryStatus.delivered;
-  bool get isPending => status == DeliveryStatus.pending;
+  bool get isPending => status == DeliveryStatus.toBeDelivered;
 
   bool get isFullyCollected => collectedTrays >= totalTrays;
 
@@ -121,7 +150,8 @@ class DeliveryModel {
   factory DeliveryModel.fromJson(Map<String, dynamic> json) {
     final bId = json['boothId'] ?? json['id'] ?? 0;
     final bIdStr = bId.toString();
-    final bCode = json['number']?.toString() ?? json['boothCode']?.toString() ?? bIdStr;
+    final bCode =
+        json['number']?.toString() ?? json['boothCode']?.toString() ?? bIdStr;
 
     final bool isDeliveredAPI = json['isDelivered'] == true ||
         json['is_delivered'] == true ||
@@ -150,10 +180,9 @@ class DeliveryModel {
     // Fallback: If we have collected trays or a delivery record exists, it's delivered
     final collected = (json['collectedTrays'] as num?)?.toInt() ??
         (json['collected_trays'] as num?)?.toInt() ??
-        (json['delivered_trays'] as num?)?.toInt() ??
         0;
 
-    if (collected > 0 && status == DeliveryStatus.pending) {
+    if (collected > 0 && status == DeliveryStatus.toBeCollected) {
       status = DeliveryStatus.delivered;
     }
 
@@ -169,16 +198,22 @@ class DeliveryModel {
               .toList() ??
           [],
       collectedTrays: collected,
-      remainingTrays: (json['remainingTrays'] as num?)?.toInt() ?? (json['outstandingTrays'] as num?)?.toInt() ?? 0,
+      remainingTrays: (json['remainingTrays'] as num?)?.toInt() ??
+          (json['outstandingTrays'] as num?)?.toInt() ??
+          0,
       apiIsDelivered: isDeliveredAPI,
       apiIsCollected: isCollectedAPI,
-      totalTrays: (json['totalTray'] as num?)?.toInt() ?? (json['tray'] as num?)?.toInt() ?? 0,
-      totalPackets: (json['totalPackets'] as num?)?.toInt() ?? (json['loosePackets'] as num?)?.toInt() ?? 0,
+      totalTrays: (json['totalTray'] as num?)?.toInt() ??
+          (json['tray'] as num?)?.toInt() ??
+          0,
+      totalPackets: (json['totalPackets'] as num?)?.toInt() ??
+          (json['loosePackets'] as num?)?.toInt() ??
+          0,
     );
   }
 
   static DeliveryStatus _parseStatus(dynamic status) {
-    if (status == null) return DeliveryStatus.pending;
+    if (status == null) return DeliveryStatus.toBeDelivered;
     final s = status.toString().toUpperCase();
     if (s == 'DELIVERED' ||
         s == 'COMPLETED' ||
@@ -197,7 +232,7 @@ class DeliveryModel {
         s == 'PROCESS') {
       return DeliveryStatus.delivering;
     }
-    return DeliveryStatus.pending;
+    return DeliveryStatus.toBeDelivered;
   }
 
   Map<String, dynamic> toJson() {

@@ -17,10 +17,11 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Obx(() => Text(
-          "Booth ${controller.store?.number ?? ''}", 
-          style: TextStyle(fontSize: w * 0.05, fontWeight: FontWeight.w500, color: Colors.white)
-        )),
+        title: Obx(() => Text("Booth ${controller.store?.number ?? ''}",
+            style: TextStyle(
+                fontSize: w * 0.05,
+                fontWeight: FontWeight.w500,
+                color: Colors.white))),
         centerTitle: true,
         backgroundColor: const Color(0xff1BA6C8),
         elevation: 0,
@@ -51,7 +52,8 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.blue.shade100.withValues(alpha: 0.5)),
+                          border: Border.all(
+                              color: Colors.blue.shade100.withValues(alpha: 0.5)),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withValues(alpha: 0.08),
@@ -130,7 +132,8 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
                     /// MODE SWITCH (Scrollable Content)
                     Obx(() {
                       final isCollection =
-                          controller.deliveryController.appMode.value == AppMode.collection;
+                          controller.deliveryController.appMode.value ==
+                              AppMode.collection;
 
                       return Column(
                         children: [
@@ -143,11 +146,13 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
                                 decoration: BoxDecoration(
                                   color: Colors.orange.shade50,
                                   borderRadius: BorderRadius.circular(15),
-                                  border: Border.all(color: Colors.orange.shade200),
+                                  border:
+                                      Border.all(color: Colors.orange.shade200),
                                 ),
                                 child: Row(
                                   children: [
-                                    Icon(Icons.history, color: Colors.orange.shade800),
+                                    Icon(Icons.history,
+                                        color: Colors.orange.shade800),
                                     SizedBox(width: w * 0.03),
                                     Expanded(
                                       child: Column(
@@ -183,7 +188,6 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
                                 ),
                               ),
                             ),
-
                           if (controller.isLoading.value)
                             const Padding(
                               padding: EdgeInsets.all(20.0),
@@ -196,7 +200,7 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
                         ],
                       );
                     }),
-                    
+
                     SizedBox(height: h * 0.02),
                   ],
                 ),
@@ -205,7 +209,8 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
 
             /// STICKY ACTIONS
             Obx(() {
-              final isCollection = controller.deliveryController.appMode.value == AppMode.collection;
+              final isCollection =
+                  controller.deliveryController.appMode.value == AppMode.collection;
               final isGlobalLoading = controller.deliveryController.isLoading.value;
               return _buildStickyActions(s, w, h, isCollection, isGlobalLoading);
             }),
@@ -217,9 +222,10 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
 
   /// DELIVERY UI (Scrollable Table)
   Widget _buildDeliverySection(DeliveryModel s, double w, double h) {
-    const headerStyle = TextStyle(fontWeight: FontWeight.bold, color: Colors.black87, fontSize: 13);
+    const headerStyle = TextStyle(
+        fontWeight: FontWeight.bold, color: Colors.black87, fontSize: 13);
     const itemStyle = TextStyle(fontSize: 13, color: Colors.black87);
-    
+
     if (s.products.isEmpty) {
       return const Center(
         child: Padding(
@@ -235,9 +241,12 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
           padding: EdgeInsets.symmetric(horizontal: w * 0.04),
           child: Row(
             children: [
-              Expanded(flex: 4, child: Text("Products", style: headerStyle)),
-              Expanded(flex: 2, child: Center(child: Text("Tray", style: headerStyle))),
-              Expanded(flex: 2, child: Center(child: Text("Packets", style: headerStyle))),
+              const Expanded(flex: 4, child: Text("Products", style: headerStyle)),
+              const Expanded(
+                  flex: 2, child: Center(child: Text("Tray", style: headerStyle))),
+              const Expanded(
+                  flex: 2,
+                  child: Center(child: Text("Packets", style: headerStyle))),
             ],
           ),
         ),
@@ -247,42 +256,49 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
           child: Divider(thickness: 1, color: Colors.grey.shade300, height: 1),
         ),
         const SizedBox(height: 8),
-
         ...s.products.map((product) => Padding(
-          padding: EdgeInsets.symmetric(horizontal: w * 0.04, vertical: 8),
-          child: Row(
-            children: [
-              Expanded(flex: 4, child: Text(product.name, style: itemStyle)),
-              Expanded(flex: 2, child: Center(child: Text("${product.trays}", style: itemStyle))),
-              Expanded(flex: 2, child: Center(child: Text("${product.packets}", style: itemStyle))),
-            ],
-          ),
-        )),
-        
+              padding: EdgeInsets.symmetric(horizontal: w * 0.04, vertical: 8),
+              child: Row(
+                children: [
+                  Expanded(flex: 4, child: Text(product.name, style: itemStyle)),
+                  Expanded(
+                      flex: 2,
+                      child: Center(child: Text("${product.trays}", style: itemStyle))),
+                  Expanded(
+                      flex: 2,
+                      child:
+                          Center(child: Text("${product.packets}", style: itemStyle))),
+                ],
+              ),
+            )),
         const SizedBox(height: 8),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: w * 0.04),
           child: Divider(thickness: 1, color: Colors.grey.shade300, height: 1),
         ),
         const SizedBox(height: 8),
-
         Padding(
           padding: EdgeInsets.symmetric(horizontal: w * 0.04, vertical: 8),
           child: Row(
             children: [
-              const Expanded(flex: 4, child: Text("Total", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14))),
+              const Expanded(
+                  flex: 4,
+                  child: Text("Total",
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14))),
               Expanded(
                 flex: 2,
                 child: Center(
                   child: Obx(() => Text("${controller.store?.totalTrays ?? 0}",
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14))),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 14))),
                 ),
               ),
               Expanded(
                 flex: 2,
                 child: Center(
                   child: Obx(() => Text("${controller.store?.totalPackets ?? 0}",
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14))),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 14))),
                 ),
               ),
             ],
@@ -294,108 +310,140 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
 
   /// COLLECTION UI (Scrollable Content)
   Widget _buildCollectionSection(DeliveryModel s, double w, double h) {
-    final isCollected = s.collectedTrays > 0;
-
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: w * 0.05),
-      child: Row(
-        children: [
-          Expanded(
-            child: _infoBox("Total Trays", "${s.totalTrays}", w, h),
-          ),
-          SizedBox(width: w * 0.04),
-          Expanded(
-            child: isCollected
-                ? _infoBox("Collected", "${s.collectedTrays}", w, h)
-                : TextField(
-              controller: controller.collectedTraysController,
-              keyboardType: TextInputType.number,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly
-              ],
-              textAlign: TextAlign.center,
-              decoration: const InputDecoration(
-                hintText: "Collected",
-                border: OutlineInputBorder(),
+    return Column(
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: w * 0.05),
+          child: Row(
+            children: [
+              Expanded(
+                child: _infoBox(
+                  "Remaining Trays",
+                  "${s.totalTrays}",
+                  w,
+                  h,
+                ),
               ),
-            ),
+              SizedBox(width: w * 0.04),
+              Expanded(
+                child: (s.status == DeliveryStatus.collected)
+                    ? _infoBox(
+                        "Collected",
+                        "${s.collectedTrays}",
+                        w,
+                        h,
+                      )
+                    : Container(
+                        height: 80,
+                        alignment: Alignment.center,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(
+                            color: Colors.blue.shade300,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: TextField(
+                          controller: controller.collectedTraysController,
+                          keyboardType: TextInputType.number,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          decoration: const InputDecoration(
+                            hintText: "Collected",
+                            border: InputBorder.none,
+                          ),
+                        ),
+                      ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+        SizedBox(height: h * 0.03),
+        if (s.products != null && s.products!.isNotEmpty)
+          _buildCollectionProductList(s, w, h),
+      ],
     );
   }
 
-  /// STICKY ACTIONS BAR
-  Widget _buildStickyActions(DeliveryModel s, double w, double h, bool isCollection, bool isLoading) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: w * 0.05, vertical: h * 0.03),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
+  Widget _buildCollectionProductList(DeliveryModel s, double w, double h) {
+    return Column(
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: w * 0.05),
+          child: Row(
+            children: [
+              Expanded(flex: 3, child: Text("Product")),
+              Expanded(flex: 2, child: Center(child: Text("Tray Input"))),
+            ],
           ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (!isCollection) ...[
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                minimumSize: Size(double.infinity, h * 0.07),
-                backgroundColor: const Color(0xFF2196F3),
-                foregroundColor: Colors.white,
-                shape: const StadiumBorder(),
-                elevation: 2,
-                shadowColor: Colors.blue.withValues(alpha: 0.3),
+        ),
+        const Divider(),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: s.products!.length,
+          itemBuilder: (context, index) {
+            final product = s.products![index];
+            final productController = controller.productControllers[index];
+            return Padding(
+              padding: EdgeInsets.symmetric(
+                  horizontal: w * 0.05, vertical: h * 0.01),
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(product.name,
+                            style:
+                                const TextStyle(fontWeight: FontWeight.bold)),
+                        Text("Expected: ${product.trays}",
+                            style: TextStyle(fontSize: 12, color: Colors.grey)),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: (s.status == DeliveryStatus.collected)
+                        ? Center(
+                            child: Text("${product.collectedTrays ?? 0}"),
+                          )
+                        : Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.shade50,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.blue.shade200),
+                            ),
+                            child: TextField(
+                              controller: productController,
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly
+                              ],
+                              textAlign: TextAlign.center,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
+                              decoration: const InputDecoration(
+                                hintText: "0",
+                                border: InputBorder.none,
+                                isDense: true,
+                              ),
+                            ),
+                          ),
+                  ),
+                ],
               ),
-              onPressed: () => controller.openMap(),
-              icon: const Icon(Icons.gps_fixed, size: 20),
-              label: const Text("Get Directions", style: TextStyle(fontSize: 17, fontWeight: FontWeight.w500)),
-            ),
-            SizedBox(height: h * 0.02),
-            s.isDelivered
-                ? _statusBox("Delivered", const Color(0xFF4CAF50), w, h)
-                : ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: Size(double.infinity, h * 0.07),
-                      backgroundColor: const Color(0xFF4CAF50),
-                      foregroundColor: Colors.white,
-                      shape: const StadiumBorder(),
-                      elevation: 2,
-                      shadowColor: Colors.green.withValues(alpha: 0.3),
-                    ),
-                    onPressed: isLoading
-                        ? null
-                        : () => controller.markDelivered(),
-                    child: isLoading
-                        ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                        : const Text("Mark Delivered", style: TextStyle(fontSize: 17, fontWeight: FontWeight.w500)),
-                  ),
-          ] else ...[
-            s.collectedTrays > 0
-                ? _statusBox("Collection Completed", const Color(0xFF4CAF50), w, h)
-                : ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: Size(double.infinity, h * 0.07),
-                      backgroundColor: const Color(0xFF4CAF50),
-                      foregroundColor: Colors.white,
-                      shape: const StadiumBorder(),
-                      elevation: 2,
-                    ),
-                    onPressed: isLoading
-                        ? null
-                        : () => controller.markCollected(),
-                    child: isLoading
-                        ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                        : const Text("Mark Collected", style: TextStyle(fontSize: 17, fontWeight: FontWeight.w500)),
-                  ),
-          ],
-        ],
-      ),
+            );
+          },
+        ),
+      ],
     );
   }
 
@@ -409,11 +457,15 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(title, style: TextStyle(color: Colors.blue.shade700, fontWeight: FontWeight.w500)),
+          Text(title,
+              style: TextStyle(
+                  color: Colors.blue.shade700, fontWeight: FontWeight.w500)),
           const SizedBox(height: 4),
           Text(value,
-              style:
-              TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blue.shade900)),
+              style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue.shade900)),
         ],
       ),
     );
@@ -435,8 +487,81 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
           SizedBox(width: w * 0.03),
           Text(
             text,
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17),
+            style: const TextStyle(
+                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17),
           ),
+        ],
+      ),
+    );
+  }
+
+  /// STICKY ACTIONS BAR
+  Widget _buildStickyActions(
+    DeliveryModel s,
+    double w,
+    double h,
+    bool isCollection,
+    bool isLoading,
+  ) {
+    bool isDone = isCollection
+        ? s.status == DeliveryStatus.collected
+        : s.status == DeliveryStatus.delivered;
+
+    String actionText = isCollection ? "Mark Collected" : "Mark Delivered";
+    String doneText = isCollection ? "Collected" : "Delivered";
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: w * 0.05,
+        vertical: h * 0.03,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (!isDone) ...[
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                minimumSize: Size(double.infinity, h * 0.07),
+                backgroundColor: const Color(0xFF2196F3),
+                foregroundColor: Colors.white,
+                shape: const StadiumBorder(),
+              ),
+              onPressed: () => controller.openMap(),
+              icon: const Icon(Icons.gps_fixed, size: 20),
+              label: const Text("Get Directions"),
+            ),
+            SizedBox(height: h * 0.02),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                minimumSize: Size(double.infinity, h * 0.07),
+                backgroundColor: const Color(0xFF4CAF50),
+                foregroundColor: Colors.white,
+                shape: const StadiumBorder(),
+              ),
+              onPressed: isLoading
+                  ? null
+                  : () => isCollection
+                      ? controller.markCollected()
+                      : controller.markDelivered(),
+              child: isLoading
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : Text(actionText,
+                      style: const TextStyle(
+                          fontSize: 17, fontWeight: FontWeight.bold)),
+            ),
+          ] else ...[
+            _statusBox(doneText, const Color(0xFF4CAF50), w, h),
+          ]
         ],
       ),
     );
