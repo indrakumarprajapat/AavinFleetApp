@@ -84,51 +84,54 @@ class HomeView extends GetView<HomeController> {
   }
 
   Widget _buildFooterView() {
-    return Obx(
-      () => Container(
-        padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 10,
-              offset: Offset(0, -5),
-            ),
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 10,
+            offset: Offset(0, -5),
+          ),
+        ],
+      ),
+      child: SafeArea(
         child: SizedBox(
           width: double.infinity,
           height: 55,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xff1BA6C8),
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
+          child: Obx(
+                () => ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xff1BA6C8),
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+              ),
+              onPressed: controller.isLoading
+                  ? null
+                  : controller.startDelivery,
+              child: controller.isLoading
+                  ? const CircularProgressIndicator(
+                color: Colors.white,
+              )
+                  : const Text(
+                "START DELIVERY",
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                ),
               ),
             ),
-            onPressed: controller.isLoading ? null : controller.startDelivery,
-            child: controller.isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                    ),
-                  )
-                : const Text(
-                    "START DELIVERY",
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
           ),
         ),
       ),
     );
   }
+
 
   Widget _buildRouteView() {
     return Column(

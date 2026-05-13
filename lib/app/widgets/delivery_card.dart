@@ -27,14 +27,17 @@ class DeliveryCard extends StatelessWidget {
   int get totalPacket =>
       packet ?? store.totalPackets;
 
-  bool get isDelivered => status == DeliveryStatus.delivered;
+  bool get isDelivered => status == DeliveryStatus.delivered || status == DeliveryStatus.collected;
 
-  bool get isCurrent => status == DeliveryStatus.delivering;
+  bool get isCurrent => status == DeliveryStatus.delivering || status == DeliveryStatus.collecting;
 
   static final Map<DeliveryStatus, Color> statusColors = {
     DeliveryStatus.delivered: Colors.green,
     DeliveryStatus.delivering: Colors.blue,
     DeliveryStatus.toBeDelivered: Colors.grey,
+    DeliveryStatus.collected: Colors.green,
+    DeliveryStatus.collecting: Colors.blue,
+    DeliveryStatus.toBeCollected: Colors.grey,
   };
 
   static final Map<DeliveryStatus, String> deliveryText = {
@@ -51,7 +54,9 @@ class DeliveryCard extends StatelessWidget {
     if (isCollection) {
       return {
         DeliveryStatus.delivered: "COLLECTED",
+        DeliveryStatus.collected: "COLLECTED",
         DeliveryStatus.delivering: "COLLECTING",
+        DeliveryStatus.collecting: "COLLECTING",
         DeliveryStatus.toBeCollected: "TO BE COLLECTED",
       }[status] ?? "Unknown";
     }
@@ -224,7 +229,7 @@ class DeliveryCard extends StatelessWidget {
                               : Colors.grey,
                         ),
                         SizedBox(width: w * 0.015),
-                        Text("Tray", style: TextStyle(fontSize: w * 0.04)),
+                        Text(isCollection ? "Remaining Tray" : "Tray", style: TextStyle(fontSize: w * 0.04)),
                       ],
                     ),
                     Text("$totalTray",
@@ -234,7 +239,7 @@ class DeliveryCard extends StatelessWidget {
                 ),
 
                 /// PACKET
-                if (!isCollection) ...[
+                if (totalPacket > 0 || !isCollection) ...[
                   SizedBox(height: h * 0.01),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,

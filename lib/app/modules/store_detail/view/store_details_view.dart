@@ -159,7 +159,7 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            "Previous Remaining Trays",
+                                            "Remaining Trays",
                                             style: TextStyle(
                                               color: Colors.orange.shade900,
                                               fontWeight: FontWeight.bold,
@@ -193,10 +193,18 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
                               padding: EdgeInsets.all(20.0),
                               child: CircularProgressIndicator(),
                             )
-                          else if (!isCollection)
-                            _buildDeliverySection(s, w, h)
-                          else
-                            _buildCollectionSection(s, w, h),
+                          else ...[
+                            _buildDeliverySection(s, w, h),
+                            if (isCollection) ...[
+                              SizedBox(height: h * 0.04),
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 20),
+                                child: Divider(),
+                              ),
+                              SizedBox(height: h * 0.02),
+                              _buildCollectionSection(s, w, h),
+                            ]
+                          ],
                         ],
                       );
                     }),
@@ -226,64 +234,62 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
         fontWeight: FontWeight.bold, color: Colors.black87, fontSize: 13);
     const itemStyle = TextStyle(fontSize: 13, color: Colors.black87);
 
-    if (s.products.isEmpty) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(20.0),
-          child: Text("No product details available."),
-        ),
-      );
+    // If no products and no totals, show nothing
+    if (s.products.isEmpty && s.totalTrays == 0 && s.totalPackets == 0) {
+      return const SizedBox.shrink();
     }
 
     return Column(
       children: [
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: w * 0.04),
-          child: Row(
-            children: [
-              const Expanded(flex: 4, child: Text("Products", style: headerStyle)),
-              const Expanded(
-                  flex: 2, child: Center(child: Text("Tray", style: headerStyle))),
-              const Expanded(
-                  flex: 2,
-                  child: Center(child: Text("Packets", style: headerStyle))),
-            ],
+        if (s.products.isNotEmpty) ...[
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: w * 0.04),
+            child: Row(
+              children: [
+                const Expanded(flex: 4, child: Text("Products", style: headerStyle)),
+                const Expanded(
+                    flex: 2, child: Center(child: Text("Tray", style: headerStyle))),
+                const Expanded(
+                    flex: 2,
+                    child: Center(child: Text("Packets", style: headerStyle))),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: w * 0.04),
-          child: Divider(thickness: 1, color: Colors.grey.shade300, height: 1),
-        ),
-        const SizedBox(height: 8),
-        ...s.products.map((product) => Padding(
-              padding: EdgeInsets.symmetric(horizontal: w * 0.04, vertical: 8),
-              child: Row(
-                children: [
-                  Expanded(flex: 4, child: Text(product.name, style: itemStyle)),
-                  Expanded(
-                      flex: 2,
-                      child: Center(child: Text("${product.trays}", style: itemStyle))),
-                  Expanded(
-                      flex: 2,
-                      child:
-                          Center(child: Text("${product.packets}", style: itemStyle))),
-                ],
-              ),
-            )),
-        const SizedBox(height: 8),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: w * 0.04),
-          child: Divider(thickness: 1, color: Colors.grey.shade300, height: 1),
-        ),
-        const SizedBox(height: 8),
+          const SizedBox(height: 8),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: w * 0.04),
+            child: Divider(thickness: 1, color: Colors.grey.shade300, height: 1),
+          ),
+          const SizedBox(height: 8),
+          ...s.products.map((product) => Padding(
+                padding: EdgeInsets.symmetric(horizontal: w * 0.04, vertical: 8),
+                child: Row(
+                  children: [
+                    Expanded(flex: 4, child: Text(product.name, style: itemStyle)),
+                    Expanded(
+                        flex: 2,
+                        child: Center(child: Text("${product.trays}", style: itemStyle))),
+                    Expanded(
+                        flex: 2,
+                        child:
+                            Center(child: Text("${product.packets}", style: itemStyle))),
+                  ],
+                ),
+              )),
+          const SizedBox(height: 8),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: w * 0.04),
+            child: Divider(thickness: 1, color: Colors.grey.shade300, height: 1),
+          ),
+          const SizedBox(height: 8),
+        ],
         Padding(
           padding: EdgeInsets.symmetric(horizontal: w * 0.04, vertical: 8),
           child: Row(
             children: [
               const Expanded(
                   flex: 4,
-                  child: Text("Total",
+                  child: Text("Delivery Summary",
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14))),
               Expanded(
                 flex: 2,
@@ -310,21 +316,38 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
 
   /// COLLECTION UI (Scrollable Content)
   Widget _buildCollectionSection(DeliveryModel s, double w, double h) {
+    // Prioritize totalTrays (today's delivery) as the expected return.
+    // Fallback to remainingTrays (residue) if totalTrays is 0.
+    final int expectedCount = s.totalTrays > 0 ? s.totalTrays : s.remainingTrays;
+
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: w * 0.05),
+          child: Text(
+            "Collection Entry",
+            style: TextStyle(
+              fontSize: w * 0.04,
+              fontWeight: FontWeight.bold,
+              color: Colors.blue.shade900,
+            ),
+          ),
+        ),
+        SizedBox(height: h * 0.015),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: w * 0.05),
           child: Row(
             children: [
               Expanded(
                 child: _infoBox(
-                  "Remaining Trays",
-                  "${s.totalTrays}",
+                  "Expected Trays",
+                  "$expectedCount",
                   w,
                   h,
                 ),
               ),
-              SizedBox(width: w * 0.04),
+              SizedBox(width: w * 0.05),
               Expanded(
                 child: (s.status == DeliveryStatus.collected)
                     ? _infoBox(
@@ -334,7 +357,7 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
                         h,
                       )
                     : Container(
-                        height: 80,
+                        height: h * 0.12,
                         alignment: Alignment.center,
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         decoration: BoxDecoration(
@@ -349,6 +372,12 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
                           controller: controller.collectedTraysController,
                           keyboardType: TextInputType.number,
                           textAlign: TextAlign.center,
+                          onTap: () {
+                            controller.collectedTraysController.selection = TextSelection(
+                              baseOffset: 0,
+                              extentOffset: controller.collectedTraysController.text.length,
+                            );
+                          },
                           style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
@@ -362,86 +391,6 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
               ),
             ],
           ),
-        ),
-        SizedBox(height: h * 0.03),
-        if (s.products != null && s.products!.isNotEmpty)
-          _buildCollectionProductList(s, w, h),
-      ],
-    );
-  }
-
-  Widget _buildCollectionProductList(DeliveryModel s, double w, double h) {
-    return Column(
-      children: [
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: w * 0.05),
-          child: Row(
-            children: [
-              Expanded(flex: 3, child: Text("Product")),
-              Expanded(flex: 2, child: Center(child: Text("Tray Input"))),
-            ],
-          ),
-        ),
-        const Divider(),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: s.products!.length,
-          itemBuilder: (context, index) {
-            final product = s.products![index];
-            final productController = controller.productControllers[index];
-            return Padding(
-              padding: EdgeInsets.symmetric(
-                  horizontal: w * 0.05, vertical: h * 0.01),
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(product.name,
-                            style:
-                                const TextStyle(fontWeight: FontWeight.bold)),
-                        Text("Expected: ${product.trays}",
-                            style: TextStyle(fontSize: 12, color: Colors.grey)),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: (s.status == DeliveryStatus.collected)
-                        ? Center(
-                            child: Text("${product.collectedTrays ?? 0}"),
-                          )
-                        : Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.shade50,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: Colors.blue.shade200),
-                            ),
-                            child: TextField(
-                              controller: productController,
-                              keyboardType: TextInputType.number,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly
-                              ],
-                              textAlign: TextAlign.center,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold),
-                              decoration: const InputDecoration(
-                                hintText: "0",
-                                border: InputBorder.none,
-                                isDense: true,
-                              ),
-                            ),
-                          ),
-                  ),
-                ],
-              ),
-            );
-          },
         ),
       ],
     );
