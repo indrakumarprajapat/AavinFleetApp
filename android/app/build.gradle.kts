@@ -56,19 +56,19 @@ android {
     productFlavors {
         create("namakkal") {
             dimension = "client"
-            applicationId = "tech.cwitch.aavinfleet.nkl"
+            applicationId = "tech.cwitch.aavinfleet"
             resValue("string", "app_name", "Aavin NKL")
             signingConfig = signingConfigs.getByName("namakkalRelease")
         }
         create("cbe") {
             dimension = "client"
-            applicationId = "tech.cwitch.aavinfleet.cbe"
-            resValue("string", "app_name", "Aavin CBE")
+            applicationId = "tech.cwitch.aavinfleet"
+            resValue("string", "app_name", "Aavin Fleet")
             signingConfig = signingConfigs.getByName("cbeRelease")
         }
         create("nilgiris") {
             dimension = "client"
-            applicationId = "tech.cwitch.aavinnilgiris"
+            applicationId = "tech.cwitch.aavinfleet"
             resValue("string", "app_name", "AavinNilgiris")
             signingConfig = signingConfigs.getByName("nilgirisRelease")
         }

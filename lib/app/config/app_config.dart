@@ -34,7 +34,7 @@ const Map<String, ClientConfig> clientConfigs = {
   "namakkal": ClientConfig(
     name:  ClientConfig.CLIENT_NAMAKKAL,
     app_title: "ddProcure.Ai",
-    loginLogo: "assets/images/logo_namakkal.svg",
+    loginLogo: "assets/images/aavin_logo_cbe.svg",
     enableReports: true,
     enablePayments: false,
     // baseUrl: "https://api.aavinnamakkal.in/",
@@ -51,23 +51,15 @@ const Map<String, ClientConfig> clientConfigs = {
     enablePayments: true,
     // baseUrl: "https://api.aavincbe.cwitch.tech/",
     // baseUrl: "http://192.168.29.89:3043/",
-    // baseUrl: "http://192.168.29.86:3043/",
-    baseUrl: "http://10.182.13.228:3043/",
-
-    // baseUrl: "http://192.168.1.10:3043/",
-
-
-
-
-
-    privacyPolicyLink:'https://www.aavincoimbatore.com/assets/privacy-policy.html',
+    baseUrl: "http://10.182.13.194:3043/",
+     privacyPolicyLink:'https://www.aavincoimbatore.com/assets/privacy-policy.html',
       termAndCondLink:'https://www.aavincoimbatore.com/assets/terms-and-conditions.html',
     centerLocation: LatLng(11.0168, 76.9558),
   ),
   "nilgiris": ClientConfig(
     name: ClientConfig.CLIENT_NILGIRIS,
     app_title: "Aavin Nilgiris",
-    loginLogo: "assets/images/logo_nilgiris.svg",
+    loginLogo: "assets/images/aavin_logo_cbe.svg",
     enableReports: false,
     enablePayments: false,
     baseUrl: "https://api.aavinnilgiris.org/",
