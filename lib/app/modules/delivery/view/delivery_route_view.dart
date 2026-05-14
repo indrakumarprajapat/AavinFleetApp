@@ -1,12 +1,8 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import '../../agent/home/controllers/home_controller.dart';
 import '../../../config/app_config.dart';
 import '../../../models/delivery_model.dart';
-import '../../../routes/app_pages.dart';
 import '../../../widgets/delivery_card.dart';
 import '../controllers/delivery_controller.dart';
 
@@ -74,12 +70,6 @@ class DeliveryRouteView extends GetView<DeliveryController> {
                               padding: EdgeInsets.only(bottom: h * 0.02),
                               child: DeliveryCard(
                                 store: delivery,
-                                tray: isCollection
-                                    ? (delivery.totalTrays > 0
-                                        ? delivery.totalTrays
-                                        : (delivery.remainingTrays > 0 ? delivery.remainingTrays : 0))
-                                    : delivery.totalTrays,
-                                packet: delivery.totalPackets,
                                 isCollection: isCollection,
                                 status: status,
                               ),

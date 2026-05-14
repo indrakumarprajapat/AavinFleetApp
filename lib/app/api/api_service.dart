@@ -1699,6 +1699,7 @@ class ApiService extends GetxService {
   Future<dynamic> markDelivered(
       int tripId,
       int boothId,
+      int trayCount,
       double lat,
       double lng,
       ) async {
@@ -1709,6 +1710,7 @@ class ApiService extends GetxService {
       final response = await _dio.post(
         '/trips/$tripId/delivery/$boothId',
         data: {
+          "trayCount": trayCount,
           "lat": lat,
           "lng": lng,
         },

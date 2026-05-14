@@ -61,11 +61,32 @@ class StoreDetailsController extends GetxController {
 
   Future<void> markDelivered() async {
     if (deliveryController.isLoading.value || store == null) return;
-    try {
-      await deliveryController.markDelivered(store!);
-    } catch (e) {
-      Get.snackbar("Error", e.toString());
-    }
+
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+        title: const Text("Confirm Delivery", style: TextStyle(fontWeight: FontWeight.bold)),
+        content: Text("Are you sure you want to mark Booth ${store!.number} as delivered (${store!.totalTrays} Trays)?"),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Get.back();
+              try {
+                await deliveryController.markDelivered(store!);
+              } catch (e) {
+                Get.snackbar("Error", e.toString());
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+            child: const Text("Confirm"),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> markCollected() async {
@@ -74,13 +95,10 @@ class StoreDetailsController extends GetxController {
     final input = collectedTraysController.text.trim();
     final int collectedCount = int.tryParse(input) ?? 0;
 
-    // Prioritize totalTrays (today's delivery) as the expected return.
-    // Fallback to remainingTrays (residue) if totalTrays is 0 (collection-only).
     final int expectedCount = (store!.totalTrays > 0)
         ? store!.totalTrays
         : store!.remainingTrays;
 
-    // Strict validation: Must match expected or be 0
     if (collectedCount != expectedCount && collectedCount != 0) {
       Get.snackbar(
         "Invalid Count",
@@ -91,14 +109,34 @@ class StoreDetailsController extends GetxController {
       return;
     }
 
-    try {
-      await deliveryController.markCollected(
-        store!,
-        collectedCount,
-      );
-    } catch (e) {
-      Get.snackbar("Error", e.toString());
-    }
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+        title: const Text("Confirm Collection", style: TextStyle(fontWeight: FontWeight.bold)),
+        content: Text("Are you sure you want to mark $collectedCount trays as collected from Booth ${store!.number}?"),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Get.back();
+              try {
+                await deliveryController.markCollected(
+                  store!,
+                  collectedCount,
+                );
+              } catch (e) {
+                Get.snackbar("Error", e.toString());
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+            child: const Text("Confirm"),
+          ),
+        ],
+      ),
+    );
   }
 
   void openMap() {

@@ -3,9 +3,9 @@ import 'package:get/get.dart';
 
 import '../../../../config/app_config.dart';
 import '../../../../services/global_cart_service.dart';
+import '../../../delivery/view/delivery_route_view.dart';
 import '../controllers/home_controller.dart';
 import '../../drawer/views/agent_drawer_view.dart';
-import '../../delivery/view/delivery_route_view.dart';
 
 class HomeView extends GetView<HomeController> {
   HomeView({Key? key}) : super(key: key);
