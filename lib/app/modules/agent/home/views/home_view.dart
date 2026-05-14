@@ -47,7 +47,7 @@ class HomeView extends GetView<HomeController> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(height: Get.height * 0.22),
+            SizedBox(height: Get.height * 0.18),
 
             /// Body Container
             Container(
@@ -55,7 +55,7 @@ class HomeView extends GetView<HomeController> {
                 color: Color(0xFFF4F6F9),
                 borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
               ),
-              padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 20),
               child: Obx(() {
                 if (controller.isLoading) {
                   return const SizedBox(
@@ -72,7 +72,7 @@ class HomeView extends GetView<HomeController> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildRouteView(),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 10),
                   ],
                 );
               }),
@@ -119,7 +119,7 @@ class HomeView extends GetView<HomeController> {
                   : const Text(
                 "START DELIVERY",
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 18,
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.2,
@@ -172,27 +172,27 @@ class HomeView extends GetView<HomeController> {
 
   Widget _buildProductCard(dynamic product) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(color: const Color(0xFF007EA7).withValues(alpha: 0.08)),
+        border: Border.all(color: const Color(0xFF01789D).withValues(alpha: 0.08)),
       ),
       child: Column(
         children: [
           /// 🔹 Header
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: const BoxDecoration(
-              color: Color(0xFFE6F7FA), // Light blue background
+              color: Color(0xFFC1E7EF), // Light blue background
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
             child: Row(
@@ -206,7 +206,7 @@ class HomeView extends GetView<HomeController> {
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF005F7A),
+                      color: Color(0xFF013B4B),
                     ),
                   ),
                 ),
@@ -215,7 +215,7 @@ class HomeView extends GetView<HomeController> {
           ),
 
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(8),
             child: Column(
               children: [
                 /// 🔹 Primary Stats
@@ -237,7 +237,7 @@ class HomeView extends GetView<HomeController> {
                   ],
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 10),
 
                 /// 🔹 Secondary Stats
                 Container(
@@ -271,7 +271,7 @@ class HomeView extends GetView<HomeController> {
   }) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(15),
@@ -283,7 +283,7 @@ class HomeView extends GetView<HomeController> {
             Row(
               children: [
                 Icon(icon, size: 14, color: color),
-                const SizedBox(width: 6),
+                const SizedBox(width: 5),
                 Text(
                   title,
                   style: TextStyle(
@@ -294,11 +294,11 @@ class HomeView extends GetView<HomeController> {
                 ),
               ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 1),
             Text(
               value,
               style: TextStyle(
-                fontSize: 22,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: color,
               ),
@@ -316,12 +316,12 @@ class HomeView extends GetView<HomeController> {
           Text(
             value,
             style: TextStyle(
-              fontSize: 17,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
               color: color.withValues(alpha: 0.9),
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 1),
           Text(
             label,
             style: TextStyle(
@@ -395,7 +395,7 @@ class HomeView extends GetView<HomeController> {
                 ],
               ),
 
-              const SizedBox(height: 5),
+              const SizedBox(height: 10),
 
               /// 🔹 ROUTE NAME
               Text(
@@ -409,7 +409,7 @@ class HomeView extends GetView<HomeController> {
                 ),
               ),
 
-              const SizedBox(height: 10),
+              const SizedBox(height: 18),
 
               Row(
                 children: [
@@ -441,7 +441,7 @@ class HomeView extends GetView<HomeController> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.calendar_today, size: 14, color: Colors.white),
+                        const Icon(Icons.calendar_month, size: 14, color: Colors.white),
                         const SizedBox(width: 6),
                         Text(
                           dateText,

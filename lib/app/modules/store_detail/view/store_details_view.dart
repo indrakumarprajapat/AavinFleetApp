@@ -462,13 +462,18 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
         ? s.status == DeliveryStatus.collected
         : s.status == DeliveryStatus.delivered;
 
-    String actionText = isCollection ? "Mark Collected" : "Mark Delivered";
+    // Check if this is the last booth in collection mode to show "Submit Trip"
+    final isLastBooth = controller.deliveryController.getNextStore(s) == null;
+
+    String actionText = isCollection
+        ? (isLastBooth ? "Submit Trip" : "Mark Collected")
+        : "Mark Delivered";
     String doneText = isCollection ? "Collected" : "Delivered";
 
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: w * 0.05,
-        vertical: h * 0.03,
+        vertical: h * 0.02, // Reduced padding
       ),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -486,7 +491,7 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
           if (!isDone) ...[
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                minimumSize: Size(double.infinity, h * 0.07),
+                minimumSize: Size(double.infinity, h * 0.06), // Slightly smaller
                 backgroundColor: const Color(0xFF2196F3),
                 foregroundColor: Colors.white,
                 shape: const StadiumBorder(),
@@ -495,11 +500,12 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
               icon: const Icon(Icons.gps_fixed, size: 20),
               label: const Text("Get Directions"),
             ),
-            SizedBox(height: h * 0.02),
+            SizedBox(height: h * 0.015),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                minimumSize: Size(double.infinity, h * 0.07),
-                backgroundColor: const Color(0xFF4CAF50),
+                minimumSize: Size(double.infinity, h * 0.065),
+                backgroundColor:
+                    isLastBooth && isCollection ? Colors.green : const Color(0xFF4CAF50),
                 foregroundColor: Colors.white,
                 shape: const StadiumBorder(),
               ),
@@ -509,10 +515,12 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
                       ? controller.markCollected()
                       : controller.markDelivered(),
               child: isLoading
-                  ? const CircularProgressIndicator(color: Colors.white)
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                   : Text(actionText,
-                      style: const TextStyle(
-                          fontSize: 17, fontWeight: FontWeight.bold)),
+                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
             ),
           ] else ...[
             _statusBox(doneText, const Color(0xFF4CAF50), w, h),

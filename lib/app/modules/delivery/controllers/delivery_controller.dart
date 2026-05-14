@@ -462,8 +462,7 @@ class DeliveryController extends GetxController {
               Get.back();
             },
             style: TextButton.styleFrom(
-              foregroundColor: const Color(0xff1BA6C8),
-              side: const BorderSide(color: Color(0xff1BA6C8)),
+              foregroundColor: Colors.grey.shade600,
               shape: const StadiumBorder(),
               padding: const EdgeInsets.symmetric(horizontal: 20),
             ),
@@ -476,13 +475,13 @@ class DeliveryController extends GetxController {
               await submitTrip();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xff1BA6C8),
+              backgroundColor: Colors.green,
               foregroundColor: Colors.white,
               shape: const StadiumBorder(),
               padding: const EdgeInsets.symmetric(horizontal: 30),
               elevation: 0,
             ),
-            child: const Text("Submit"),
+            child: const Text("Submit Trip"),
           ),
         ],
       ),
