@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import '../../../config/app_config.dart';
 import '../../../constants/app_enums.dart';
 import '../../../data/session_manager.dart';
-import '../../../models/DeviceInfo.dart';
+import '../../../models/device_info.dart';
 import '../../../routes/app_pages.dart';
 import '../../../api/api_service.dart';
 import '../../../models/models.dart';
@@ -24,10 +24,8 @@ class SplashController extends GetxController {
   void onInit() {
     super.onInit();
 
-    // we are already calling startSplashFlow(); in separate flow in namakkal
-    if(config.name != ClientConfig.CLIENT_NAMAKKAL){
-      startSplashFlow();
-    }
+    // The splash flow is now controlled by SplashView's animation sequence
+    // to ensure the Tamil Nadu Government logo is displayed before navigating.
   }
 
   /// call this manually AFTER animation
@@ -41,9 +39,14 @@ class SplashController extends GetxController {
 
   void _checkAutoLogin() async {
     final isLoggedIn = await _autoLoginCall();
-    if (isLoggedIn){
-      Get.offAllNamed(Routes.HOME);
-    }else{
+    if (isLoggedIn) {
+      final activeTripId = storage.read('active_trip_id');
+      if (activeTripId != null) {
+        Get.offAllNamed(Routes.DELIVERY_ROUTE, arguments: activeTripId);
+      } else {
+        Get.offAllNamed(Routes.HOME);
+      }
+    } else {
       Get.offAllNamed(Routes.LOGIN);
     }
   }
@@ -92,29 +95,38 @@ class SplashController extends GetxController {
     session.loadSession();
     var fleetUser = session.fleetUser.value;
 
-    if (fleetUser?.accessToken != null) {
+    // Check if we have a stored token
+    final storedToken = fleetUser?.accessToken ?? storage.read('access_token');
+
+    if (storedToken == null) return false;
+
+    try {
+      var deviceInfo = DeviceInfo();
+      var version = '';
       try {
-        var  deviceInfo = DeviceInfo();
-        var  version = '';
-        try{
-          deviceInfo = await DeviceUtil.getDeviceDetails();
-          version = await DeviceUtil.getAppVersion();
-        }catch(err){
-          print(err);
-        }
-        final responseFleetUser = await apiService.agentAutoLogin(fleetUser?.accessToken ?? '',deviceInfo,version);
-
-        final session = Get.find<SessionManager>();
-        await session.saveSession(responseFleetUser);
-
-        return true;
-      } catch (e) {
-        print('Agent auto-login failed: $e');
-        storage.erase();
-        Get.offAllNamed('/login');
+        deviceInfo = await DeviceUtil.getDeviceDetails();
+        version = await DeviceUtil.getAppVersion();
+      } catch (err) {
+        // Silently continue
       }
+
+      // Attempt auto-login with the token
+      final responseFleetUser = await apiService.agentAutoLogin(storedToken, deviceInfo, version);
+      
+      // Save the refreshed session
+      await session.saveSession(responseFleetUser);
+      return true;
+    } catch (e) {
+      // If it's an Authentication error (401/403), the session is invalid -> Logout
+      if (e.toString().contains('401') || e.toString().contains('403')) {
+        await session.clearSession();
+        return false;
+      }
+      
+      // For network errors or server downtime, trust the existing local session
+      // This allows the app to proceed to the Home/Delivery screen even if offline
+      return fleetUser != null; 
     }
-    return false;
   }
 
   void _showForceUpdateDialog(String playStoreUrl) {

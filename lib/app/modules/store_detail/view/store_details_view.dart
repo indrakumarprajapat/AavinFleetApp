@@ -4,289 +4,313 @@ import 'package:get/get.dart';
 
 import '../../../models/delivery_model.dart';
 import '../../delivery/controllers/delivery_controller.dart';
-import '../../delivery/view/delivery_route_view.dart';
+import '../controller/store_details_controller.dart';
 
-class StoreDetailsView extends StatefulWidget {
+class StoreDetailsView extends GetView<StoreDetailsController> {
   const StoreDetailsView({super.key});
 
   @override
-  State<StoreDetailsView> createState() => _StoreDetailsScreenState();
-}
-
-class _StoreDetailsScreenState extends State<StoreDetailsView> {
-  final DeliveryController controller = Get.find();
-
-  late TextEditingController collectedTraysController;
-  DeliveryModel? store;
-
-  @override
-  void initState() {
-    super.initState();
-
-    store = Get.arguments;
-
-    collectedTraysController = TextEditingController(
-      text: (store?.collectedTrays ?? 0) == 0
-          ? ""
-          : store!.collectedTrays.toString(),
-    );
-  }
-
-  @override
-  void dispose() {
-    collectedTraysController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    // Capture the controller instance locally to avoid "Controller not found" 
+    // during route transitions when GetX disposes the controller.
+    final controller = this.controller;
     final h = MediaQuery.of(context).size.height;
     final w = MediaQuery.of(context).size.width;
 
-    if (store == null) {
-      return const Scaffold(
-        body: Center(child: Text("Store data not found")),
-      );
-    }
-
-    final s = store!;
-
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: Text(s.storeName, style: TextStyle(fontSize: w * 0.05, fontWeight: FontWeight.w500, color: Colors.white)),
-        centerTitle: true,
-        backgroundColor: const Color(0xff1BA6C8),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Get.back(),
+      body: Stack(
+        children: [
+          Column(
+            children: [
+              SizedBox(height: h * 0.16),
+              Expanded(
+                child: Obx(() {
+                  final s = controller.store;
+                  if (s == null) {
+                    return const Center(child: Text("Store data not found"));
+                  }
+
+                  return Column(
+                    children: [
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            children: [
+                              /// STORE CARD
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: w * 0.05),
+                                child: Container(
+                                  padding: EdgeInsets.all(w * 0.04),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                        color: Colors.blue.shade100.withValues(alpha: 0.5)),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.08),
+                                        blurRadius: 15,
+                                        offset: const Offset(0, 5),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        height: w * 0.16,
+                                        width: w * 0.16,
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(15),
+                                          color: const Color(0xffE3F2FD),
+                                        ),
+                                        child: Icon(Icons.store_rounded,
+                                            size: w * 0.08, color: const Color(0xff1BA6C8)),
+                                      ),
+                                      SizedBox(width: w * 0.04),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                Expanded(
+                                                  child: Text(
+                                                    "Booth ${s.number}",
+                                                    style: TextStyle(
+                                                      fontSize: w * 0.048,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Colors.black87,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            SizedBox(height: h * 0.005),
+                                            Text(
+                                              s.address,
+                                              style: TextStyle(
+                                                  color: Colors.grey.shade600,
+                                                  fontSize: w * 0.034,
+                                                  height: 1.2),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+
+                              SizedBox(height: h * 0.015),
+
+                              /// MODE SWITCH (Scrollable Content)
+                              Obx(() {
+                                final isCollection =
+                                    controller.deliveryController.appMode.value ==
+                                        AppMode.collection;
+
+                                return Column(
+                                  children: [
+                                    if (s.remainingTrays > 0)
+                                      Padding(
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal: w * 0.05, vertical: h * 0.01),
+                                        child: Container(
+                                          padding: EdgeInsets.all(w * 0.04),
+                                          decoration: BoxDecoration(
+                                            color: Colors.orange.shade50,
+                                            borderRadius: BorderRadius.circular(15),
+                                            border:
+                                                Border.all(color: Colors.orange.shade200),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Icon(Icons.history,
+                                                  color: Colors.orange.shade800),
+                                              SizedBox(width: w * 0.03),
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      "Remaining Trays",
+                                                      style: TextStyle(
+                                                        color: Colors.orange.shade900,
+                                                        fontWeight: FontWeight.bold,
+                                                        fontSize: w * 0.035,
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      "These trays were not collected in the last trip.",
+                                                      style: TextStyle(
+                                                        color: Colors.orange.shade700,
+                                                        fontSize: w * 0.03,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              Text(
+                                                "${s.remainingTrays}",
+                                                style: TextStyle(
+                                                  color: Colors.orange.shade900,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: w * 0.06,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    if (controller.isLoading.value)
+                                      const Padding(
+                                        padding: EdgeInsets.all(20.0),
+                                        child: CircularProgressIndicator(),
+                                      )
+                                    else ...[
+                                      if (!isCollection)
+                                        _buildDeliverySection(controller, s, w, h),
+                                      if (isCollection)
+                                        _buildCollectionSection(controller, s, w, h),
+                                    ],
+                                  ],
+                                );
+                              }),
+
+                              SizedBox(height: h * 0.02),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      /// STICKY ACTIONS
+                      Obx(() {
+                        final isCollection =
+                            controller.deliveryController.appMode.value == AppMode.collection;
+                        final isGlobalLoading = controller.deliveryController.isLoading.value;
+                        return _buildStickyActions(controller, s, w, h, isCollection, isGlobalLoading);
+                      }),
+                    ],
+                  );
+                }),
+              ),
+            ],
+          ),
+          _buildCustomHeader(context, h),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCustomHeader(BuildContext context, double h) {
+    return Container(
+      width: double.infinity,
+      height: h * 0.14,
+      padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top, left: 10),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF00ADD3), Color(0xFF007EA7), Color(0xFF005F7A)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(35),
+          bottomRight: Radius.circular(35),
         ),
       ),
-      body: Column(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  SizedBox(height: h * 0.03),
-
-                  /// STORE CARD
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: w * 0.05),
-                    child: Container(
-                      padding: EdgeInsets.all(w * 0.04),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.blue.shade100.withOpacity(0.5)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
-                            blurRadius: 15,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            height: w * 0.16,
-                            width: w * 0.16,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(15),
-                              color: const Color(0xffE3F2FD),
-                            ),
-                            child: Icon(Icons.store_rounded,
-                                size: w * 0.08, color: const Color(0xff1BA6C8)),
-                          ),
-                          SizedBox(width: w * 0.04),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        s.storeName,
-                                        style: TextStyle(
-                                          fontSize: w * 0.048,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black87,
-                                        ),
-                                      ),
-                                    ),
-                                    Container(
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: w * 0.02,
-                                          vertical: h * 0.004),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xff90CAF9),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        "#${s.number}",
-                                        style: TextStyle(
-                                          fontSize: w * 0.028,
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: h * 0.005),
-                                Text(
-                                  s.address,
-                                  style: TextStyle(
-                                      color: Colors.grey.shade400,
-                                      fontSize: w * 0.032,
-                                      height: 1.2),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: h * 0.04),
-
-                  /// MODE SWITCH (Scrollable Content)
-                  Obx(() {
-                    final isCollection =
-                        controller.appMode.value == AppMode.collection;
-
-                    return Column(
-                      children: [
-                        if (s.remainingTrays > 0)
-                          Padding(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: w * 0.05, vertical: h * 0.01),
-                            child: Container(
-                              padding: EdgeInsets.all(w * 0.04),
-                              decoration: BoxDecoration(
-                                color: Colors.orange.shade50,
-                                borderRadius: BorderRadius.circular(15),
-                                border: Border.all(color: Colors.orange.shade200),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.history, color: Colors.orange.shade800),
-                                  SizedBox(width: w * 0.03),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          "Previous Remaining Trays",
-                                          style: TextStyle(
-                                            color: Colors.orange.shade900,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: w * 0.035,
-                                          ),
-                                        ),
-                                        Text(
-                                          "These trays were not collected in the last trip.",
-                                          style: TextStyle(
-                                            color: Colors.orange.shade700,
-                                            fontSize: w * 0.03,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Text(
-                                    "${s.remainingTrays}",
-                                    style: TextStyle(
-                                      color: Colors.orange.shade900,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: w * 0.06,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-
-                        if (!isCollection)
-                          _buildDeliverySection(s, w, h),
-
-                        if (isCollection)
-                          _buildCollectionSection(s, w, h),
-                      ],
-                    );
-                  }),
-                  
-                  SizedBox(height: h * 0.02),
-                ],
-              ),
-            ),
+          IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Get.back(),
           ),
-
-          /// STICKY ACTIONS
-          Obx(() {
-            final isCollection = controller.appMode.value == AppMode.collection;
-            return _buildStickyActions(s, w, h, isCollection);
-          }),
         ],
       ),
     );
   }
 
   /// DELIVERY UI (Scrollable Table)
-  Widget _buildDeliverySection(DeliveryModel s, double w, double h) {
-    const headerStyle = TextStyle(fontWeight: FontWeight.bold, color: Colors.black87, fontSize: 15);
+  Widget _buildDeliverySection(StoreDetailsController controller, DeliveryModel s, double w, double h) {
+    const headerStyle = TextStyle(
+        fontWeight: FontWeight.bold, color: Colors.black87, fontSize: 15);
+    const itemStyle = TextStyle(fontSize: 15, color: Colors.black87);
+
+    // If no products and no totals, show nothing
+    if (s.products.isEmpty && s.totalTrays == 0 && s.totalPackets == 0) {
+      return const SizedBox.shrink();
+    }
+
     return Column(
       children: [
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: w * 0.06),
-          child: Row(
-            children: [
-              Expanded(flex: 3, child: Text("Items", style: headerStyle)),
-              Expanded(child: Center(child: Text("Tray", style: headerStyle))),
-              Expanded(child: Center(child: Text("Packet", style: headerStyle))),
-              Expanded(child: Center(child: Text("Tub", style: headerStyle))),
-            ],
+        if (s.products.isNotEmpty) ...[
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: w * 0.04),
+            child: Row(
+              children: [
+                const Expanded(flex: 4, child: Text("Products", style: headerStyle)),
+                const Expanded(
+                    flex: 2, child: Center(child: Text("Tray", style: headerStyle))),
+                const Expanded(
+                    flex: 2,
+                    child: Center(child: Text("Packets", style: headerStyle))),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: w * 0.06),
-          child: Divider(thickness: 1, color: Colors.grey.shade300, height: 1),
-        ),
-        const SizedBox(height: 8),
-
-        ...s.products.map((product) => Padding(
-          padding: EdgeInsets.symmetric(horizontal: w * 0.06, vertical: 8),
-          child: Row(
-            children: [
-              Expanded(flex: 3, child: Text(product.name, style: const TextStyle(fontSize: 15, color: Colors.black87))),
-              Expanded(child: Center(child: Text("${product.trays}", style: const TextStyle(fontSize: 15)))),
-              Expanded(child: Center(child: Text("${product.packets}", style: const TextStyle(fontSize: 15)))),
-              Expanded(child: Center(child: Text("${product.tubs}", style: const TextStyle(fontSize: 15)))),
-            ],
+          const SizedBox(height: 10),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: w * 0.04),
+            child: Divider(thickness: 1, color: Colors.grey.shade300, height: 1),
           ),
-        )),
-        
-        const SizedBox(height: 8),
+          const SizedBox(height: 6),
+          ...s.products.map((product) => Padding(
+                padding: EdgeInsets.symmetric(horizontal: w * 0.04, vertical: 6),
+                child: Row(
+                  children: [
+                    Expanded(flex: 4, child: Text(product.name, style: itemStyle)),
+                    Expanded(
+                        flex: 2,
+                        child: Center(child: Text("${product.trays}", style: itemStyle))),
+                    Expanded(
+                        flex: 2,
+                        child:
+                            Center(child: Text("${product.packets}", style: itemStyle))),
+                  ],
+                ),
+              )),
+          const SizedBox(height: 6),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: w * 0.04),
+            child: Divider(thickness: 1, color: Colors.grey.shade300, height: 1),
+          ),
+          const SizedBox(height: 6),
+        ],
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: w * 0.06),
-          child: Divider(thickness: 1, color: Colors.grey.shade300, height: 1),
-        ),
-        const SizedBox(height: 8),
-
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: w * 0.06, vertical: 8),
+          padding: EdgeInsets.symmetric(horizontal: w * 0.04, vertical: 6),
           child: Row(
             children: [
-              const Expanded(flex: 3, child: Text("Total", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
-              Expanded(child: Center(child: Text("${s.totalTrays}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)))),
-              Expanded(child: Center(child: Text("${s.totalPackets}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)))),
-              Expanded(child: Center(child: Text("${s.totalTubs}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)))),
+              const Expanded(
+                  flex: 4,
+                  child: Text("Total",
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14))),
+              Expanded(
+                flex: 2,
+                child: Center(
+                  child: Text("${s.totalTrays}",
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 14)),
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Center(
+                  child: Text("${s.totalPackets}",
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 14)),
+                ),
+              ),
             ],
           ),
         ),
@@ -295,134 +319,84 @@ class _StoreDetailsScreenState extends State<StoreDetailsView> {
   }
 
   /// COLLECTION UI (Scrollable Content)
-  Widget _buildCollectionSection(DeliveryModel s, double w, double h) {
-    final isCollected = s.collectedTrays > 0;
+  Widget _buildCollectionSection(StoreDetailsController controller, DeliveryModel s, double w, double h) {
+    // Prioritize totalTrays (today's delivery) as the expected return.
+    // Fallback to remainingTrays (residue) if totalTrays is 0.
+    final int expectedCount = s.totalTrays > 0 ? s.totalTrays : s.remainingTrays;
 
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: w * 0.05),
-      child: Row(
-        children: [
-          Expanded(
-            child: _infoBox("Total Trays", "${s.totalTrays}", w, h),
-          ),
-          SizedBox(width: w * 0.04),
-          Expanded(
-            child: isCollected
-                ? _infoBox("Collected", "${s.collectedTrays}", w, h)
-                : TextField(
-              controller: collectedTraysController,
-              keyboardType: TextInputType.number,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly
-              ],
-              textAlign: TextAlign.center,
-              decoration: const InputDecoration(
-                hintText: "Collected",
-                border: OutlineInputBorder(),
-              ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: w * 0.05),
+          child: Text(
+            "Collection ",
+            style: TextStyle(
+              fontSize: w * 0.04,
+              fontWeight: FontWeight.bold,
+              color: Colors.blue.shade900,
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  /// STICKY ACTIONS BAR
-  Widget _buildStickyActions(DeliveryModel s, double w, double h, bool isCollection) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: w * 0.05, vertical: h * 0.03),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (!isCollection) ...[
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                minimumSize: Size(double.infinity, h * 0.07),
-                backgroundColor: const Color(0xFF2196F3),
-                foregroundColor: Colors.white,
-                shape: const StadiumBorder(),
-                elevation: 2,
-                shadowColor: Colors.blue.withOpacity(0.3),
+        ),
+        SizedBox(height: h * 0.015),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: w * 0.05),
+          child: Row(
+            children: [
+              Expanded(
+                child: _infoBox(
+                  "Trays",
+                  "$expectedCount",
+                  w,
+                  h,
+                ),
               ),
-              onPressed: () => controller.openMap(s.address),
-              icon: const Icon(Icons.gps_fixed, size: 20),
-              label: const Text("Get Directions", style: TextStyle(fontSize: 17, fontWeight: FontWeight.w500)),
-            ),
-            SizedBox(height: h * 0.02),
-            s.isDelivered
-                ? _statusBox("Delivered", const Color(0xFF4CAF50), w, h)
-                : ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: Size(double.infinity, h * 0.07),
-                      backgroundColor: const Color(0xFF4CAF50),
-                      foregroundColor: Colors.white,
-                      shape: const StadiumBorder(),
-                      elevation: 2,
-                      shadowColor: Colors.green.withOpacity(0.3),
-                    ),
-                    onPressed: controller.isLoading.value
-                        ? null
-                        : () => _handleDeliveryMark(s),
-                    child: controller.isLoading.value
-                        ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                        : const Text("Mark Delivered", style: TextStyle(fontSize: 17, fontWeight: FontWeight.w500)),
-                  ),
-          ] else ...[
-            s.collectedTrays > 0
-                ? _statusBox("Collection Completed", const Color(0xFF4CAF50), w, h)
-                : ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: Size(double.infinity, h * 0.07),
-                      backgroundColor: const Color(0xFF4CAF50),
-                      foregroundColor: Colors.white,
-                      shape: const StadiumBorder(),
-                      elevation: 2,
-                    ),
-                    onPressed: controller.isLoading.value
-                        ? null
-                        : () {
-                      if (collectedTraysController.text.trim().isEmpty) {
-                        Get.snackbar("Error", "Please enter collected trays",
-                            snackPosition: SnackPosition.TOP,
-                            colorText: Colors.red);
-                        return;
-                      }
-
-                      final trays = int.tryParse(collectedTraysController.text) ?? 0;
-
-                      if (trays < 0) {
-                        Get.snackbar("Error", "Trays cannot be negative",
-                            snackPosition: SnackPosition.TOP,
-                            colorText: Colors.red);
-                        return;
-                      }
-
-                      if (trays > s.totalTrays) {
-                        Get.snackbar("Error", "Cannot exceed total trays",
-                            snackPosition: SnackPosition.TOP,
-                            colorText: Colors.red);
-                        return;
-                      }
-
-                      _handleCollectionMark(s, trays);
-                    },
-                    child: controller.isLoading.value
-                        ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                        : const Text("Mark Collected", style: TextStyle(fontSize: 17, fontWeight: FontWeight.w500)),
-                  ),
-          ],
-        ],
-      ),
+              SizedBox(width: w * 0.05),
+              Expanded(
+                child: (s.status == DeliveryStatus.collected)
+                    ? _infoBox(
+                        "Collected",
+                        "${s.collectedTrays}",
+                        w,
+                        h,
+                      )
+                    : Container(
+                        height: h * 0.12,
+                        alignment: Alignment.center,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(
+                            color: Colors.blue.shade300,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: TextField(
+                          controller: controller.collectedTraysController,
+                          keyboardType: TextInputType.number,
+                          textAlign: TextAlign.center,
+                          onTap: () {
+                            controller.collectedTraysController.selection = TextSelection(
+                              baseOffset: 0,
+                              extentOffset: controller.collectedTraysController.text.length,
+                            );
+                          },
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          decoration: const InputDecoration(
+                            hintText: "Collected",
+                            border: InputBorder.none,
+                          ),
+                        ),
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -434,13 +408,18 @@ class _StoreDetailsScreenState extends State<StoreDetailsView> {
         borderRadius: BorderRadius.circular(15),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(title, style: TextStyle(color: Colors.blue.shade700, fontWeight: FontWeight.w500)),
+          Text(title,
+              style: TextStyle(
+                  color: Colors.blue.shade700, fontWeight: FontWeight.w500)),
           const SizedBox(height: 4),
           Text(value,
-              style:
-              TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blue.shade900)),
+              style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue.shade900)),
         ],
       ),
     );
@@ -462,27 +441,84 @@ class _StoreDetailsScreenState extends State<StoreDetailsView> {
           SizedBox(width: w * 0.03),
           Text(
             text,
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17),
+            style: const TextStyle(
+                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17),
           ),
         ],
       ),
     );
   }
 
-  void _handleDeliveryMark(DeliveryModel store) async {
-    try{
-      await controller.markDelivered(store);
-    }catch(e){
-      Get.snackbar("Error", e.toString());
-    }
+  /// STICKY ACTIONS BAR
+  Widget _buildStickyActions(
+    StoreDetailsController controller,
+    DeliveryModel s,
+    double w,
+    double h,
+    bool isCollection,
+    bool isLoading,
+  ) {
+    bool isDone = isCollection
+        ? s.status == DeliveryStatus.collected
+        : s.status == DeliveryStatus.delivered;
 
-  }
+    String actionText = isCollection ? "Mark Collected" : "Mark Delivered";
+    String doneText = isCollection ? "Collected" : "Delivered";
 
-  void _handleCollectionMark(DeliveryModel store, int trays) async {
-    try{
-    await controller.markCollected(store, trays);
-  }catch(e){
-    Get.snackbar("Error", e.toString());
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: w * 0.05,
+        vertical: h * 0.03,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (!isDone) ...[
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                minimumSize: Size(double.infinity, h * 0.07),
+                backgroundColor: const Color(0xFF2196F3),
+                foregroundColor: Colors.white,
+                shape: const StadiumBorder(),
+              ),
+              onPressed: () => controller.openMap(),
+              icon: const Icon(Icons.gps_fixed, size: 20),
+              label: const Text("Get Directions"),
+            ),
+            SizedBox(height: h * 0.02),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                minimumSize: Size(double.infinity, h * 0.07),
+                backgroundColor: const Color(0xFF4CAF50),
+                foregroundColor: Colors.white,
+                shape: const StadiumBorder(),
+              ),
+              onPressed: isLoading
+                  ? null
+                  : () => isCollection
+                      ? controller.markCollected()
+                      : controller.markDelivered(),
+              child: isLoading
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : Text(actionText,
+                      style: const TextStyle(
+                          fontSize: 17, fontWeight: FontWeight.bold)),
+            ),
+          ] else ...[
+            _statusBox(doneText, const Color(0xFF4CAF50), w, h),
+          ]
+        ],
+      ),
+    );
   }
-    }
 }

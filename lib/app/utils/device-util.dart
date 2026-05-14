@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-import '../models/DeviceInfo.dart';
+import '../models/device_info.dart';
 
 class LoginDeviceType {
   static const int android = 1;

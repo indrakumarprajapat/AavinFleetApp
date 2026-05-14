@@ -77,7 +77,7 @@ class _MilkSuppliesListViewState extends State<MilkSuppliesListView> {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: Colors.grey.withValues(alpha: 0.1),
               blurRadius: 4,
               offset: Offset(0, 2),
             ),
@@ -89,7 +89,7 @@ class _MilkSuppliesListViewState extends State<MilkSuppliesListView> {
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: supply['shift'] == 1 ? Color(0xFFFF7A00).withOpacity(0.1) : Color(0xFF007BFF).withOpacity(0.1),
+                color: supply['shift'] == 1 ? const Color(0xFFFF7A00).withValues(alpha: 0.1) : const Color(0xFF007BFF).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(

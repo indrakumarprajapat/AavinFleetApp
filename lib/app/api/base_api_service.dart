@@ -1,13 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:get_storage/get_storage.dart';
-import 'dart:io';
-import 'package:dio/dio.dart';
-import 'package:get_storage/get_storage.dart';
-import 'package:get/get.dart';
 import '../data/data_service.dart';
 import 'api_exception.dart';
-import 'package:dio/dio.dart' as dioD;
-import 'package:dio/dio.dart' hide MultipartFile, FormData;
 
 class BaseApiService {
   final Dio dio;
@@ -74,59 +67,6 @@ class BaseApiService {
       throw ApiException(e.toString());
     }
   }
-
-  // Upload helper (Multipart)
-  // Future<T> upload<T>({
-  //   required String path,
-  //   required Map<String, dynamic> fields,
-  //   List<File>? files,
-  //   T Function(dynamic data)? parser,
-  //   Options? options,
-  // }) async {
-  //   // final form = FormData();
-  //   final formData = dioD.FormData.fromMap({
-  //     'file': await dioD.MultipartFile.fromFile(file.path),
-  //     'jsondata': '{"lat":$lat,"lng":$lng}',
-  //     'code': 'BOOTH_UPDATE',
-  //   });
-  //
-  //   // append fields
-  //   fields.forEach((k, v) {
-  //     form.fields.add(MapEntry(k, v == null ? '' : v.toString()));
-  //   });
-  //
-  //   // append files
-  //   if (files != null && files.isNotEmpty) {
-  //     for (final f in files) {
-  //       final filename = f.path.split(Platform.pathSeparator).last;
-  //       form.files.add(
-  //         MapEntry(
-  //           'file',
-  //           MultipartFile.fromFileSync(f.path, filename: filename),
-  //         ),
-  //       );
-  //     }
-  //   }
-  //
-  //   try {
-  //     final response = await dio.post(
-  //       path,
-  //       data: form,
-  //       options: options?.copyWith(
-  //         headers: {
-  //           ...?options.headers,
-  //           'Content-Type': 'multipart/form-data',
-  //         },
-  //       ) ??
-  //           Options(headers: {'Content-Type': 'multipart/form-data'}),
-  //     );
-  //     return parser != null ? parser(response.data) : response.data as T;
-  //   } on DioException catch (e) {
-  //     throw _handleDioError(e);
-  //   } catch (e) {
-  //     throw ApiException(e.toString());
-  //   }
-  // }
 
   ApiException _handleDioError(DioException e) {
     final status = e.response?.statusCode;

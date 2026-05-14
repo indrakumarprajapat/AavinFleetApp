@@ -1,15 +1,13 @@
-import 'dart:convert';
+import 'package:geolocator/geolocator.dart';
+import '../../../data/session_manager.dart';
+import '../../../utils/location-utils.dart';
 
 import 'package:aavin/app/api/api_service.dart';
-import 'package:aavin/app/modules/dashboard/view/dashboard_view.dart';
-import 'package:aavin/app/modules/store_detail/view/store_details_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:get_storage/get_storage.dart';
-import '../../../models/booth_model.dart';
-import '../../../models/fleet_user.dart';
 import '../../../models/delivery_model.dart';
 import '../../../routes/app_pages.dart';
 
@@ -41,32 +39,46 @@ class DeliveryController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    
+    // 1. Recover Trip Mode
+    final storedMode = storage.read('app_mode');
+    if (storedMode != null) {
+      appMode.value = storedMode == 'collection' ? AppMode.collection : AppMode.delivery;
+    }
+
+    // 2. Recover Trip ID (from arguments or storage)
     if (Get.arguments != null) {
       tripId = int.tryParse(Get.arguments.toString()) ?? 0;
+    } else {
+      tripId = storage.read('active_trip_id') ?? 0;
     }
+
+    if (tripId != 0) {
+      storage.write('active_trip_id', tripId);
+      debugPrint("DeliveryController: Active Trip ID = $tripId");
+    }
+
+    // 3. Recover User Info
     _loadUserInfo();
+
+    // 4. Recover Collection Index
+    final storedIndex = storage.read('collecting_index_$tripId');
+    if (storedIndex != null) {
+      currentCollectingIndex.value = storedIndex;
+    }
+
+    // 5. Load Data
     fetchRouteBooths();
-    loadTripSummary();
   }
 
   void _loadUserInfo() {
     try {
-      final agentData = storage.read('fleetUser');
-      if (agentData != null) {
-        if (agentData is Map) {
-          name.value = agentData['name']?.toString() ?? "Driver";
-        } else {
-          // If it was stored as a string for some reason
-          final decoded = json.decode(agentData.toString());
-          name.value = decoded['name']?.toString() ?? "Driver";
-        }
-      }
+      final session = Get.find<SessionManager>();
+      final user = session.fleetUser.value;
 
-      if (name.value.isEmpty || name.value == "Driver") {
-        final societyData = storage.read('societyDetails');
-        if (societyData != null && societyData is Map) {
-          name.value = societyData['name']?.toString() ?? name.value;
-        }
+      if (user != null) {
+        name.value = user.operatorName ?? "Operator";
+        vehicleNumber.value = user.vehicleRegistrationNumber ?? "";
       }
     } catch (e) {
       debugPrint("Error loading user info: $e");
@@ -77,12 +89,107 @@ class DeliveryController extends GetxController {
   Future<void> fetchRouteBooths() async {
     try {
       isLoading.value = true;
-      final data = await api.getTripBooths(tripId, "DELIVERY");
-      deliveries.assignAll(
-        data.map<DeliveryModel>((json) {
-          return DeliveryModel.fromJson(json);
-        }).toList(),
+      final data = (appMode.value == AppMode.delivery)
+          ? await api.getTripBooths(tripId, "DELIVERY")
+          : await api.getCollectionBooths(tripId);
+
+      final initialBooths = data.map<DeliveryModel>((json) {
+        return DeliveryModel.fromJson(json);
+      }).toList();
+      
+      // 1. Initialize statuses based on API and Local Storage
+      final List<dynamic> rawDelivered = storage.read('delivered_booths_$tripId') ?? [];
+      final Set<String> localDeliveredIds = rawDelivered.map((e) => e.toString()).toSet();
+      final List<dynamic> rawCollected = storage.read('collected_booths_$tripId') ?? [];
+      final Set<String> localCollectedIds = rawCollected.map((e) => e.toString()).toSet();
+
+      for (int i = 0; i < initialBooths.length; i++) {
+        final booth = initialBooths[i];
+        final bId = booth.boothId.toString();
+
+        if (appMode.value == AppMode.delivery) {
+
+          final isDelivered =
+              booth.apiIsDelivered ||
+                  localDeliveredIds.contains(bId);
+
+          initialBooths[i] = booth.copyWith(
+            status: isDelivered
+                ? DeliveryStatus.delivered
+                : DeliveryStatus.toBeDelivered,
+          );
+
+        } else {
+
+          final isCollected =
+              booth.apiIsCollected ||
+                  localCollectedIds.contains(bId) ||
+                  (booth.totalTrays > 0 && booth.collectedTrays >= booth.totalTrays);
+
+          initialBooths[i] = booth.copyWith(
+            status: isCollected
+                ? DeliveryStatus.collected
+                : DeliveryStatus.toBeCollected,
+          );
+        }
+      }
+      // 2. RESUME LOGIC: Auto-highlight the next available booth (IN_PROGRESS)
+      bool hasInProgress = initialBooths.any(
+            (b) =>
+        b.status == DeliveryStatus.delivering ||
+            b.status == DeliveryStatus.collecting,
       );
+      if (!hasInProgress) {
+        if (appMode.value == AppMode.delivery) {
+
+          final firstPending = initialBooths.indexWhere(
+                (b) => b.status == DeliveryStatus.toBeDelivered,
+          );
+
+          if (firstPending != -1) {
+            initialBooths[firstPending] =
+                initialBooths[firstPending].copyWith(
+                  status: DeliveryStatus.delivering,
+                );
+          }
+
+        } else {
+
+          int nextToCollect = -1;
+
+          for (int i = initialBooths.length - 1; i >= 0; i--) {
+
+            if (initialBooths[i].status ==
+                DeliveryStatus.toBeCollected) {
+
+              nextToCollect = i;
+              break;
+            }
+          }
+
+          if (nextToCollect != -1) {
+
+            currentCollectingIndex.value = nextToCollect;
+
+            initialBooths[nextToCollect] =
+                initialBooths[nextToCollect].copyWith(
+                  status: DeliveryStatus.collecting,
+                );
+
+          } else {
+
+            currentCollectingIndex.value = -1;
+          }
+        }
+      } else if (appMode.value == AppMode.collection) {
+        currentCollectingIndex.value =
+            initialBooths.indexWhere(
+                  (b) => b.status == DeliveryStatus.collecting,
+            );
+      }
+      
+      storage.write('collecting_index_$tripId', currentCollectingIndex.value);
+      deliveries.assignAll(initialBooths);
     } catch (e) {
       Get.snackbar("Error", e.toString());
     } finally {
@@ -93,58 +200,201 @@ class DeliveryController extends GetxController {
   //START TRIP
   Future<void> markDelivered(DeliveryModel store) async {
     if (isLoading.value) return;
+
     try {
       isLoading.value = true;
-      
-      await api.markDelivered(tripId, int.parse(store.id));
 
-      final index = _getIndexById(store.id);
-      if(index == -1) return;
-      final updatedStore = store.copyWith(status: DeliveryStatus.delivered);
-      deliveries[index] = updatedStore;
+      final allowed = await LocationUtils.ensureLocationPermission();
 
-      if(index < deliveries.length - 1){
-        final next = deliveries[index + 1];
-        if(next.status == DeliveryStatus.pending){
-          deliveries[index + 1] = next.copyWith(status: DeliveryStatus.delivering);
+      double lat = 0;
+      double lng = 0;
+
+      if (allowed) {
+        Position? position = await LocationUtils.getCurrentLocation();
+
+        if (position != null) {
+          lat = position.latitude;
+          lng = position.longitude;
         }
       }
-      final nextStore = getNextStore(updatedStore);
 
-      if (nextStore != null) {
-        Get.offNamed(
-          Routes.STORE_DETAILS,
-          arguments: nextStore,
-          preventDuplicates: false,
+      try {
+        await api.markDelivered(
+          tripId,
+          store.boothId,
+          lat,
+          lng,
         );
-      } else {
-        Get.offNamed(Routes.DELIVERY_ROUTE);
+
+        /// SAVE LOCAL
+        List<dynamic> delivered =
+            storage.read('delivered_booths_$tripId') ?? [];
+
+        if (!delivered.contains(store.boothId)) {
+          delivered.add(store.boothId);
+
+          storage.write(
+            'delivered_booths_$tripId',
+            delivered,
+          );
+        }
+      } catch (e) {
+        final errorStr = e.toString().toLowerCase();
+
+        if (!errorStr.contains("already delivered") &&
+            !errorStr.contains("already completed")) {
+          rethrow;
+        }
+
+        /// SAVE EVEN IF ALREADY DELIVERED
+        List<dynamic> delivered =
+            storage.read('delivered_booths_$tripId') ?? [];
+
+        if (!delivered.contains(store.boothId)) {
+          delivered.add(store.boothId);
+
+          storage.write(
+            'delivered_booths_$tripId',
+            delivered,
+          );
+        }
       }
 
-      Get.snackbar("Success", "${store.storeName} delivered ");
+      /// UPDATE CURRENT STORE STATUS
+      final index = _getIndexById(store.id);
+
+      if (index == -1) return;
+
+      final updatedStore = store.copyWith(
+        status: DeliveryStatus.delivered,
+      );
+
+      deliveries[index] = updatedStore;
+
+      /// MOVE NEXT DELIVERY TO IN PROGRESS
+      if (index < deliveries.length - 1) {
+        final next = deliveries[index + 1];
+
+        if (next.status == DeliveryStatus.toBeDelivered ||
+            next.status == DeliveryStatus.delivering) {
+          deliveries[index + 1] = next.copyWith(
+            status: DeliveryStatus.delivering,
+          );
+        }
+      }
+
+      Get.snackbar(
+        "Success",
+        "Booth ${store.number} delivered",
+        snackPosition: SnackPosition.TOP,
+      );
+
+      final nextStore = getNextStore(updatedStore);
+
+      Future.delayed(
+        const Duration(milliseconds: 300),
+            () async {
+          FocusManager.instance.primaryFocus?.unfocus();
+
+          /// NEXT DELIVERY BOOTH
+          if (nextStore != null) {
+            // Set loading to false BEFORE navigation to ensure the current view
+            // handles its state update before it starts being disposed by Get.offNamed
+            isLoading.value = false;
+            Get.offNamed(
+              Routes.STORE_DETAILS,
+              arguments: nextStore,
+              preventDuplicates: false,
+            );
+            return;
+          }
+
+          /// START COLLECTION MODE
+          // initiateCollection manages its own isLoading state
+          await initiateCollection();
+
+          /// FIND FIRST COLLECTION BOOTH
+          final collectionIndex = deliveries.indexWhere(
+            (b) => b.status == DeliveryStatus.collecting,
+          );
+          
+          final collectionBooth = collectionIndex != -1 ? deliveries[collectionIndex] : null;
+
+          /// OPEN COLLECTION BOOTH
+          if (collectionBooth != null) {
+            Get.offNamed(
+              Routes.STORE_DETAILS,
+              arguments: collectionBooth,
+              preventDuplicates: false,
+            );
+          } else {
+            Get.back();
+          }
+          isLoading.value = false;
+        },
+      );
     } catch (e) {
-      Get.snackbar("Error", e.toString());
-    } finally {
       isLoading.value = false;
+
+      Get.snackbar(
+        "Error",
+        e.toString(),
+      );
     }
   }
-
   //START COLLECTION
   Future<void> initiateCollection() async {
     try {
+
       isLoading.value = true;
-      await api.startCollection(tripId);
+
       appMode.value = AppMode.collection;
-      if (deliveries.isNotEmpty) {
-        openStoreDetails(deliveries.last);
+
+      storage.write('app_mode', 'collection');
+
+      await fetchRouteBooths();
+
+      if (deliveries.isEmpty) return;
+
+      int lastPending = -1;
+
+      for (int i = deliveries.length - 1; i >= 0; i--) {
+
+        if (deliveries[i].status ==
+            DeliveryStatus.toBeCollected) {
+
+          lastPending = i;
+          break;
+        }
       }
+
+      if (lastPending != -1) {
+
+        currentCollectingIndex.value = lastPending;
+
+        deliveries[lastPending] =
+            deliveries[lastPending].copyWith(
+              status: DeliveryStatus.collecting,
+            );
+      }
+
+      storage.write(
+        'collecting_index_$tripId',
+        currentCollectingIndex.value,
+      );
+
     } catch (e) {
-      Get.snackbar("Error", "Failed to start collection: $e");
+
+      Get.snackbar(
+        "Error",
+        "Failed to start collection: $e",
+      );
+
     } finally {
+
       isLoading.value = false;
     }
   }
-
   @Deprecated("Use markCollected instead")
   Future<void> startCollection(DeliveryModel store) async {
     // This was previously used for individual store collection start
@@ -164,35 +414,35 @@ class DeliveryController extends GetxController {
     );
     await launchUrl(url, mode: LaunchMode.externalApplication);
   }
-
-  //DASHBOARD
- Future<void> loadTripSummary() async {
-    try{
-      isSummaryLoading.value = true;
-      final data = await api.getTripSummary(tripId);
-      summary.value = data;
-      
-      // Update vehicle number and name from summary if available
-      final summaryData = data['data'] ?? data;
-      
-      if (summaryData['vehicleNumber'] != null) {
-        vehicleNumber.value = summaryData['vehicleNumber'].toString();
-      } else if (summaryData['vehicle'] != null && summaryData['vehicle']['number'] != null) {
-        vehicleNumber.value = summaryData['vehicle']['number'].toString();
-      }
-
-      if (summaryData['driverName'] != null) {
-        name.value = summaryData['driverName'].toString();
-      } else if (summaryData['driver'] != null && summaryData['driver']['name'] != null) {
-        name.value = summaryData['driver']['name'].toString();
-      }
-      
-    }catch(e){
-      debugPrint("Error loading trip summary: $e");
-    }finally{
-      isSummaryLoading.value = false;
-    }
- }
+ //
+ //  //DASHBOARD
+ // Future<void> loadTripSummary() async {
+ //    try{
+ //      isSummaryLoading.value = true;
+ //      final data = await api.getTripSummary(tripId);
+ //      summary.value = data;
+ //
+ //      // Update vehicle number and name from summary if available
+ //      final summaryData = data['data'] ?? data;
+ //
+ //      if (summaryData['vehicleNumber'] != null) {
+ //        vehicleNumber.value = summaryData['vehicleNumber'].toString();
+ //      } else if (summaryData['vehicle'] != null && summaryData['vehicle']['number'] != null) {
+ //        vehicleNumber.value = summaryData['vehicle']['number'].toString();
+ //      }
+ //
+ //      if (summaryData['driverName'] != null) {
+ //        name.value = summaryData['driverName'].toString();
+ //      } else if (summaryData['driver'] != null && summaryData['driver']['name'] != null) {
+ //        name.value = summaryData['driver']['name'].toString();
+ //      }
+ //
+ //    }catch(e){
+ //      debugPrint("Error loading trip summary: $e");
+ //    }finally{
+ //      isSummaryLoading.value = false;
+ //    }
+ // }
 
 
 
@@ -220,10 +470,10 @@ class DeliveryController extends GetxController {
             child: const Text("Cancel"),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               isDialogShown.value = false;
               Get.back();
-              Get.offAllNamed(Routes.DASHBOARD);
+              await submitTrip();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xff1BA6C8),
@@ -239,209 +489,41 @@ class DeliveryController extends GetxController {
       barrierDismissible: false,
     );
   }
-  
 
-  @override
-  void onClose() {
-    deliveries.clear();
-    super.onClose();
+  Future<void> submitTrip() async {
+    try {
+      isLoading.value = true;
+      final allowed = await LocationUtils.ensureLocationPermission();
+      double lat = 0, lng = 0;
+      if (allowed) {
+        Position? position = await LocationUtils.getCurrentLocation();
+        if (position != null) {
+          lat = position.latitude;
+          lng = position.longitude;
+        }
+      }
+      await api.endTrip(tripId, lat, lng);
+      
+      // CLEAR PERSISTENCE
+      storage.remove('active_trip_id');
+      storage.remove('app_mode');
+      storage.remove('delivered_booths_$tripId');
+      storage.remove('collected_booths_$tripId');
+      storage.remove('collecting_index_$tripId');
+      
+      // Close the app or return to login/home
+      SystemNavigator.pop();
+    } catch (e) {
+      Get.snackbar("Error", "Failed to end trip: $e");
+    } finally {
+      isLoading.value = false;
+    }
   }
 
-  // Future<void> fetchRouteBooths() async {
-  //   try {
-  //     isLoading.value = true;
-  //     loadDummyData();
-  //
-  //   } catch (e) {
-  //     loadDummyData();
-  //   } finally {
-  //     isLoading.value = false;
-  //   }
-  // }
-
-  void loadDummyData() {
-    deliveries.assignAll([
-      DeliveryModel(
-        id: "D1",
-        number: "01",
-        storeName: "Balaji Stores",
-        address: "No.21 AA Block 3rd St, Anna Nagar",
-        status: DeliveryStatus.delivered,
-        remainingTrays: 2,
-        products: [
-          const ProductModel(name: "Aavin Nice (500ml)", trays: 5, packets: 50, tubs: 2),
-          const ProductModel(name: "Aavin Premium (500ml)", trays: 3, packets: 30, tubs: 1),
-        ],
-      ),
-      DeliveryModel(
-        id: "D2",
-        number: "02",
-        storeName: "Sivanesh Stores",
-        address: "T Nagar",
-        status: DeliveryStatus.delivering,
-        products: [
-          const ProductModel(name: "Aavin Nice (500ml)", trays: 10, packets: 100, tubs: 4),
-        ],
-      ),
-      DeliveryModel(
-        id: "D3",
-        number: "03",
-        storeName: "Kishore Stall",
-        address: "Velachery",
-        status: DeliveryStatus.pending,
-        remainingTrays: 5,
-        products: [
-          const ProductModel(name: "Aavin Green (500ml)", trays: 8, packets: 80, tubs: 3),
-          const ProductModel(name: "Aavin Nice (500ml)", trays: 5, packets: 50, tubs: 2),
-          const ProductModel(name: "Aavin Premium (500ml)", trays: 4, packets: 40, tubs: 1),
-          const ProductModel(name: "Aavin Diet (500ml)", trays: 2, packets: 20, tubs: 1),
-          const ProductModel(name: "Aavin Tea Milk", trays: 10, packets: 100, tubs: 4),
-          const ProductModel(name: "Aavin Coffee Milk", trays: 6, packets: 60, tubs: 2),
-          const ProductModel(name: "Aavin Butter Milk", trays: 15, packets: 150, tubs: 5),
-          const ProductModel(name: "Aavin Lassi", trays: 3, packets: 30, tubs: 1),
-          const ProductModel(name: "Aavin Curd (200g)", trays: 20, packets: 200, tubs: 8),
-          const ProductModel(name: "Aavin Curd (500g)", trays: 12, packets: 120, tubs: 5),
-          const ProductModel(name: "Aavin Paneer (200g)", trays: 5, packets: 50, tubs: 2),
-          const ProductModel(name: "Aavin Ghee (100ml)", trays: 2, packets: 20, tubs: 1),
-          const ProductModel(name: "Aavin Ghee (500ml)", trays: 1, packets: 10, tubs: 1),
-          const ProductModel(name: "Aavin Flavored Milk - Rose", trays: 8, packets: 80, tubs: 3),
-          const ProductModel(name: "Aavin Flavored Milk - Pista", trays: 8, packets: 80, tubs: 3),
-          const ProductModel(name: "Aavin Flavored Milk - Cardamom", trays: 8, packets: 80, tubs: 3),
-          const ProductModel(name: "Aavin Khoa", trays: 4, packets: 40, tubs: 1),
-          const ProductModel(name: "Aavin Gulab Jamun", trays: 3, packets: 30, tubs: 1),
-          const ProductModel(name: "Aavin Rasgulla", trays: 3, packets: 30, tubs: 1),
-          const ProductModel(name: "Aavin Skimmed Milk Powder", trays: 5, packets: 50, tubs: 2),
-          const ProductModel(name: "Aavin Green (500ml)", trays: 8, packets: 80, tubs: 3),
-          const ProductModel(name: "Aavin Nice (500ml)", trays: 5, packets: 50, tubs: 2),
-          const ProductModel(name: "Aavin Premium (500ml)", trays: 4, packets: 40, tubs: 1),
-          const ProductModel(name: "Aavin Diet (500ml)", trays: 2, packets: 20, tubs: 1),
-          const ProductModel(name: "Aavin Tea Milk", trays: 10, packets: 100, tubs: 4),
-          const ProductModel(name: "Aavin Coffee Milk", trays: 6, packets: 60, tubs: 2),
-          const ProductModel(name: "Aavin Butter Milk", trays: 15, packets: 150, tubs: 5),
-          const ProductModel(name: "Aavin Lassi", trays: 3, packets: 30, tubs: 1),
-          const ProductModel(name: "Aavin Curd (200g)", trays: 20, packets: 200, tubs: 8),
-          const ProductModel(name: "Aavin Curd (500g)", trays: 12, packets: 120, tubs: 5),
-          const ProductModel(name: "Aavin Paneer (200g)", trays: 5, packets: 50, tubs: 2),
-          const ProductModel(name: "Aavin Ghee (100ml)", trays: 2, packets: 20, tubs: 1),
-          const ProductModel(name: "Aavin Ghee (500ml)", trays: 1, packets: 10, tubs: 1),
-          const ProductModel(name: "Aavin Flavored Milk - Rose", trays: 8, packets: 80, tubs: 3),
-          const ProductModel(name: "Aavin Flavored Milk - Pista", trays: 8, packets: 80, tubs: 3),
-          const ProductModel(name: "Aavin Flavored Milk - Cardamom", trays: 8, packets: 80, tubs: 3),
-          const ProductModel(name: "Aavin Khoa", trays: 4, packets: 40, tubs: 1),
-          const ProductModel(name: "Aavin Gulab Jamun", trays: 3, packets: 30, tubs: 1),
-          const ProductModel(name: "Aavin Rasgulla", trays: 3, packets: 30, tubs: 1),
-          const ProductModel(name: "Aavin Skimmed Milk Powder", trays: 5, packets: 50, tubs: 2), const ProductModel(name: "Aavin Green (500ml)", trays: 8, packets: 80, tubs: 3),
-          const ProductModel(name: "Aavin Nice (500ml)", trays: 5, packets: 50, tubs: 2),
-          const ProductModel(name: "Aavin Premium (500ml)", trays: 4, packets: 40, tubs: 1),
-          const ProductModel(name: "Aavin Diet (500ml)", trays: 2, packets: 20, tubs: 1),
-          const ProductModel(name: "Aavin Tea Milk", trays: 10, packets: 100, tubs: 4),
-          const ProductModel(name: "Aavin Coffee Milk", trays: 6, packets: 60, tubs: 2),
-          const ProductModel(name: "Aavin Butter Milk", trays: 15, packets: 150, tubs: 5),
-          const ProductModel(name: "Aavin Lassi", trays: 3, packets: 30, tubs: 1),
-          const ProductModel(name: "Aavin Curd (200g)", trays: 20, packets: 200, tubs: 8),
-          const ProductModel(name: "Aavin Curd (500g)", trays: 12, packets: 120, tubs: 5),
-          const ProductModel(name: "Aavin Paneer (200g)", trays: 5, packets: 50, tubs: 2),
-          const ProductModel(name: "Aavin Ghee (100ml)", trays: 2, packets: 20, tubs: 1),
-          const ProductModel(name: "Aavin Ghee (500ml)", trays: 1, packets: 10, tubs: 1),
-          const ProductModel(name: "Aavin Flavored Milk - Rose", trays: 8, packets: 80, tubs: 3),
-          const ProductModel(name: "Aavin Flavored Milk - Pista", trays: 8, packets: 80, tubs: 3),
-          const ProductModel(name: "Aavin Flavored Milk - Cardamom", trays: 8, packets: 80, tubs: 3),
-          const ProductModel(name: "Aavin Khoa", trays: 4, packets: 40, tubs: 1),
-          const ProductModel(name: "Aavin Gulab Jamun", trays: 3, packets: 30, tubs: 1),
-          const ProductModel(name: "Aavin Rasgulla", trays: 3, packets: 30, tubs: 1),
-          const ProductModel(name: "Aavin Skimmed Milk Powder", trays: 5, packets: 50, tubs: 2),
-        ],
-      ),
-      DeliveryModel(
-        id: "D4",
-        number: "04",
-        storeName: "Murugan Stores",
-        address: "Anna Nagar",
-        status: DeliveryStatus.pending,
-        remainingTrays: 1,
-        products: [
-          const ProductModel(name: "Aavin Nice (500ml)", trays: 12, packets: 120, tubs: 5),
-        ],
-      ),
-      DeliveryModel(
-        id: "D5",
-        number: "05",
-        storeName: "Senthi Milk Agency",
-        address: "Salem Road",
-        status: DeliveryStatus.pending,
-        products: [
-          const ProductModel(name: "Aavin Green (500ml)", trays: 6, packets: 60, tubs: 2),
-        ],
-      ),
-      DeliveryModel(
-        id: "D6",
-        number: "06",
-        storeName: "Vetrivel Traders",
-        address: "Paramathi Road",
-        status: DeliveryStatus.pending,
-        products: [
-          const ProductModel(name: "Aavin Diet (500ml)", trays: 4, packets: 40, tubs: 1),
-        ],
-      ),
-    ]);
-  }
 
   int _getIndexById(String id) {
     return deliveries.indexWhere((s) => s.id == id);
   }
-
-  DeliveryStatus _parseStatus(String status) {
-    switch (status) {
-      case "delivered":
-        return DeliveryStatus.delivered;
-      case "delivering":
-        return DeliveryStatus.delivering;
-      default:
-        return DeliveryStatus.pending;
-    }
-  }
-  // //
-  // // void startCollection() {
-  // //   appMode.value = AppMode.collection;
-  // //   currentCollectingIndex.value = deliveries.length - 1;
-  // //   isDialogShown.value = false;
-  // //
-  // //   if (deliveries.isNotEmpty) {
-  // //     Get.toNamed(Routes.STORE_DETAILS, arguments: deliveries.last);
-  // //   }
-  // // }
-  //
-  // Future<void> markDelivered(DeliveryModel store) async {
-  //   if (isLoading.value) return;
-  //   isLoading.value = true;
-  //
-  //   final index = _getIndexById(store.id);
-  //   if (index == -1) {
-  //     isLoading.value = false;
-  //     return;
-  //   }
-  //
-  //   final updatedStore = store.copyWith(status: DeliveryStatus.delivered);
-  //   deliveries[index] = updatedStore;
-  //
-  //   if (index < deliveries.length - 1) {
-  //     final next = deliveries[index + 1];
-  //     if (next.status == DeliveryStatus.pending) {
-  //       deliveries[index + 1] = next.copyWith(status: DeliveryStatus.delivering);
-  //     }
-  //   }
-  //
-  //   isLoading.value = false;
-  //   Get.snackbar("Success", "${store.storeName} marked delivered",
-  //       snackPosition: SnackPosition.TOP);
-  //
-  //   final nextStore = getNextStore(store);
-  //   if (nextStore != null) {
-  //     Get.offNamed(Routes.STORE_DETAILS, arguments: nextStore, preventDuplicates: false);
-  //   } else {
-  //     Get.offNamed(Routes.DELIVERY_ROUTE);
-  //   }
-  // }
 
   Future<void> markCollected(DeliveryModel store, int trays) async {
     if (isLoading.value) return;
@@ -449,32 +531,107 @@ class DeliveryController extends GetxController {
     try {
       isLoading.value = true;
 
-      await api.submitTrayCollection(tripId, int.parse(store.id), trays);
+      final allowed = await LocationUtils.ensureLocationPermission();
+      double lat = 0, lng = 0;
+      if (allowed) {
+        Position? position = await LocationUtils.getCurrentLocation();
+        if (position != null) {
+          lat = position.latitude;
+          lng = position.longitude;
+        }
+      }
+
+      try {
+        await api.markCollected(tripId, store.boothId, trays, lat, lng);
+        
+        // SAVE PERSISTENCE
+        List<dynamic> collected = storage.read('collected_booths_$tripId') ?? [];
+        if (!collected.contains(store.boothId)) {
+          collected.add(store.boothId);
+          storage.write('collected_booths_$tripId', collected);
+        }
+      } catch (e) {
+        final errorStr = e.toString().toLowerCase();
+        if (!errorStr.contains("already collected") && 
+            !errorStr.contains("already delivered") && 
+            !errorStr.contains("already completed")) {
+          rethrow;
+        }
+        // Even on error, if it's already done, mark it locally
+        List<dynamic> collected = storage.read('collected_booths_$tripId') ?? [];
+        if (!collected.contains(store.boothId)) {
+          collected.add(store.boothId);
+          storage.write('collected_booths_$tripId', collected);
+        }
+      }
 
       final index = _getIndexById(store.id);
-      if (index == -1) return;
+      debugPrint("MarkCollected: Booth ${store.number} at index $index. Mode: ${appMode.value}");
+      if (index == -1) {
+        debugPrint("Error: Could not find booth in list");
+        return;
+      }
 
-      final updatedStore =
-      store.copyWith(collectedTrays: trays);
+      final updatedStore = store.copyWith(
+        collectedTrays: trays,
+        status: DeliveryStatus.collected,
+      );
+
       deliveries[index] = updatedStore;
 
-      Get.snackbar("Success", "${store.storeName} collected");
+      if (appMode.value == AppMode.collection) {
+        int nextIndex = index - 1;
+        while (nextIndex >= 0) {
+          if (deliveries[nextIndex].status != DeliveryStatus.collected) {
+            deliveries[nextIndex] =
+                deliveries[nextIndex].copyWith(
+                  status: DeliveryStatus.collecting,
+                );
+            currentCollectingIndex.value = nextIndex;
+            break;
+          }
+          nextIndex--;
+        }
+
+        if (nextIndex < 0) {
+          currentCollectingIndex.value = -1;
+        }
+
+        storage.write(
+          'collecting_index_$tripId',
+          currentCollectingIndex.value,
+        );
+      }
+      Get.snackbar(
+        "Success", 
+        "Booth ${store.number} collected",
+        snackPosition: SnackPosition.TOP,
+      );
 
       final nextStore = getNextStore(updatedStore);
 
-      if (nextStore != null) {
-        Get.offNamed(
-          Routes.STORE_DETAILS,
-          arguments: nextStore,
-          preventDuplicates: false,
-        );
-      } else {
-        showCompletionDialog();
-      }
+      Future.delayed(const Duration(milliseconds: 300), () {
+        FocusManager.instance.primaryFocus?.unfocus();
+
+        // Set loading to false BEFORE navigation to ensure the current view
+        // handles its state update before it starts being disposed by Get.offNamed
+        isLoading.value = false;
+
+        if (nextStore != null) {
+          Get.offNamed(
+            Routes.STORE_DETAILS,
+            arguments: nextStore,
+            preventDuplicates: false,
+          );
+        } else {
+          // Return to route list when finished
+          showCompletionDialog();
+        }
+      });
     } catch (e) {
-      Get.snackbar("Error", "Collection failed: $e");
-    } finally {
       isLoading.value = false;
+      debugPrint("Collection Error: $e");
+      Get.snackbar("Error", "Collection failed: $e");
     }
   }
 
@@ -485,12 +642,16 @@ class DeliveryController extends GetxController {
       if (index == -1 || deliveries.isEmpty) return null;
 
       if (appMode.value == AppMode.delivery) {
-        if (index < deliveries.length - 1) {
-          return deliveries[index + 1];
+        for (int i = index + 1; i < deliveries.length; i++) {
+          if (deliveries[i].status != DeliveryStatus.delivered) {
+            return deliveries[i];
+          }
         }
       } else {
-        if (index > 0) {
-          return deliveries[index - 1];
+        for (int i = index - 1; i >= 0; i--) {
+          if (deliveries[i].status != DeliveryStatus.collected) {
+            return deliveries[i];
+          }
         }
       }
 

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../constants/app_enums.dart';
 import '../../../data/session_manager.dart';
-import '../../../models/DeviceInfo.dart';
+import '../../../models/device_info.dart';
 import '../../../routes/app_pages.dart';
 import '../../../api/api_service.dart';
 import '../../../services/config_service.dart';

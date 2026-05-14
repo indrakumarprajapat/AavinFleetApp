@@ -50,7 +50,15 @@ const Map<String, ClientConfig> clientConfigs = {
     enableReports: true,
     enablePayments: true,
     // baseUrl: "https://api.aavincbe.cwitch.tech/",
-    baseUrl: "http://192.168.29.89:3043/",
+    // baseUrl: "http://192.168.29.89:3043/",
+    // baseUrl: "http://192.168.29.86:3043/",
+    baseUrl: "http://10.109.13.228:3043/",
+
+    // baseUrl: "http://192.168.1.7:3043/",
+
+
+
+
 
     privacyPolicyLink:'https://www.aavincoimbatore.com/assets/privacy-policy.html',
       termAndCondLink:'https://www.aavincoimbatore.com/assets/terms-and-conditions.html',

@@ -1,89 +1,109 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../api/api_service.dart';
 import '../../../models/delivery_model.dart';
 import '../../delivery/controllers/delivery_controller.dart';
-import '../../delivery/view/delivery_route_view.dart';
-import '../view/store_details_view.dart';
 
 class StoreDetailsController extends GetxController {
+  final ApiService api = Get.find<ApiService>();
   final DeliveryController deliveryController = Get.find();
-  late DeliveryModel store;
-  late TextEditingController collectedTraysController;
+  
+  final _store = Rxn<DeliveryModel>();
+  DeliveryModel? get store => _store.value;
+  
+  final isLoading = false.obs;
+  final TextEditingController collectedTraysController =
+      TextEditingController();
 
   @override
   void onInit() {
     super.onInit();
-    store = Get.arguments;
-    collectedTraysController = TextEditingController(
-      text: (store.collectedTrays == 0)
-          ? ""
-          : store.collectedTrays.toString(),
-    );
+    final initialStore = Get.arguments as DeliveryModel;
+    _store.value = initialStore;
+
+    collectedTraysController.text = "0";
+    fetchBoothProductDetails();
+  }
+
+  Future<void> fetchBoothProductDetails() async {
+    if (store == null) return;
+    try {
+      isLoading.value = true;
+      final List<dynamic> data =
+          await api.getBoothDetails(deliveryController.tripId, store!.boothId);
+
+      final products =
+          data.map((json) => DeliveryProductModel.fromJson(json)).toList();
+
+      // Update the local store with fetched products
+      final updatedStore = store!.copyWith(products: products);
+      _store.value = updatedStore;
+
+      // Also update the main list in DeliveryController so the change is reflected when going back
+      final index = deliveryController.deliveries.indexWhere((d) => d.id == store!.id);
+      if (index != -1) {
+        deliveryController.deliveries[index] = updatedStore;
+      }
+    } catch (e) {
+      debugPrint("Error fetching booth details: $e");
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   @override
   void onClose() {
-    collectedTraysController.dispose();
+    // Note: We don't dispose collectedTraysController here because GetX might 
+    // reuse the instance or the view might still access it during transitions,
+    // which causes the "used after being disposed" error.
     super.onClose();
   }
 
   Future<void> markDelivered() async {
-    if (deliveryController.isLoading.value) return;
+    if (deliveryController.isLoading.value || store == null) return;
     try {
-      await deliveryController.markDelivered(store);
+      await deliveryController.markDelivered(store!);
     } catch (e) {
       Get.snackbar("Error", e.toString());
     }
   }
 
   Future<void> markCollected() async {
-    if (deliveryController.isLoading.value) return;
-    final trays = int.tryParse(collectedTraysController.text) ?? 0;
+    if (deliveryController.isLoading.value || store == null) return;
 
-    if (trays <= 0) {
-      Get.snackbar("Error", "Enter valid trays");
-      return;
-    }
+    final input = collectedTraysController.text.trim();
+    final int collectedCount = int.tryParse(input) ?? 0;
 
-    if (trays > store.totalTrays) {
-      Get.snackbar("Error", "Cannot exceed total trays");
+    // Prioritize totalTrays (today's delivery) as the expected return.
+    // Fallback to remainingTrays (residue) if totalTrays is 0 (collection-only).
+    final int expectedCount = (store!.totalTrays > 0)
+        ? store!.totalTrays
+        : store!.remainingTrays;
+
+    // Strict validation: Must match expected or be 0
+    if (collectedCount != expectedCount && collectedCount != 0) {
+      Get.snackbar(
+        "Invalid Count",
+        "You must collect either all ($expectedCount) or 0 trays.",
+        backgroundColor: Colors.red.shade100,
+        colorText: Colors.red.shade900,
+      );
       return;
     }
 
     try {
-      await deliveryController.markCollected(store, trays);
+      await deliveryController.markCollected(
+        store!,
+        collectedCount,
+      );
     } catch (e) {
       Get.snackbar("Error", e.toString());
     }
   }
-  //
-  // /// ================= COLLECTION =================
-  // Future<void> markCollected() async {
-  //   final trays =
-  //       int.tryParse(collectedTraysController.text) ?? 0;
-  //
-  //   if (trays <= 0) {
-  //     Get.snackbar("Error", "Enter valid trays");
-  //     return;
-  //   }
-  //
-  //   if (trays > store.totalTrays) {
-  //     Get.snackbar("Error", "Cannot exceed total trays");
-  //     return;
-  //   }
-  //
-  //   await deliveryController.markCollected(store, trays);
-  //
-  //   final nextStore = deliveryController.getNextStore(store);
-  //
-  //   if (nextStore != null) {
-  //     Get.off(() => const StoreDetailsView(), arguments: nextStore);
-  //   } else {
-  //     Get.off(() => const DeliveryRouteView());
-  //   }
-  // }
 
   void openMap() {
-    deliveryController.openMap(store.address);
+    if (store != null) {
+      deliveryController.openMap(store!.address);
+    }
   }
 }

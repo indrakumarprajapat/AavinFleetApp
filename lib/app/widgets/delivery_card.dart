@@ -9,7 +9,6 @@ class DeliveryCard extends StatelessWidget {
   final bool isCollection;
   final int? tray;
   final int? packet;
-  final int? tub;
   final int? remainingTray;
 
   DeliveryCard({
@@ -18,34 +17,33 @@ class DeliveryCard extends StatelessWidget {
     required this.status,
     this.tray,
     this.packet,
-    this.tub,
     this.remainingTray,
     this.isCollection = false,
   });
 
   int get totalTray =>
-      tray ?? store.products.fold(0, (sum, p) => sum + p.trays);
+      tray ?? store.totalTrays;
 
   int get totalPacket =>
-      packet ?? store.products.fold(0, (sum, p) => sum + p.packets);
+      packet ?? store.totalPackets;
 
-  int get totalTub =>
-      tub ?? store.products.fold(0, (sum, p) => sum + p.tubs);
+  bool get isDelivered => status == DeliveryStatus.delivered || status == DeliveryStatus.collected;
 
-  bool get isDelivered => status == DeliveryStatus.delivered;
-
-  bool get isCurrent => status == DeliveryStatus.delivering;
+  bool get isCurrent => status == DeliveryStatus.delivering || status == DeliveryStatus.collecting;
 
   static final Map<DeliveryStatus, Color> statusColors = {
     DeliveryStatus.delivered: Colors.green,
     DeliveryStatus.delivering: Colors.blue,
-    DeliveryStatus.pending: Colors.grey,
+    DeliveryStatus.toBeDelivered: Colors.grey,
+    DeliveryStatus.collected: Colors.green,
+    DeliveryStatus.collecting: Colors.blue,
+    DeliveryStatus.toBeCollected: Colors.grey,
   };
 
   static final Map<DeliveryStatus, String> deliveryText = {
     DeliveryStatus.delivered: "DELIVERED",
     DeliveryStatus.delivering: "IN_PROGRESS",
-    DeliveryStatus.pending: "PENDING",
+    DeliveryStatus.toBeDelivered: "PENDING",
   };
 
   Color getStatusColor() {
@@ -56,8 +54,10 @@ class DeliveryCard extends StatelessWidget {
     if (isCollection) {
       return {
         DeliveryStatus.delivered: "COLLECTED",
+        DeliveryStatus.collected: "COLLECTED",
         DeliveryStatus.delivering: "COLLECTING",
-        DeliveryStatus.pending: "TO BE COLLECTED",
+        DeliveryStatus.collecting: "COLLECTING",
+        DeliveryStatus.toBeCollected: "TO BE COLLECTED",
       }[status] ?? "Unknown";
     }
     return deliveryText[status] ?? "Unknown";
@@ -71,9 +71,9 @@ class DeliveryCard extends StatelessWidget {
       case "IN_PROGRESS":
         return DeliveryStatus.delivering;
       case "PENDING":
-        return DeliveryStatus.pending;
+        return DeliveryStatus.toBeDelivered;
       default:
-        return DeliveryStatus.pending;
+        return DeliveryStatus.toBeDelivered;
     }
   }
 
@@ -229,7 +229,7 @@ class DeliveryCard extends StatelessWidget {
                               : Colors.grey,
                         ),
                         SizedBox(width: w * 0.015),
-                        Text("Tray", style: TextStyle(fontSize: w * 0.04)),
+                        Text(isCollection ? " Tray" : "Tray", style: TextStyle(fontSize: w * 0.04)),
                       ],
                     ),
                     Text("$totalTray",
@@ -239,57 +239,32 @@ class DeliveryCard extends StatelessWidget {
                 ),
 
                 /// PACKET
-                if (!isCollection) ...[
+                if (totalPacket > 0 || !isCollection) ...[
                   SizedBox(height: h * 0.01),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.local_drink,
-                            size: w * 0.045,
-                            color: (isDelivered || isCurrent)
-                                ? Colors.blue
-                                : Colors.grey,
-                          ),
-                          SizedBox(width: w * 0.015),
-                          Text("Packet", style: TextStyle(fontSize: w * 0.04)),
-                        ],
-                      ),
-                      Text("$totalPacket",
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: w * 0.04)),
+                      // Row(
+                      //   children: [
+                      //     Icon(
+                      //       Icons.local_drink,
+                      //       size: w * 0.045,
+                      //       color: (isDelivered || isCurrent)
+                      //           ? Colors.blue
+                      //           : Colors.grey,
+                      //     ),
+                      //     SizedBox(width: w * 0.015),
+                      //     Text("Packet", style: TextStyle(fontSize: w * 0.04)),
+                      //   ],
+                      // ),
+                      // Text("$totalPacket",
+                      //     style: TextStyle(k'
+                      //         fontWeight: FontWeight.bold, fontSize: w * 0.04)),
                     ],
                   ),
                 ],
 
-                SizedBox(height: h * 0.01),
 
-                /// TUB (HIDDEN IN COLLECTION MODE)
-                if (!isCollection) ...[
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.local_mall,
-                            size: w * 0.045,
-                            color: (isDelivered || isCurrent)
-                                ? Colors.green
-                                : Colors.grey,
-                          ),
-                          SizedBox(width: w * 0.015),
-                          Text("Tub", style: TextStyle(fontSize: w * 0.04)),
-                        ],
-                      ),
-                      Text("$totalTub",
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: w * 0.04)),
-                    ],
-                  ),
-                ],
 
                 /// REMAINING
                 if (store.remainingTrays > 0) ...[
@@ -331,7 +306,7 @@ class DeliveryCard extends StatelessWidget {
                   padding: EdgeInsets.symmetric(horizontal: w * 0.03),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: getStatusColor().withOpacity(0.15),
+                    color: getStatusColor().withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -355,7 +330,7 @@ class DeliveryCard extends StatelessWidget {
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: (isCurrent || isDelivered)
-                          ? getStatusColor().withOpacity(0.2)
+                          ? getStatusColor().withValues(alpha: 0.2)
                           : Colors.grey.shade500,
                       borderRadius: BorderRadius.circular(8),
                     ),

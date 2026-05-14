@@ -13,10 +13,18 @@ class RouteDetail {
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final bool? success;
+  final int? tripId;
+  final String? routeName;
+  final String? agentName;
+  final String? agentMobile;
+
+  final int? gatepassId;
+  final List<dynamic>? products;
 
   RouteDetail({
     this.id,
     this.routeId,
+    this.gatepassId,
     this.shift,
     this.reportDate,
     this.mainRouteUrl,
@@ -27,14 +35,27 @@ class RouteDetail {
     this.createdAt,
     this.updatedAt,
     this.success,
+    this.products,
+    this.tripId,
+    this.routeName,
+    this.agentName,
+    this.agentMobile,
   });
 
   factory RouteDetail.fromJson(Map<String, dynamic> json) {
     return RouteDetail(
       id: ParseUtil.parseInt(json['id']),
 
+      tripId: ParseUtil.parseInt(
+        json['trip_id'] ?? json['tripId'],
+      ),
+
       routeId: ParseUtil.parseInt(
         json['route_id'] ?? json['routeId'],
+      ),
+
+      gatepassId: ParseUtil.parseInt(
+        json['gatepass_id'] ?? json['gatepassId'],
       ),
 
       shift: ParseUtil.parseInt(json['shift']),
@@ -70,6 +91,12 @@ class RouteDetail {
       ),
 
       success: ParseUtil.parseBool(json['success']),
+
+      products: json['products'] as List?,
+
+      routeName: json['route_name']?.toString() ?? json['routeName']?.toString(),
+      agentName: json['agent_name']?.toString() ?? json['agentName']?.toString(),
+      agentMobile: json['agent_mobile']?.toString() ?? json['agentMobile']?.toString(),
     );
   }
 
@@ -78,6 +105,9 @@ class RouteDetail {
       'id': id,
       'routeId': routeId,
       'shift': shift,
+      'tripId': tripId,
+      'gatepassId': gatepassId,
+      'products': products,
       'reportDate': reportDate?.toIso8601String(),
       'mainRouteUrl': mainRouteUrl,
       'tempRouteUrl': tempRouteUrl,
@@ -87,6 +117,9 @@ class RouteDetail {
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
       'success': success,
+      'route_name': routeName,
+      'agent_name': agentName,
+      'agent_mobile': agentMobile,
     };
   }
 }

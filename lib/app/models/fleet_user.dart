@@ -153,7 +153,7 @@ class FleetUser {
             json['route_id'] ?? json['routeId']
         ),
       routeName:
-            json['route_name'] ?? json['route_name'],
+            json['route_name'] ?? json['routeName'],
 
 
       shift: ParseUtil.parseInt(
