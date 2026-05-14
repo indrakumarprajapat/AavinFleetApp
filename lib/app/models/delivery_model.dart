@@ -180,6 +180,8 @@ class DeliveryModel {
     // Fallback: If we have collected trays or a delivery record exists, it's delivered
     final collected = (json['collectedTrays'] as num?)?.toInt() ??
         (json['collected_trays'] as num?)?.toInt() ??
+        (json['collected_tray'] as num?)?.toInt() ??
+        (json['collectedTray'] as num?)?.toInt() ??
         0;
 
     if (collected > 0 && status == DeliveryStatus.toBeCollected) {
@@ -199,15 +201,22 @@ class DeliveryModel {
           [],
       collectedTrays: collected,
       remainingTrays: (json['remainingTrays'] as num?)?.toInt() ??
+          (json['remaining_trays'] as num?)?.toInt() ??
           (json['outstandingTrays'] as num?)?.toInt() ??
           0,
       apiIsDelivered: isDeliveredAPI,
       apiIsCollected: isCollectedAPI,
-      totalTrays: (json['totalTray'] as num?)?.toInt() ??
+      totalTrays: (json['totalTrays'] as num?)?.toInt() ??
+          (json['total_trays'] as num?)?.toInt() ??
+          (json['totalTray'] as num?)?.toInt() ??
+          (json['total_tray'] as num?)?.toInt() ??
           (json['tray'] as num?)?.toInt() ??
+          (json['trays'] as num?)?.toInt() ??
           0,
       totalPackets: (json['totalPackets'] as num?)?.toInt() ??
+          (json['total_packets'] as num?)?.toInt() ??
           (json['loosePackets'] as num?)?.toInt() ??
+          (json['packets'] as num?)?.toInt() ??
           0,
     );
   }

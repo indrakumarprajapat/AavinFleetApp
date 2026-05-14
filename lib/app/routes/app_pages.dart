@@ -12,6 +12,7 @@ import '../modules/login/bindings/login_binding.dart';
 import '../modules/login/views/login_view.dart';
 import '../modules/splash/bindings/splash_binding.dart';
 import '../modules/splash/views/splash_view.dart';
+import '../modules/store_detail/binding/store_details_binding.dart';
 import '../modules/store_detail/view/store_details_view.dart';
 
 part 'app_routes.dart';
@@ -44,7 +45,7 @@ class AppPages {
     GetPage(
       name: _Paths.STORE_DETAILS,
       page: () => const StoreDetailsView(),
-      binding: DeliveryRouteBinding(),
+      binding: StoreDetailsBinding(),
     ),
   ];
 }

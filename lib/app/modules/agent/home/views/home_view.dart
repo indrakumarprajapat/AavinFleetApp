@@ -47,7 +47,7 @@ class HomeView extends GetView<HomeController> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(height: Get.height * 0.25),
+            SizedBox(height: Get.height * 0.22),
 
             /// Body Container
             Container(
@@ -55,7 +55,7 @@ class HomeView extends GetView<HomeController> {
                 color: Color(0xFFF4F6F9),
                 borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
               ),
-              padding: const EdgeInsets.fromLTRB(20, 30, 20, 30),
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
               child: Obx(() {
                 if (controller.isLoading) {
                   return const SizedBox(
@@ -137,7 +137,7 @@ class HomeView extends GetView<HomeController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 15),
+        const SizedBox(height: 5),
         Obx(() {
           if (controller.products.isEmpty) {
             return Container(
@@ -347,8 +347,8 @@ class HomeView extends GetView<HomeController> {
       clipBehavior: Clip.none,
       children: [
         Container(
-          height: Get.height * 0.24,
-          padding: const EdgeInsets.only(top: 60, left: 20, right: 20),
+          height: Get.height * 0.22,
+          padding: const EdgeInsets.only(top: 35, left: 20, right: 20),
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               colors: [Color(0xFF00ADD3), Color(0xFF007EA7), Color(0xFF005F7A)],
@@ -395,19 +395,21 @@ class HomeView extends GetView<HomeController> {
                 ],
               ),
 
-              const SizedBox(height: 15),
+              const SizedBox(height: 5),
 
               /// 🔹 ROUTE NAME
               Text(
                 'Route: $routeName',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontSize: 22,
+                  fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
               ),
 
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
 
               Row(
                 children: [

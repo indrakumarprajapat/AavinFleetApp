@@ -36,7 +36,14 @@ class StoreDetailsController extends GetxController {
           data.map((json) => DeliveryProductModel.fromJson(json)).toList();
 
       // Update the local store with fetched products
-      _store.value = store!.copyWith(products: products);
+      final updatedStore = store!.copyWith(products: products);
+      _store.value = updatedStore;
+
+      // Also update the main list in DeliveryController so the change is reflected when going back
+      final index = deliveryController.deliveries.indexWhere((d) => d.id == store!.id);
+      if (index != -1) {
+        deliveryController.deliveries[index] = updatedStore;
+      }
     } catch (e) {
       debugPrint("Error fetching booth details: $e");
     } finally {

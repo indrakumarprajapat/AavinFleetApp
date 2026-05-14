@@ -291,8 +291,6 @@ class DeliveryController extends GetxController {
 
       final nextStore = getNextStore(updatedStore);
 
-      isLoading.value = false;
-
       Future.delayed(
         const Duration(milliseconds: 300),
             () async {
@@ -300,27 +298,27 @@ class DeliveryController extends GetxController {
 
           /// NEXT DELIVERY BOOTH
           if (nextStore != null) {
+            // Set loading to false BEFORE navigation to ensure the current view
+            // handles its state update before it starts being disposed by Get.offNamed
+            isLoading.value = false;
             Get.offNamed(
               Routes.STORE_DETAILS,
               arguments: nextStore,
               preventDuplicates: false,
             );
-
             return;
           }
 
           /// START COLLECTION MODE
+          // initiateCollection manages its own isLoading state
           await initiateCollection();
 
           /// FIND FIRST COLLECTION BOOTH
-          DeliveryModel? collectionBooth;
-
-          for (int i = deliveries.length - 1; i >= 0; i--) {
-            if (deliveries[i].status != DeliveryStatus.delivered) {
-              collectionBooth = deliveries[i];
-              break;
-            }
-          }
+          final collectionIndex = deliveries.indexWhere(
+            (b) => b.status == DeliveryStatus.collecting,
+          );
+          
+          final collectionBooth = collectionIndex != -1 ? deliveries[collectionIndex] : null;
 
           /// OPEN COLLECTION BOOTH
           if (collectionBooth != null) {
@@ -332,6 +330,7 @@ class DeliveryController extends GetxController {
           } else {
             Get.back();
           }
+          isLoading.value = false;
         },
       );
     } catch (e) {
@@ -610,10 +609,13 @@ class DeliveryController extends GetxController {
       );
 
       final nextStore = getNextStore(updatedStore);
-      isLoading.value = false;
 
       Future.delayed(const Duration(milliseconds: 300), () {
         FocusManager.instance.primaryFocus?.unfocus();
+
+        // Set loading to false BEFORE navigation to ensure the current view
+        // handles its state update before it starts being disposed by Get.offNamed
+        isLoading.value = false;
 
         if (nextStore != null) {
           Get.offNamed(

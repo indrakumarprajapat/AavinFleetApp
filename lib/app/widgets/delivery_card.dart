@@ -229,7 +229,7 @@ class DeliveryCard extends StatelessWidget {
                               : Colors.grey,
                         ),
                         SizedBox(width: w * 0.015),
-                        Text(isCollection ? "Remaining Tray" : "Tray", style: TextStyle(fontSize: w * 0.04)),
+                        Text(isCollection ? " Tray" : "Tray", style: TextStyle(fontSize: w * 0.04)),
                       ],
                     ),
                     Text("$totalTray",
@@ -244,22 +244,22 @@ class DeliveryCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.local_drink,
-                            size: w * 0.045,
-                            color: (isDelivered || isCurrent)
-                                ? Colors.blue
-                                : Colors.grey,
-                          ),
-                          SizedBox(width: w * 0.015),
-                          Text("Packet", style: TextStyle(fontSize: w * 0.04)),
-                        ],
-                      ),
-                      Text("$totalPacket",
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: w * 0.04)),
+                      // Row(
+                      //   children: [
+                      //     Icon(
+                      //       Icons.local_drink,
+                      //       size: w * 0.045,
+                      //       color: (isDelivered || isCurrent)
+                      //           ? Colors.blue
+                      //           : Colors.grey,
+                      //     ),
+                      //     SizedBox(width: w * 0.015),
+                      //     Text("Packet", style: TextStyle(fontSize: w * 0.04)),
+                      //   ],
+                      // ),
+                      // Text("$totalPacket",
+                      //     style: TextStyle(k'
+                      //         fontWeight: FontWeight.bold, fontSize: w * 0.04)),
                     ],
                   ),
                 ],
