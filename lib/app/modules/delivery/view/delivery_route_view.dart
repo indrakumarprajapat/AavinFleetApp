@@ -156,7 +156,9 @@ class DeliveryRouteView extends GetView<DeliveryController> {
                           final originalIndex = originalDeliveries.indexOf(delivery);
                           final currentActive = controller.currentCollectingIndex.value;
 
-                          if (delivery.apiIsCollected || delivery.collectedTrays > 0) {
+                          if (delivery.apiIsCollected || 
+                              delivery.collectedTrays > 0 || 
+                              delivery.status == DeliveryStatus.collected) {
                              status = DeliveryStatus.delivered;
                           } else if (originalIndex == currentActive) {
                             status = DeliveryStatus.delivering; // Currently collecting
@@ -174,9 +176,11 @@ class DeliveryRouteView extends GetView<DeliveryController> {
                           child: DeliveryCard(
                             store: delivery,
                             tray: isCollection
-                                ? delivery.totalTrays
+                                ? (delivery.totalTrays > 0 
+                                    ? delivery.totalTrays 
+                                    : delivery.remainingTrays)
                                 : delivery.totalTrays,
-                            packet: isCollection ? 0 : delivery.totalPackets,
+                            packet: delivery.totalPackets,
                             isCollection: isCollection,
                             status: status,
                           ),
@@ -214,7 +218,9 @@ class DeliveryRouteView extends GetView<DeliveryController> {
                     ),
 
                   if (controller.appMode.value == AppMode.collection &&
-                      deliveries.every((d) => d.apiIsCollected || d.collectedTrays > 0))
+                      deliveries.every((d) => d.apiIsCollected || 
+                                              d.collectedTrays > 0 || 
+                                              d.status == DeliveryStatus.collected))
                     Padding(
                       padding: EdgeInsets.all(w * 0.04),
                       child: SizedBox(

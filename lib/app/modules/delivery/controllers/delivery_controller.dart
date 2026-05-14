@@ -124,7 +124,7 @@ class DeliveryController extends GetxController {
           final isCollected =
               booth.apiIsCollected ||
                   localCollectedIds.contains(bId) ||
-                  booth.collectedTrays >= booth.totalTrays;
+                  (booth.totalTrays > 0 && booth.collectedTrays >= booth.totalTrays);
 
           initialBooths[i] = booth.copyWith(
             status: isCollected
