@@ -1,11 +1,8 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
+import '../../agent/home/controllers/home_controller.dart';
 import '../../../config/app_config.dart';
 import '../../../models/delivery_model.dart';
-import '../../../routes/app_pages.dart';
 import '../../../widgets/delivery_card.dart';
 import '../controllers/delivery_controller.dart';
 
@@ -18,15 +15,13 @@ class DeliveryRouteView extends GetView<DeliveryController> {
     final w = MediaQuery.of(context).size.width;
     final config = Get.find<ClientConfig>();
 
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              SizedBox(height: h * 0.24),
-              Expanded(
-                child: Obx(() {
+    return Stack(
+      children: [
+        Column(
+          children: [
+            SizedBox(height: h * 0.24),
+            Expanded(
+              child: Obx(() {
                   final isCollection =
                       controller.appMode.value == AppMode.collection;
 
@@ -75,12 +70,6 @@ class DeliveryRouteView extends GetView<DeliveryController> {
                               padding: EdgeInsets.only(bottom: h * 0.02),
                               child: DeliveryCard(
                                 store: delivery,
-                                tray: isCollection
-                                    ? (delivery.totalTrays > 0 
-                                        ? delivery.totalTrays 
-                                        : (delivery.remainingTrays > 0 ? delivery.remainingTrays : 0))
-                                    : delivery.totalTrays,
-                                packet: delivery.totalPackets,
                                 isCollection: isCollection,
                                 status: status,
                               ),
@@ -155,8 +144,7 @@ class DeliveryRouteView extends GetView<DeliveryController> {
           ),
           _buildCustomHeader(h, w, config),
         ],
-      ),
-    );
+      );
   }
 
   Widget _buildCustomHeader(double h, double w, ClientConfig config) {
@@ -184,9 +172,20 @@ class DeliveryRouteView extends GetView<DeliveryController> {
           children: [
             Row(
               children: [
-                IconButton(
+                /* IconButton(
                   icon: const Icon(Icons.arrow_back, color: Colors.white),
                   onPressed: () => Get.offAllNamed(Routes.HOME),
+                ), */
+                IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () {
+                    try {
+                      final homeController = Get.find<HomeController>();
+                      homeController.isTripStarted.value = false;
+                    } catch (e) {
+                      Get.back();
+                    }
+                  },
                 ),
                 Expanded(
                   child: Center(

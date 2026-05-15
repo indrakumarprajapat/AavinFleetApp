@@ -222,6 +222,7 @@ class DeliveryController extends GetxController {
         await api.markDelivered(
           tripId,
           store.boothId,
+          store.totalTrays,
           lat,
           lng,
         );
@@ -309,27 +310,9 @@ class DeliveryController extends GetxController {
             return;
           }
 
-          /// START COLLECTION MODE
-          // initiateCollection manages its own isLoading state
-          await initiateCollection();
-
-          /// FIND FIRST COLLECTION BOOTH
-          final collectionIndex = deliveries.indexWhere(
-            (b) => b.status == DeliveryStatus.collecting,
-          );
-          
-          final collectionBooth = collectionIndex != -1 ? deliveries[collectionIndex] : null;
-
-          /// OPEN COLLECTION BOOTH
-          if (collectionBooth != null) {
-            Get.offNamed(
-              Routes.STORE_DETAILS,
-              arguments: collectionBooth,
-              preventDuplicates: false,
-            );
-          } else {
-            Get.back();
-          }
+          /// ALL DELIVERIES COMPLETED
+          // Return to the route screen where "Start Collection" will be visible
+          Get.back();
           isLoading.value = false;
         },
       );
@@ -624,7 +607,7 @@ class DeliveryController extends GetxController {
           );
         } else {
           // Return to route list when finished
-          showCompletionDialog();
+          Get.back();
         }
       });
     } catch (e) {
