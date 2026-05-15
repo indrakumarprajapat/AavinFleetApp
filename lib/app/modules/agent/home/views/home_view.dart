@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../../config/app_config.dart';
-import '../../../../services/global_cart_service.dart';
-import '../../../delivery/view/delivery_route_view.dart';
-import '../controllers/home_controller.dart';
+import 'package:aavin/app/config/app_config.dart';
+import 'package:aavin/app/models/app_mode.dart';
+import 'package:aavin/app/services/global_cart_service.dart';
+import 'package:aavin/app/modules/delivery/view/delivery_route_view.dart';
+import 'package:aavin/app/modules/agent/home/controllers/home_controller.dart';
+
 import '../../drawer/views/agent_drawer_view.dart';
 
 class HomeView extends GetView<HomeController> {
@@ -17,7 +19,6 @@ class HomeView extends GetView<HomeController> {
   Widget build(BuildContext context) {
     return Obx(() {
       final isLocationSubmitted = controller.boothDetails?.isLocSubmit == true;
-      final isTripStarted = controller.isTripStarted.value;
 
       return Scaffold(
         key: _scaffoldKey,
@@ -25,19 +26,18 @@ class HomeView extends GetView<HomeController> {
         drawer: AgentDrawer(),
         body: Stack(
           children: [
-            isTripStarted ? const DeliveryRouteView() : _buildHomeContent(controller),
-            if (!isTripStarted)
-              Obx(() => _buildCustomHeader(
-                    isLocationSubmitted,
-                    controller.routeDetail.value?.routeName ??
-                        controller.routeDetail.value?.routeId?.toString() ??
-                        controller.fleetUser?.routeName ??
-                        '',
-                    controller.fleetUser?.vehicleRegistrationNumber ?? '',
-                  )),
+            _buildHomeContent(controller),
+            Obx(() => _buildCustomHeader(
+                  isLocationSubmitted,
+                  controller.routeDetail.value?.routeName ??
+                      controller.routeDetail.value?.routeId?.toString() ??
+                      controller.fleetUser?.routeName ??
+                      '',
+                  controller.fleetUser?.vehicleRegistrationNumber ?? '',
+                )),
           ],
         ),
-        bottomNavigationBar: isTripStarted ? null : _buildFooterView(),
+        bottomNavigationBar: _buildFooterView(),
       );
     });
   }

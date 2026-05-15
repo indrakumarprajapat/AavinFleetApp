@@ -1,5 +1,12 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_instance/src/extension_instance.dart';
+import 'package:get/get_navigation/src/extension_navigation.dart';
+import 'package:get/get_rx/src/rx_types/rx_types.dart';
+import 'package:get/get_state_manager/src/simple/get_controllers.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import '../../../api/api_service.dart';
 import '../../../models/delivery_model.dart';
 import '../../delivery/controllers/delivery_controller.dart';
@@ -66,10 +73,17 @@ class StoreDetailsController extends GetxController {
       AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
         title: const Text("Confirm Delivery", style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Text("Are you sure you want to mark Booth ${store!.number} as delivered (${store!.totalTrays} Trays)?"),
+        content: Text("Are you sure you want to mark delivered?"),
         actions: [
-          TextButton(
+          ElevatedButton(
             onPressed: () => Get.back(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFBBDEFB),
+              foregroundColor: const Color(0xFF007EA7),
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              side: BorderSide(color: const Color(0xFF007EA7).withOpacity(0.4), width: 1),
+            ),
             child: const Text("Cancel"),
           ),
           ElevatedButton(
@@ -81,7 +95,11 @@ class StoreDetailsController extends GetxController {
                 Get.snackbar("Error", e.toString());
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF007EA7),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
             child: const Text("Confirm"),
           ),
         ],
@@ -103,20 +121,30 @@ class StoreDetailsController extends GetxController {
       Get.snackbar(
         "Invalid Count",
         "You must collect either all ($expectedCount) or 0 trays.",
-        backgroundColor: Colors.red.shade100,
-        colorText: Colors.red.shade900,
       );
       return;
     }
 
+    final isLastBooth = deliveryController.getNextStore(store!) == null;
+
     Get.dialog(
       AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-        title: const Text("Confirm Collection", style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Text("Are you sure you want to mark $collectedCount trays as collected from Booth ${store!.number}?"),
+        title: Text(isLastBooth ? "Complete Trip" : "Confirm Collection",
+            style: const TextStyle(fontWeight: FontWeight.bold)),
+        content: Text(isLastBooth
+            ? "This is the last booth. Mark collected and submit trip?"
+            : "Are you sure you want to mark collected?"),
         actions: [
-          TextButton(
+          ElevatedButton(
             onPressed: () => Get.back(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFBBDEFB),
+              foregroundColor: const Color(0xFF007EA7),
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              side: BorderSide(color: const Color(0xFF007EA7).withOpacity(0.4), width: 1),
+            ),
             child: const Text("Cancel"),
           ),
           ElevatedButton(
@@ -131,7 +159,11 @@ class StoreDetailsController extends GetxController {
                 Get.snackbar("Error", e.toString());
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF007EA7),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
             child: const Text("Confirm"),
           ),
         ],
@@ -142,6 +174,16 @@ class StoreDetailsController extends GetxController {
   void openMap() {
     if (store != null) {
       deliveryController.openMap(store!.address);
+    }
+  }
+
+  Future<void> callAgent() async {
+    if (store?.agentPhone == null) return;
+    final Uri url = Uri.parse("tel:${store!.agentPhone}");
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
+    } else {
+      Get.snackbar("Error", "Could not launch dialer");
     }
   }
 }

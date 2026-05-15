@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import '../../../../api/api_service.dart';
 import '../../../../services/config_service.dart';
 import '../../../../services/global_cart_service.dart';
+import '../../../delivery/controllers/delivery_controller.dart';
 import '../controllers/home_controller.dart';
 
 class HomeBinding extends Bindings {
@@ -16,6 +17,8 @@ class HomeBinding extends Bindings {
     if (!Get.isRegistered<GlobalCartService>()) {
       Get.lazyPut<GlobalCartService>(() => GlobalCartService());
     }
+    
     Get.put<HomeController>(HomeController());
+    Get.lazyPut<DeliveryController>(() => DeliveryController());
   }
 }

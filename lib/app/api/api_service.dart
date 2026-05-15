@@ -1686,8 +1686,11 @@ class ApiService extends GetxService {
         ),
       );
 
-      if (response.data is List) {
-        return response.data;
+      final data = response.data;
+      if (data is List) {
+        return data;
+      } else if (data is Map && data['data'] is List) {
+        return data['data'];
       }
 
       return [];

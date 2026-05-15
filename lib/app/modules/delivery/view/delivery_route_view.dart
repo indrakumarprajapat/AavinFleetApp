@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../agent/home/controllers/home_controller.dart';
-import '../../../config/app_config.dart';
-import '../../../models/delivery_model.dart';
-import '../../../widgets/delivery_card.dart';
-import '../controllers/delivery_controller.dart';
+import 'package:aavin/app/models/app_mode.dart';
+import 'package:aavin/app/modules/agent/home/controllers/home_controller.dart';
+import 'package:aavin/app/config/app_config.dart';
+import 'package:aavin/app/models/delivery_model.dart';
+import 'package:aavin/app/widgets/delivery_card.dart';
+import 'package:aavin/app/modules/delivery/controllers/delivery_controller.dart';
+import 'package:get_storage/get_storage.dart';
 
 class DeliveryRouteView extends GetView<DeliveryController> {
   const DeliveryRouteView({super.key});
@@ -13,254 +15,170 @@ class DeliveryRouteView extends GetView<DeliveryController> {
   Widget build(BuildContext context) {
     final h = MediaQuery.of(context).size.height;
     final w = MediaQuery.of(context).size.width;
-    final config = Get.find<ClientConfig>();
 
-    return Stack(
-      children: [
-        Column(
-          children: [
-            SizedBox(height: h * 0.24),
-            Expanded(
-              child: Obx(() {
-                  final isCollection =
-                      controller.appMode.value == AppMode.collection;
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F8F8),
+      body: Stack(
+        children: [
+          Obx(() {
+            if (controller.isLoading.value) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-                  final originalDeliveries = controller.deliveries;
-                  final deliveries = isCollection
-                      ? originalDeliveries.reversed.toList()
-                      : originalDeliveries;
+            if (controller.deliveries.isEmpty) {
+              return const Center(child: Text("No stores found for this route"));
+            }
 
-                  if (deliveries.isEmpty) {
-                    return const Center(
-                      child: Text("No deliveries available"),
-                    );
-                  }
+            final isCollectionMode = controller.appMode.value == AppMode.collection;
 
-                  return Column(
-                    children: [
-                      Expanded(
-                        child: ListView.builder(
-                          padding: EdgeInsets.fromLTRB(w * 0.05, 5, w * 0.05, w * 0.05),
-                          itemCount: deliveries.length,
-                          itemBuilder: (context, index) {
-                            final delivery = deliveries[index];
-
-                            DeliveryStatus status;
-
-                            if (isCollection) {
-                              final originalIndex = originalDeliveries.indexOf(delivery);
-                              final currentActive = controller.currentCollectingIndex.value;
-
-                              if (delivery.apiIsCollected || 
-                                  delivery.collectedTrays > 0 || 
-                                  delivery.status == DeliveryStatus.collected) {
-                                 status = DeliveryStatus.delivered;
-                              } else if (originalIndex == currentActive) {
-                                status = DeliveryStatus.delivering; // Currently collecting
-                              } else if (originalIndex > currentActive && currentActive != -1) {
-                                status = DeliveryStatus.delivered; // Already passed
-                              } else {
-                                status = DeliveryStatus.toBeCollected; // To be collected
-                              }
-                            } else {
-                              status = delivery.status;
-                            }
-
-                            return Padding(
-                              padding: EdgeInsets.only(bottom: h * 0.02),
-                              child: DeliveryCard(
-                                store: delivery,
-                                isCollection: isCollection,
-                                status: status,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-
-                      if (controller.appMode.value == AppMode.delivery &&
-                          deliveries.every(
-                                  (d) => d.status == DeliveryStatus.delivered || d.status == DeliveryStatus.collected))
-                        Padding(
-                          padding: EdgeInsets.all(w * 0.04),
-                          child: SizedBox(
-                            width: double.infinity,
-                            height: h * 0.065,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xff1BA6C8),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              ),
-                              onPressed: () {
-                                controller.initiateCollection();
-                              },
-                              child: Text(
-                                "Start Collection",
-                                style: TextStyle(
-                                  fontSize: w * 0.045,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-
-                      if (controller.appMode.value == AppMode.collection &&
-                          deliveries.every((d) => d.apiIsCollected || 
-                                                  d.collectedTrays > 0 || 
-                                                  d.status == DeliveryStatus.collected))
-                        Padding(
-                          padding: EdgeInsets.all(w * 0.04),
-                          child: SizedBox(
-                            width: double.infinity,
-                            height: h * 0.065,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              ),
-                              onPressed: () {
-                                controller.showCompletionDialog();
-                              },
-                              child: Text(
-                                "Submit Trip",
-                                style: TextStyle(
-                                  fontSize: w * 0.045,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-
-                      const SizedBox(height: 20),
-                    ],
+            return RefreshIndicator(
+              onRefresh: () => controller.fetchRouteBooths(silent: true),
+              child: ListView.separated(
+                padding: const EdgeInsets.fromLTRB(16, 160, 16, 20),
+                itemCount: controller.deliveries.length,
+                physics: const AlwaysScrollableScrollPhysics(),
+                separatorBuilder: (context, index) => const SizedBox(height: 16),
+                itemBuilder: (context, index) {
+                  final store = controller.deliveries[index];
+                  return DeliveryCard(
+                    store: store,
+                    onTap: () => controller.openStoreDetails(store),
+                    isCollection: isCollectionMode,
                   );
-                }),
+                },
               ),
-            ],
-          ),
-          _buildCustomHeader(h, w, config),
+            );
+          }),
+
+          // Dynamic Header
+          _buildDynamicHeader(w, h),
         ],
-      );
+      ),
+      bottomNavigationBar: _buildBottomButton(),
+    );
   }
 
-  Widget _buildCustomHeader(double h, double w, ClientConfig config) {
-    final now = DateTime.now();
-    final dateText = "${now.day}-${now.month}-${now.year}";
+  Widget _buildBottomButton() {
+    return Obx(() {
+      final isDeliveryMode = controller.appMode.value == AppMode.delivery;
+      final allDelivered = controller.deliveries.isNotEmpty &&
+          controller.deliveries.every((s) => s.status == DeliveryStatus.delivered);
+      final allCollected = controller.deliveries.isNotEmpty &&
+          controller.deliveries.every((s) => s.status == DeliveryStatus.collected);
 
+      bool showButton = false;
+      String buttonText = "";
+      VoidCallback? onPressed;
+
+      if (isDeliveryMode && allDelivered) {
+        showButton = true;
+        buttonText = "START COLLECTION";
+        onPressed = () => controller.initiateCollection();
+      } else if (!isDeliveryMode && allCollected) {
+        showButton = true;
+        buttonText = "SUBMIT TRIP";
+        onPressed = () => controller.showCompletionDialog();
+      }
+
+      if (!showButton) return const SizedBox.shrink();
+
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 10,
+              offset: Offset(0, -5),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: SizedBox(
+            width: double.infinity,
+            height: 55,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xff2289a4),
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+              ),
+              onPressed: controller.isLoading.value ? null : onPressed,
+              child: controller.isLoading.value
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(
+                      buttonText,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+            ),
+          ),
+        ),
+      );
+    });
+  }
+
+  Widget _buildDynamicHeader(double w, double h) {
     return Obx(() {
       final isCollection = controller.appMode.value == AppMode.collection;
+      final title = isCollection ? "Collection Route" : "Delivery Route";
+
       return Container(
-        height: h * 0.22,
-        padding: const EdgeInsets.only(top: 35, left: 10, right: 20),
+        height: 140,
+        width: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF00ADD3), Color(0xFF007EA7), Color(0xFF005F7A)],
+            colors: [Color(0xFF00ADD3), Color(0xFF007EA7)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(35),
-            bottomRight: Radius.circular(35),
+            bottomLeft: Radius.circular(30),
+            bottomRight: Radius.circular(30),
           ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.only(top: 40, left: 30, right: 20),
+        child: Row(
           children: [
-            Row(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                /* IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  onPressed: () => Get.offAllNamed(Routes.HOME),
-                ), */
-                IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  onPressed: () {
-                    try {
-                      final homeController = Get.find<HomeController>();
-                      homeController.isTripStarted.value = false;
-                    } catch (e) {
-                      Get.back();
-                    }
-                  },
-                ),
-                Expanded(
-                  child: Center(
-                    child: Text(
-                      config.app_title,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(width: 40), // Balance the back button
               ],
             ),
-            const SizedBox(height: 10),
-            Padding(
-              padding: const EdgeInsets.only(left: 15),
-              child: Text(
-                isCollection ? "Collection Route" : "Delivery Route",
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+            const Spacer(),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(20),
               ),
-            ),
-            const SizedBox(height: 15),
-            Padding(
-              padding: const EdgeInsets.only(left: 15),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      "Vehicle: ${controller.vehicleNumber.value}",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.calendar_today, size: 14, color: Colors.white),
-                        const SizedBox(width: 6),
-                        Text(
-                          dateText,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+              child: Text(
+                isCollection ? "COLLECTION" : "DELIVERY",
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
               ),
             ),
           ],

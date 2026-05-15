@@ -1,8 +1,10 @@
+import 'package:get_storage/get_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../../utils/location-utils.dart';
 import '../../../../data/session_manager.dart';
+import 'package:aavin/app/models/app_mode.dart';
 import '../../../../models/fleet_user.dart';
 import '../../../../models/booth_model.dart';
 import '../../../../models/route_detail.dart';
@@ -14,6 +16,7 @@ import '../../../delivery/controllers/delivery_controller.dart';
 class HomeController extends GetxController with GetSingleTickerProviderStateMixin, WidgetsBindingObserver {
   final apiService = Get.find<ApiService>();
   final globalCartService = Get.find<GlobalCartService>();
+  final storage = GetStorage();
 
   final _isLoading = false.obs;
   final _boothDetails = Rxn<Society>();
@@ -33,7 +36,7 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
 
   final currentIndex = 0.obs;
   final isInitialLoading = true.obs;
-  final isTripStarted = false.obs;
+  final currentAppMode = AppMode.home.obs;
 
   @override
   void onInit() {
@@ -48,6 +51,14 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
 
     if (session.fleetUser.value != null) {
       setFleetUser(session.fleetUser.value);
+    }
+
+    // Recover AppMode from storage and Redirect if active trip
+    final storedMode = storage.read('app_mode');
+    if (storedMode != null && (storedMode == 'delivery' || storedMode == 'collection')) {
+      Future.delayed(Duration.zero, () {
+        Get.offNamed(Routes.DELIVERY_ROUTE);
+      });
     }
 
     loadRouteDetails();
@@ -123,11 +134,12 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
         }
       }
 
-      isTripStarted.value = true;
-      // Initialize DeliveryController if not already registered
-      if (!Get.isRegistered<DeliveryController>()) {
-        Get.put(DeliveryController());
-      }
+      currentAppMode.value = AppMode.delivery;
+      storage.write('app_mode', 'delivery');
+      storage.write('active_trip_id', tripId.value);
+      
+      // Navigate to Delivery Route and remove Home from stack
+      Get.offNamed(Routes.DELIVERY_ROUTE, arguments: tripId.value);
 
     } catch (e) {
       Get.snackbar("Error", e.toString());

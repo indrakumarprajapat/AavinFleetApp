@@ -9,6 +9,6 @@ class DeliveryRouteBinding extends Bindings {
   @override
   void dependencies() {
     Get.put(DeliveryController(), permanent: true);
-    Get.lazyPut(() => StoreDetailsController());
+    Get.lazyPut(() => StoreDetailsController(), fenix: true);
   }
 }

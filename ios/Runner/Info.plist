@@ -28,6 +28,9 @@
 	<false/>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
+		<string>tel</string>
+		<string>https</string>
+		<string>http</string>
 		<string>upi</string>
 		<string>googlepay</string>
 		<string>tez</string>

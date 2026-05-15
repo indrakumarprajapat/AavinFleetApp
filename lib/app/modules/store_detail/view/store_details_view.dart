@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
-import '../../../models/delivery_model.dart';
-import '../../delivery/controllers/delivery_controller.dart';
-import '../controller/store_details_controller.dart';
+import 'package:aavin/app/models/delivery_model.dart';
+import 'package:aavin/app/models/app_mode.dart';
+import 'package:aavin/app/modules/delivery/controllers/delivery_controller.dart';
+import 'package:aavin/app/modules/store_detail/controller/store_details_controller.dart';
 
 class StoreDetailsView extends GetView<StoreDetailsController> {
   const StoreDetailsView({super.key});
@@ -62,7 +63,7 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
                                         width: w * 0.16,
                                         decoration: BoxDecoration(
                                           borderRadius: BorderRadius.circular(15),
-                                          color: const Color(0xffE3F2FD),
+                                          color: const Color(0xffBBDEFB),
                                         ),
                                         child: Icon(Icons.store_rounded,
                                             size: w * 0.08, color: const Color(0xff1BA6C8)),
@@ -95,6 +96,55 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
                                                   fontSize: w * 0.034,
                                                   height: 1.2),
                                             ),
+                                            if (s.agentName != null || s.agentPhone != null) ...[
+                                              const SizedBox(height: 12),
+                                              Divider(color: Colors.grey.shade200, thickness: 1),
+                                              const SizedBox(height: 8),
+                                              Row(
+                                                children: [
+                                                  Icon(Icons.person_outline_rounded, size: 16, color: Colors.blue.shade700),
+                                                  const SizedBox(width: 8),
+                                                  Expanded(
+                                                    child: Text(
+                                                      s.agentName ?? "Agent Name N/A",
+                                                      style: TextStyle(
+                                                        fontSize: w * 0.036,
+                                                        fontWeight: FontWeight.w600,
+                                                        color: Colors.black87,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  if (s.agentPhone != null)
+                                                    GestureDetector(
+                                                      onTap: () => controller.callAgent(),
+                                                      child: Container(
+                                                        padding: const EdgeInsets.all(6),
+                                                        decoration: BoxDecoration(
+                                                          color: Colors.green.shade50,
+                                                          shape: BoxShape.circle,
+                                                        ),
+                                                        child: Icon(Icons.call, size: 18, color: Colors.green.shade700),
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
+                                              if (s.agentPhone != null) ...[
+                                                const SizedBox(height: 4),
+                                                Row(
+                                                  children: [
+                                                    Icon(Icons.phone_android_rounded, size: 16, color: Colors.blue.shade700),
+                                                    const SizedBox(width: 8),
+                                                    Text(
+                                                      s.agentPhone!,
+                                                      style: TextStyle(
+                                                        fontSize: w * 0.034,
+                                                        color: Colors.grey.shade700,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ],
                                           ],
                                         ),
                                       ),
@@ -120,15 +170,15 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
                                         child: Container(
                                           padding: EdgeInsets.all(w * 0.04),
                                           decoration: BoxDecoration(
-                                            color: Colors.orange.shade50,
+                                            color: const Color(0xFFBBDEFB),
                                             borderRadius: BorderRadius.circular(15),
                                             border:
-                                                Border.all(color: Colors.orange.shade200),
+                                                Border.all(color: const Color(0xFF00ADD3).withOpacity(0.5)),
                                           ),
                                           child: Row(
                                             children: [
-                                              Icon(Icons.history,
-                                                  color: Colors.orange.shade800),
+                                              const Icon(Icons.history,
+                                                  color: Color(0xFF007EA7)),
                                               SizedBox(width: w * 0.03),
                                               Expanded(
                                                 child: Column(
@@ -137,7 +187,7 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
                                                     Text(
                                                       "Remaining Trays",
                                                       style: TextStyle(
-                                                        color: Colors.orange.shade900,
+                                                        color: const Color(0xFF007EA7),
                                                         fontWeight: FontWeight.bold,
                                                         fontSize: w * 0.035,
                                                       ),
@@ -145,7 +195,7 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
                                                     Text(
                                                       "These trays were not collected in the last trip.",
                                                       style: TextStyle(
-                                                        color: Colors.orange.shade700,
+                                                        color: const Color(0xFF007EA7).withValues(alpha: 0.7),
                                                         fontSize: w * 0.03,
                                                       ),
                                                     ),
@@ -155,7 +205,7 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
                                               Text(
                                                 "${s.remainingTrays}",
                                                 style: TextStyle(
-                                                  color: Colors.orange.shade900,
+                                                  color: const Color(0xFF007EA7),
                                                   fontWeight: FontWeight.bold,
                                                   fontSize: w * 0.06,
                                                 ),
@@ -208,7 +258,7 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
     return Container(
       width: double.infinity,
       height: h * 0.14,
-      padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top, left: 10),
+      padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top, left: 5),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [Color(0xFF00ADD3), Color(0xFF007EA7), Color(0xFF005F7A)],
@@ -221,11 +271,16 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
         ),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () => Get.back(),
+          const SizedBox(width: 25),
+          const Text(
+            "Booth Details",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),
@@ -368,7 +423,7 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
                           color: Colors.blue.shade50,
                           borderRadius: BorderRadius.circular(15),
                           border: Border.all(
-                            color: Colors.blue.shade300,
+                            color: Colors.blue.shade100,
                             width: 1.5,
                           ),
                         ),
@@ -382,12 +437,14 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
                               extentOffset: controller.collectedTraysController.text.length,
                             );
                           },
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
+                            color: Colors.blue.shade900,
                           ),
                           decoration: const InputDecoration(
-                            hintText: "Collected",
+                            hintText: "0",
+                            hintStyle: TextStyle(color: Colors.grey),
                             border: InputBorder.none,
                           ),
                         ),
@@ -430,19 +487,20 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
       width: double.infinity,
       height: h * 0.07,
       alignment: Alignment.center,
-      decoration: ShapeDecoration(
-        color: color,
-        shape: const StadiumBorder(),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: color.withOpacity(0.5), width: 1.5),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.check_circle_outline, color: Colors.white, size: 24),
+          Icon(Icons.check_circle_rounded, color: color, size: 24),
           SizedBox(width: w * 0.03),
           Text(
-            text,
-            style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17),
+            text.toUpperCase(),
+            style: TextStyle(
+                color: color, fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 1.1),
           ),
         ],
       ),
@@ -473,59 +531,68 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: w * 0.05,
-        vertical: h * 0.02, // Reduced padding
+        vertical: h * 0.015,
       ),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 15,
             offset: const Offset(0, -5),
           ),
         ],
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (!isDone) ...[
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                minimumSize: Size(double.infinity, h * 0.06), // Slightly smaller
-                backgroundColor: const Color(0xFF2196F3),
-                foregroundColor: Colors.white,
-                shape: const StadiumBorder(),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (!isDone) ...[
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  minimumSize: Size(double.infinity, h * 0.06),
+                  backgroundColor: const Color(0xFFBBDEFB),
+                  foregroundColor: const Color(0xFF007EA7),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                  side: BorderSide(color: const Color(0xFF00ADD3).withOpacity(0.6), width: 1.5),
+                ),
+                onPressed: () => controller.openMap(),
+                icon: const Icon(Icons.near_me_rounded, size: 20),
+                label: const Text("GET DIRECTIONS",
+                    style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 0.8)),
               ),
-              onPressed: () => controller.openMap(),
-              icon: const Icon(Icons.gps_fixed, size: 20),
-              label: const Text("Get Directions"),
-            ),
-            SizedBox(height: h * 0.015),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                minimumSize: Size(double.infinity, h * 0.065),
-                backgroundColor:
-                    isLastBooth && isCollection ? Colors.green : const Color(0xFF4CAF50),
-                foregroundColor: Colors.white,
-                shape: const StadiumBorder(),
+              SizedBox(height: h * 0.015),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  minimumSize: Size(double.infinity, h * 0.065),
+                  backgroundColor: const Color(0xFFC8E6C9),
+                  foregroundColor: const Color(0xFF2E7D32),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                  side: BorderSide(color: const Color(0xFF81C784).withOpacity(0.6), width: 1.5),
+                ),
+                onPressed: isLoading
+                    ? null
+                    : () => isCollection ? controller.markCollected() : controller.markDelivered(),
+                icon: isLoading
+                    ? const SizedBox.shrink()
+                    : const Icon(Icons.check_circle_outline_rounded, size: 20),
+                label: isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(color: Color(0xFF2E7D32), strokeWidth: 2))
+                    : Text(actionText.toUpperCase(),
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
               ),
-              onPressed: isLoading
-                  ? null
-                  : () => isCollection
-                      ? controller.markCollected()
-                      : controller.markDelivered(),
-              child: isLoading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                  : Text(actionText,
-                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-            ),
-          ] else ...[
-            _statusBox(doneText, const Color(0xFF4CAF50), w, h),
-          ]
-        ],
+            ] else ...[
+              _statusBox(doneText, const Color(0xFF2E7D32), w, h),
+            ]
+          ],
+        ),
       ),
     );
   }

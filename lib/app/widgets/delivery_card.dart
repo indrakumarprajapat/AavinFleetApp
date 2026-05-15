@@ -5,29 +5,37 @@ import '../modules/delivery/controllers/delivery_controller.dart';
 
 class DeliveryCard extends StatelessWidget {
   final DeliveryModel store;
-  final DeliveryStatus status;
+  final DeliveryStatus? status;
   final bool isCollection;
+  final VoidCallback? onTap;
 
   const DeliveryCard({
     super.key,
     required this.store,
-    required this.status,
+    this.status,
+    this.onTap,
     this.isCollection = false,
   });
 
-  bool get isDelivered => status == DeliveryStatus.delivered || status == DeliveryStatus.collected;
-  bool get isCurrent => status == DeliveryStatus.delivering || status == DeliveryStatus.collecting;
+  DeliveryStatus get _effectiveStatus => status ?? store.status;
+
+  bool get isDelivered =>
+      _effectiveStatus == DeliveryStatus.delivered ||
+      _effectiveStatus == DeliveryStatus.collected;
+  bool get isCurrent =>
+      _effectiveStatus == DeliveryStatus.delivering ||
+      _effectiveStatus == DeliveryStatus.collecting;
 
   static final Map<DeliveryStatus, Color> statusColors = {
-    DeliveryStatus.delivered: Colors.green,
-    DeliveryStatus.delivering: Colors.blue,
+    DeliveryStatus.delivered: const Color(0xFF2E7D32),
+    DeliveryStatus.delivering: const Color(0xFF00ADD3),
     DeliveryStatus.toBeDelivered: Colors.grey,
-    DeliveryStatus.collected: Colors.green,
-    DeliveryStatus.collecting: Colors.blue,
+    DeliveryStatus.collected: const Color(0xFF2E7D32),
+    DeliveryStatus.collecting: const Color(0xFF00ADD3),
     DeliveryStatus.toBeCollected: Colors.grey,
   };
 
-  Color getStatusColor() => statusColors[status] ?? Colors.grey;
+  Color getStatusColor() => statusColors[_effectiveStatus] ?? Colors.grey;
 
   String getStatusText() {
     if (isCollection) {
@@ -37,13 +45,15 @@ class DeliveryCard extends StatelessWidget {
             DeliveryStatus.delivering: "COLLECTING",
             DeliveryStatus.collecting: "COLLECTING",
             DeliveryStatus.toBeCollected: "TO BE COLLECTED",
-          }[status] ?? "Unknown";
+          }[_effectiveStatus] ??
+          "Unknown";
     }
     return {
           DeliveryStatus.delivered: "DELIVERED",
           DeliveryStatus.delivering: "IN_PROGRESS",
           DeliveryStatus.toBeDelivered: "PENDING",
-        }[status] ?? "Unknown";
+        }[_effectiveStatus] ??
+        "Unknown";
   }
 
   @override
@@ -53,79 +63,111 @@ class DeliveryCard extends StatelessWidget {
     final w = MediaQuery.of(context).size.width;
 
     return GestureDetector(
-      onTap: () => controller.openStoreDetails(store),
+      onTap: onTap ?? () => controller.openStoreDetails(store),
       child: Container(
         width: double.infinity,
         padding: EdgeInsets.all(w * 0.04),
         decoration: BoxDecoration(
-          color: isCurrent ? Colors.blue.shade50 : Colors.white,
+          color: isCurrent ? const Color(0xFFBBDEFB) : Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: isCurrent ? Border.all(color: Colors.blue, width: 1.5) : null,
+          border: isCurrent ? Border.all(color: const Color(0xFF00ADD3), width: 1.5) : null,
           boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6)],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  height: h * 0.08, width: h * 0.08,
+                  height: 60,
+                  width: 60,
                   alignment: Alignment.center,
-                  decoration: BoxDecoration(color: getStatusColor(), borderRadius: BorderRadius.circular(10)),
-                  child: Text(store.number, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: w * 0.06)),
+                  decoration: BoxDecoration(
+                    color: getStatusColor(),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        store.number,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 22,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-                SizedBox(width: w * 0.03),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      Text(store.storeName, style: TextStyle(fontWeight: FontWeight.bold, fontSize: w * 0.05)),
-                      Text(store.address, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.grey, fontSize: w * 0.035)),
+                      Text(
+                        store.storeName,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: w * 0.045,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        store.address,
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: w * 0.035,
+                          height: 1.2,
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                Icon(Icons.check_circle, color: isDelivered ? Colors.green : Colors.grey.shade300),
-              ],
-            ),
-            Divider(height: h * 0.03),
-            // TRAY INFO (Directly from getTripBooths API)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(children: [
-                  Icon(Icons.inventory, size: 18, color: Colors.orange),
-                  SizedBox(width: 8),
-                  Text("Trays", style: TextStyle(fontSize: 16)),
-                ]),
-                Text("${store.totalTrays}", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              ],
-            ),
-            SizedBox(height: 8),
-            // PACKET INFO (Directly from getTripBooths API)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(children: [
-                  Icon(Icons.local_drink, size: 18, color: Colors.blue),
-                  SizedBox(width: 8),
-                  Text("Packets", style: TextStyle(fontSize: 16)),
-                ]),
-                Text("${store.totalPackets}", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const SizedBox(width: 8),
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Icon(
+                    Icons.check_circle,
+                    color: isDelivered ? const Color(0xFF2E7D32) : Colors.grey.shade300,
+                  ),
+                ),
               ],
             ),
             SizedBox(height: h * 0.02),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(color: getStatusColor().withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-                  child: Text(getStatusText(), style: TextStyle(color: getStatusColor(), fontWeight: FontWeight.bold)),
+                  decoration: BoxDecoration(
+                    color: getStatusColor().withOpacity(0.15), 
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: getStatusColor().withOpacity(0.3))
+                  ),
+                  child: Text(
+                    getStatusText(), 
+                    style: TextStyle(
+                      color: getStatusColor().withValues(alpha: 0.9), 
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    )
+                  ),
                 ),
                 TextButton.icon(
                   onPressed: () => controller.openMap(store.address),
                   icon: const Icon(Icons.directions, size: 18),
                   label: const Text("Directions"),
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFF007EA7),
+                    backgroundColor: const Color(0xFF90CAF9),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
                 )
               ],
             )

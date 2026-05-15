@@ -5,7 +5,8 @@ class StoreDetailsBinding extends Bindings {
   @override
   void dependencies() {
     Get.lazyPut<StoreDetailsController>(
-          () => StoreDetailsController(),
+      () => StoreDetailsController(),
+      fenix: true,
     );
   }
 }
