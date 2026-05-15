@@ -39,9 +39,9 @@ android {
         }
 
         create("cbeRelease") {
-            storeFile = file("aavincbe-release-key.jks")
+            storeFile = file("aavin-fleet-release-key.jks")
             storePassword = "000999888"
-            keyAlias = "aavincbe"
+            keyAlias = "aavin_fleet"
             keyPassword = "000999888"
         }
 
