@@ -53,7 +53,7 @@ const Map<String, ClientConfig> clientConfigs = {
     // baseUrl: "http://192.168.29.86:3043/",
     // baseUrl: "http://192.168.1.7:3043/",
     privacyPolicyLink:'https://aavincoimbatore.com/aavinfleet-privacy-policy.html',
-    termAndCondLink:'https://www.aavincoimbatore.com/assets/terms-and-conditions.html',
+    termAndCondLink:'https://aavincoimbatore.com/aavinfleet-terms-and-conditions.html',
     centerLocation: LatLng(11.0168, 76.9558),
   ),
   "nilgiris": ClientConfig(
