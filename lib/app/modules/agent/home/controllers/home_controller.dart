@@ -9,6 +9,7 @@ import '../../../../models/route_detail.dart';
 import '../../../../api/api_service.dart';
 import '../../../../routes/app_pages.dart';
 import '../../../../services/global_cart_service.dart';
+import '../../../delivery/controllers/delivery_controller.dart';
 
 class HomeController extends GetxController with GetSingleTickerProviderStateMixin, WidgetsBindingObserver {
   final apiService = Get.find<ApiService>();
@@ -32,6 +33,7 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
 
   final currentIndex = 0.obs;
   final isInitialLoading = true.obs;
+  final isTripStarted = false.obs;
 
   @override
   void onInit() {
@@ -121,10 +123,11 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
         }
       }
 
-      Get.offNamed(
-        Routes.DELIVERY_ROUTE,
-        arguments: tripId.value,
-      );
+      isTripStarted.value = true;
+      // Initialize DeliveryController if not already registered
+      if (!Get.isRegistered<DeliveryController>()) {
+        Get.put(DeliveryController());
+      }
 
     } catch (e) {
       Get.snackbar("Error", e.toString());

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../../config/app_config.dart';
 import '../../../../services/global_cart_service.dart';
+import '../../../delivery/view/delivery_route_view.dart';
 import '../controllers/home_controller.dart';
 import '../../drawer/views/agent_drawer_view.dart';
 
@@ -16,23 +17,27 @@ class HomeView extends GetView<HomeController> {
   Widget build(BuildContext context) {
     return Obx(() {
       final isLocationSubmitted = controller.boothDetails?.isLocSubmit == true;
+      final isTripStarted = controller.isTripStarted.value;
+
       return Scaffold(
         key: _scaffoldKey,
         backgroundColor: const Color(0xFFF8F8F8),
         drawer: AgentDrawer(),
         body: Stack(
           children: [
-            _buildHomeContent(controller),
-            Obx(() => _buildCustomHeader(
-              isLocationSubmitted,
-              controller.routeDetail.value?.routeName ?? 
-                  controller.routeDetail.value?.routeId?.toString() ??
-                  controller.fleetUser?.routeName ?? '',
-              controller.fleetUser?.vehicleRegistrationNumber ?? '',
-            )),
+            isTripStarted ? const DeliveryRouteView() : _buildHomeContent(controller),
+            if (!isTripStarted)
+              Obx(() => _buildCustomHeader(
+                    isLocationSubmitted,
+                    controller.routeDetail.value?.routeName ??
+                        controller.routeDetail.value?.routeId?.toString() ??
+                        controller.fleetUser?.routeName ??
+                        '',
+                    controller.fleetUser?.vehicleRegistrationNumber ?? '',
+                  )),
           ],
         ),
-        bottomNavigationBar: _buildFooterView(),
+        bottomNavigationBar: isTripStarted ? null : _buildFooterView(),
       );
     });
   }
