@@ -13,12 +13,18 @@ class DeliveryProductModel {
   final int trays;
   final int packets;
   final int? collectedTrays;
+  final int leak;
+  final int pktMinus;
+  final int pktPlus;
 
   const DeliveryProductModel({
     required this.name,
     required this.trays,
     required this.packets,
     this.collectedTrays,
+    this.leak = 0,
+    this.pktMinus = 0,
+    this.pktPlus = 0,
   });
 
   // JSON
@@ -35,6 +41,9 @@ class DeliveryProductModel {
           0,
       collectedTrays: (json['collected_trays'] as num?)?.toInt() ??
           (json['collectedTrays'] as num?)?.toInt(),
+      leak: (json['leak'] as num?)?.toInt() ?? 0,
+      pktMinus: (json['pkt_minus'] as num?)?.toInt() ?? 0,
+      pktPlus: (json['pkt_plus'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -44,6 +53,9 @@ class DeliveryProductModel {
       'trays': trays,
       'packets': packets,
       'collected_trays': collectedTrays,
+      'leak': leak,
+      'pkt_minus': pktMinus,
+      'pkt_plus': pktPlus,
     };
   }
 
@@ -52,12 +64,18 @@ class DeliveryProductModel {
     int? trays,
     int? packets,
     int? collectedTrays,
+    int? leak,
+    int? pktMinus,
+    int? pktPlus,
   }) {
     return DeliveryProductModel(
       name: name ?? this.name,
       trays: trays ?? this.trays,
       packets: packets ?? this.packets,
       collectedTrays: collectedTrays ?? this.collectedTrays,
+      leak: leak ?? this.leak,
+      pktMinus: pktMinus ?? this.pktMinus,
+      pktPlus: pktPlus ?? this.pktPlus,
     );
   }
 }
@@ -74,6 +92,8 @@ class DeliveryModel {
   final int remainingTrays; // Historical residue from previous trips
   final bool apiIsDelivered;
   final bool apiIsCollected;
+  final String? agentName;
+  final String? agentPhone;
 
   // Calculations
   int get totalTrays => products.isNotEmpty
@@ -99,6 +119,8 @@ class DeliveryModel {
     this.remainingTrays = 0,
     this.apiIsDelivered = false,
     this.apiIsCollected = false,
+    this.agentName,
+    this.agentPhone,
     int totalTrays = 0,
     int totalPackets = 0,
   })  : _totalTrays = totalTrays,
@@ -117,6 +139,8 @@ class DeliveryModel {
     int? remainingTrays,
     bool? apiIsDelivered,
     bool? apiIsCollected,
+    String? agentName,
+    String? agentPhone,
     int? totalTrays,
     int? totalPackets,
   }) {
@@ -132,6 +156,8 @@ class DeliveryModel {
       remainingTrays: remainingTrays ?? this.remainingTrays,
       apiIsDelivered: apiIsDelivered ?? this.apiIsDelivered,
       apiIsCollected: apiIsCollected ?? this.apiIsCollected,
+      agentName: agentName ?? this.agentName,
+      agentPhone: agentPhone ?? this.agentPhone,
       totalTrays: totalTrays ?? _totalTrays,
       totalPackets: totalPackets ?? _totalPackets,
     );
@@ -206,6 +232,8 @@ class DeliveryModel {
           0,
       apiIsDelivered: isDeliveredAPI,
       apiIsCollected: isCollectedAPI,
+      agentName: json['agentName']?.toString() ?? json['agent_name']?.toString(),
+      agentPhone: json['agentPhone']?.toString() ?? json['agent_phone']?.toString() ?? json['mobile']?.toString(),
       totalTrays: (json['totalTrays'] as num?)?.toInt() ??
           (json['total_trays'] as num?)?.toInt() ??
           (json['totalTray'] as num?)?.toInt() ??
@@ -255,6 +283,8 @@ class DeliveryModel {
       'products': products.map((e) => e.toJson()).toList(),
       'collectedTrays': collectedTrays,
       'remainingTrays': remainingTrays,
+      'agentName': agentName,
+      'agentPhone': agentPhone,
       'totalTray': _totalTrays,
       'totalPackets': _totalPackets,
     };
