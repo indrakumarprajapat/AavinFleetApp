@@ -212,21 +212,40 @@ class DeliveryRouteView extends GetView<DeliveryController> {
       return Container(
         padding: const EdgeInsets.fromLTRB(20, 48, 20, 24),
         decoration: const BoxDecoration(
-          color: _teal1,
+          gradient: LinearGradient(
+            colors: [_teal1, _teal2, _teal3],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
           borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(28),
-            bottomRight: Radius.circular(28),
+            bottomLeft: Radius.circular(30),
+            bottomRight: Radius.circular(30),
           ),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
+          clipBehavior: Clip.none,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // Decorative circles matching HomeView style
+            Positioned(
+              top: -45,
+              right: -45,
+              child: _circle(160, Colors.white.withOpacity(0.07)),
+            ),
+            Positioned(
+              bottom: -40,
+              left: 30,
+              child: _circle(100, Colors.white.withOpacity(0.05)),
+            ),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
+                    _iconBtn(
+                      icon: Icons.menu_rounded,
+                      onTap: () => _scaffoldKey.currentState?.openDrawer(),
+                    ),
                     const SizedBox(width: 16),
                     Text(
                       isCollection ? "Collection Mode" : "Delivery Mode",
@@ -239,14 +258,14 @@ class DeliveryRouteView extends GetView<DeliveryController> {
                     ),
                   ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                _headerBadge(
-                  icon: Icons.calendar_today_rounded,
-                  label: dateText,
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    _headerBadge(
+                      icon: Icons.calendar_today_rounded,
+                      label: dateText,
+                    ),
+                  ],
                 ),
               ],
             ),
