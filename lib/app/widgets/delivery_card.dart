@@ -18,16 +18,19 @@ class DeliveryCard extends StatelessWidget {
   bool get isDelivered => status == DeliveryStatus.delivered || status == DeliveryStatus.collected;
   bool get isCurrent => status == DeliveryStatus.delivering || status == DeliveryStatus.collecting;
 
-  static const _bluePrimary = Color(0xFF0052CC);
-  static const _blueDark = Color(0xFF0F172A);
+  static const _teal1 = Color(0xFF005F80);
+  static const _teal2 = Color(0xFF007EA7);
+  static const _teal3 = Color(0xFF009CBF);
+  static const _teal4 = Color(0xFF1BA6C8);
+  static const _teal5 = Color(0xFF00ADD3);
 
   static final Map<DeliveryStatus, Color> statusColors = {
-    DeliveryStatus.delivered: Colors.green.shade600,
-    DeliveryStatus.delivering: _bluePrimary,
-    DeliveryStatus.toBeDelivered: Colors.blueGrey.shade200,
-    DeliveryStatus.collected: Colors.green.shade600,
-    DeliveryStatus.collecting: _bluePrimary,
-    DeliveryStatus.toBeCollected: Colors.blueGrey.shade200,
+    DeliveryStatus.delivered: Colors.green,
+    DeliveryStatus.delivering: _teal2,
+    DeliveryStatus.toBeDelivered: Colors.grey,
+    DeliveryStatus.collected: Colors.green,
+    DeliveryStatus.collecting: _teal2,
+    DeliveryStatus.toBeCollected: Colors.grey,
   };
 
   Color getStatusColor() => statusColors[status] ?? Colors.blueGrey;
@@ -53,6 +56,7 @@ class DeliveryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.find<DeliveryController>();
     final w = MediaQuery.of(context).size.width;
+    final bool isPending = !isDelivered && !isCurrent;
 
     return GestureDetector(
       onTap: () => controller.openStoreDetails(store),
@@ -62,20 +66,20 @@ class DeliveryCard extends StatelessWidget {
         padding: EdgeInsets.all(w * 0.04),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isCurrent 
-              ? _bluePrimary.withValues(alpha: 0.5) 
-              : Colors.grey.shade100,
-            width: isCurrent ? 2 : 1,
+            color: isCurrent
+              ? _teal2.withValues(alpha: 0.3)
+              : isDelivered 
+                ? Colors.green.withValues(alpha: 0.3) 
+                : Colors.grey.shade200,
+            width: (isCurrent || isDelivered) ? 1.5 : 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: isCurrent 
-                ? _bluePrimary.withValues(alpha: 0.1) 
-                : _blueDark.withValues(alpha: 0.04),
-              blurRadius: 15,
-              offset: const Offset(0, 6),
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -84,136 +88,107 @@ class DeliveryCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                // Store index/number circle
                 Container(
-                  height: 50,
-                  width: 50,
+                  height: 54,
+                  width: 54,
                   alignment: Alignment.center,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
                   decoration: BoxDecoration(
-                    color: getStatusColor().withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
+                    color: isPending ? Colors.grey.shade100 : getStatusColor().withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Text(
-                    store.number,
-                    style: TextStyle(
-                      color: getStatusColor(),
-                      fontWeight: FontWeight.w900,
-                      fontSize: 18,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      store.number,
+                      maxLines: 1,
+                      style: TextStyle(
+                        color: isPending ? Colors.grey.shade400 : getStatusColor(),
+                        fontWeight: FontWeight.w900,
+                        fontSize: 24,
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 16),
                 Expanded(
-                  child: Column(
+                    child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         store.storeName,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 16,
-                          color: _blueDark,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 20, // Slightly reduced from 28 to prevent wrapping
+                          color: isPending ? Colors.grey.shade400 : getStatusColor(),
+                          height: 1.1,
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          Icon(Icons.location_on_rounded, size: 12, color: Colors.blueGrey.shade300),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              store.address,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: Colors.blueGrey.shade400,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ],
+                      const SizedBox(height: 4),
+                      Text(
+                        store.address,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: isPending ? Colors.grey.shade400 : Colors.blueGrey.shade400,
+                          fontSize: 12, // Reduced from 20 to show more address info
+                          height: 1.2,
+                        ),
                       ),
                     ],
                   ),
                 ),
                 if (isDelivered)
-                  const Icon(Icons.check_circle_rounded, color: Colors.green, size: 26)
+                  const Icon(Icons.check_circle, color: Colors.green, size: 22)
                 else if (isCurrent)
-                  const Icon(Icons.radio_button_checked_rounded, color: _bluePrimary, size: 26)
+                  const Icon(Icons.check_circle, color: _teal2, size: 22)
                 else
-                  Icon(Icons.radio_button_unchecked_rounded, color: Colors.blueGrey.shade100, size: 26),
+                  Icon(Icons.check_circle, color: Colors.grey.shade300, size: 22),
               ],
             ),
             const SizedBox(height: 16),
             Row(
               children: [
-                _buildInfoBadge(
-                  Icons.grid_view_rounded,
-                  "${store.totalTrays} Trays",
-                  _bluePrimary,
-                ),
-                const SizedBox(width: 10),
-                _buildInfoBadge(
-                  Icons.inventory_2_rounded,
-                  "${store.totalPackets} Pkts",
-                  Colors.indigo,
-                ),
-                const Spacer(),
-                if (!isCollection) ...[
-                  _buildIssueIndicator(store),
-                  const SizedBox(width: 8),
-                ],
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () => controller.openMap(store.address),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: _bluePrimary.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Row(
-                        children: [
-                          Icon(Icons.directions_rounded, size: 16, color: _bluePrimary),
-                          SizedBox(width: 4),
-                          Text(
-                            "MAP",
-                            style: TextStyle(
-                              color: _bluePrimary,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 11,
-                            ),
+                Expanded(
+                  child: Container(
+                    height: 30, // Fixed height for consistency
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: isPending ? Colors.grey.shade50 : getStatusColor().withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: isPending ? Colors.grey.shade200 : getStatusColor().withValues(alpha: 0.1)),
+                    ),
+                    child: Center(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          getStatusText(),
+                          style: TextStyle(
+                            color: isPending ? Colors.grey.shade400 : getStatusColor(),
+                            fontWeight: FontWeight.w900,
+                            fontSize: 14, // Slightly reduced for "TO BE COLLECTED" cases
+                            letterSpacing: 0.5,
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(
-                color: getStatusColor().withValues(alpha: 0.06),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: getStatusColor().withValues(alpha: 0.1)),
-              ),
-              child: Center(
-                child: Text(
-                  getStatusText(),
-                  style: TextStyle(
-                    color: getStatusColor(),
-                    fontWeight: FontWeight.w900,
-                    fontSize: 11,
-                    letterSpacing: 1.2,
+                const SizedBox(width: 12),
+                SizedBox(
+                  height: 30, // Match status button height
+                  child: TextButton.icon(
+                    onPressed: () => controller.openMap(store.address),
+                    icon: Icon(Icons.directions_rounded, size: 12, color: isPending ? Colors.grey.shade400 : _teal2),
+                    label: Text("MAP", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isPending ? Colors.grey.shade400 : _teal2)),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      backgroundColor: (isPending ? Colors.grey : _teal2).withValues(alpha: 0.05),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
           ],
         ),

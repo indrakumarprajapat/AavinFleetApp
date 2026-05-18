@@ -14,12 +14,12 @@ class StoreDetailsController extends GetxController {
   DeliveryModel? get store => _store.value;
   
   final isLoading = false.obs;
-  final TextEditingController collectedTraysController =
-      TextEditingController();
+  late TextEditingController collectedTraysController;
 
   @override
   void onInit() {
     super.onInit();
+    collectedTraysController = TextEditingController();
     if (Get.arguments is DeliveryModel) {
       _store.value = Get.arguments as DeliveryModel;
     }
@@ -54,7 +54,6 @@ class StoreDetailsController extends GetxController {
 
   @override
   void onClose() {
-    collectedTraysController.dispose();
     super.onClose();
   }
 
@@ -65,7 +64,7 @@ class StoreDetailsController extends GetxController {
       AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
         title: const Text("Confirm Delivery", style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Text("Are you sure you want to mark Booth ${store!.number} as delivered (${store!.totalTrays} Trays)?"),
+        content: Text("Are you sure you want to mark Booth ${store!.number} as delivered?"),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
@@ -73,6 +72,7 @@ class StoreDetailsController extends GetxController {
           ),
           ElevatedButton(
             onPressed: () async {
+              FocusManager.instance.primaryFocus?.unfocus();
               Get.back(); // Close dialog
               await deliveryController.markDelivered(store!);
             },
@@ -102,9 +102,7 @@ class StoreDetailsController extends GetxController {
       Get.snackbar(
         "Invalid Count",
         "You must collect either all ($expectedCount) or 0 trays.",
-        backgroundColor: Colors.red.shade100,
-        colorText: Colors.red.shade900,
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
       );
       return;
     }
@@ -121,6 +119,7 @@ class StoreDetailsController extends GetxController {
           ),
           ElevatedButton(
             onPressed: () async {
+              FocusManager.instance.primaryFocus?.unfocus();
               Get.back(); // Close dialog
               await deliveryController.markCollected(store!, collectedCount);
             },
@@ -149,10 +148,10 @@ class StoreDetailsController extends GetxController {
       if (await canLaunchUrl(url)) {
         await launchUrl(url);
       } else {
-        Get.snackbar("Error", "Could not launch dialer");
+        Get.snackbar("Error", "Could not launch dialer", snackPosition: SnackPosition.TOP);
       }
     } catch (e) {
-      Get.snackbar("Error", "Error launching dialer: $e");
+      Get.snackbar("Error", "Error launching dialer: $e", snackPosition: SnackPosition.TOP);
     }
   }
 }

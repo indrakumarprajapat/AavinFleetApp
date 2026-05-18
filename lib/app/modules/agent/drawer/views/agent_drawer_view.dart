@@ -111,8 +111,8 @@ class _AgentDrawerState extends State<AgentDrawer> {
                       const SizedBox(height: 12),
                       _buildBoothDetailsCard(),
                     ],
-                    const SizedBox(height: 24),
-                    _buildSectionTitle(),
+                    // const SizedBox(height: 24),
+                    // _buildSectionTitle(),
                     const SizedBox(height: 16),
                     _buildQuickActions(),
                     const SizedBox(height: 20),
@@ -196,7 +196,7 @@ class _AgentDrawerState extends State<AgentDrawer> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                /*Text(
                   'Hi,',
                   style: TextStyle(
                     fontSize: 14,
@@ -204,7 +204,7 @@ class _AgentDrawerState extends State<AgentDrawer> {
                     fontFamily: 'Poppins',
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 4),*/
                 Text(
                   firstName,
                   style: TextStyle(
@@ -214,7 +214,7 @@ class _AgentDrawerState extends State<AgentDrawer> {
                     fontFamily: 'Poppins',
                   ),
                 ),
-                const SizedBox(height: 4),
+                /*const SizedBox(height: 4),
                 Text(
                   mobileNumber,
                   style: TextStyle(
@@ -223,24 +223,25 @@ class _AgentDrawerState extends State<AgentDrawer> {
                     color: Colors.black.withValues(alpha:0.8),
                     fontFamily: 'Poppins',
                   ),
-                ),
+                ),*/
               ],
             ),
           ),
           GestureDetector(
-            onTap: () async {
+            onTap: null,
+            /*onTap: () async {
               Navigator.of(context).pop();
               final result = await Get.to(() => AgentProfileView());
               if (result == true || result == null) {
                 _loadProfileData();
               }
-            },
+            },*/
             child: Stack(
               children: [
                 CircleAvatar(
                   radius: 30,
                   backgroundColor: Color(0xFF05967B).withValues(alpha:0.1),
-                  backgroundImage: profilePhotoUrl != null && profilePhotoUrl!.isNotEmpty 
+                  backgroundImage: profilePhotoUrl != null && profilePhotoUrl!.isNotEmpty
                       ? NetworkImage(profilePhotoUrl!) : null,
                   child: profilePhotoUrl == null || profilePhotoUrl!.isEmpty ? Icon(
                     Icons.person,
@@ -451,7 +452,7 @@ class _AgentDrawerState extends State<AgentDrawer> {
   Widget _buildQuickActions() {
     // final homeController = Get.find<HomeController>();
     final isLocationSubmitted = true ;//homeController.boothDetails?.isLocSubmit == true;
-    
+
     return Column(
       children: [
         if (isLocationSubmitted) ...[

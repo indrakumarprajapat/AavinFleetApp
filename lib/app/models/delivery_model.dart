@@ -177,34 +177,37 @@ class DeliveryModel {
         json['number']?.toString() ?? json['boothCode']?.toString() ?? bIdStr;
 
     final bool isDeliveredAPI = ParseUtil.parseBool(json['isDelivered'] ?? json['is_delivered'] ?? json['delivered']) ||
-        json['delivery_time'] != null ||
-        json['delivered_at'] != null ||
-        ParseUtil.parseInt(json['deliveryStatus'] ?? json['delivery_status']) == 1;
+        (json['delivery_time'] != null && 
+         json['delivery_time'].toString().isNotEmpty && 
+         json['delivery_time'].toString() != "null" && 
+         json['delivery_time'].toString() != "0" && 
+         json['delivery_time'].toString() != "00:00:00" &&
+         json['delivery_time'].toString() != "00:00:00.000000") ||
+        (json['delivered_at'] != null && 
+         json['delivered_at'].toString().isNotEmpty && 
+         json['delivered_at'].toString() != "null") ||
+        (ParseUtil.parseInt(json['deliveryStatus'] ?? json['delivery_status'] ?? json['status']) == 4);
 
-    final bool isCollectedAPI = ParseUtil.parseBool(json['isCollected'] ?? json['is_collected'] ?? json['is_completed'] ?? json['completed']);
+    final bool isCollectedAPI = ParseUtil.parseBool(json['isCollected'] ?? json['is_collected'] ?? json['is_completed'] ?? json['completed']) ||
+        (json['collected_at'] != null && json['collected_at'].toString().isNotEmpty && json['collected_at'].toString() != "null");
 
     final bool isCompleted = isDeliveredAPI || isCollectedAPI;
 
     DeliveryStatus status = _parseStatus(json['status'] ??
         json['deliveryStatus'] ??
         json['delivery_status'] ??
-        json['boothStatus'] ??
-        json['tripStatus']);
+        json['boothStatus']);
 
     // If any "completed" flag is true, force the status to delivered
     if (isCompleted) {
       status = DeliveryStatus.delivered;
     }
 
-    // Fallback: If we have collected trays or a delivery record exists, it's delivered
+    // Fallback: Trust API flags first
     final collected = ParseUtil.parseInt(json['collectedTrays'] ??
         json['collected_trays'] ??
         json['collected_tray'] ??
         json['collectedTray']) ?? 0;
-
-    if (collected > 0 && status == DeliveryStatus.toBeCollected) {
-      status = DeliveryStatus.delivered;
-    }
 
     return DeliveryModel(
       boothId: ParseUtil.parseInt(bId) ?? 0,
@@ -248,7 +251,7 @@ class DeliveryModel {
         s == 'SUCCESS' ||
         s == 'COLLECTED' ||
         s == 'TRUE' ||
-        s == '1' ||
+        s == '4' ||
         s == 'FINISH') {
       return DeliveryStatus.delivered;
     }
@@ -256,7 +259,6 @@ class DeliveryModel {
         s == 'IN_PROGRESS' ||
         s == 'START' ||
         s == 'RUNNING' ||
-        s == '2' ||
         s == 'PROCESS') {
       return DeliveryStatus.delivering;
     }

@@ -13,12 +13,13 @@ class DeliveryRouteView extends GetView<DeliveryController> {
 
   static final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  // ── Brand Palette (Synced with HomeView) ───────────────────────
+  // ── Brand Palette (Professional Theme) ────────────────────────
   static const _teal1 = Color(0xFF005F80);
   static const _teal2 = Color(0xFF007EA7);
   static const _teal3 = Color(0xFF009CBF);
   static const _teal4 = Color(0xFF1BA6C8);
-  static const _tealBg = Color(0xFFF0F4F8);
+  static const _teal5 = Color(0xFF00ADD3);
+  static const _tealBg = Color(0xFFF4F7F9);
 
   @override
   Widget build(BuildContext context) {
@@ -27,27 +28,23 @@ class DeliveryRouteView extends GetView<DeliveryController> {
     final config = Get.find<ClientConfig>();
 
     return PopScope(
-      canPop: false, 
+      canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
         Get.snackbar(
-          "Trip in Progress", 
+          "Trip in Progress",
           "You cannot go back until the trip is submitted or cancelled.",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.black87,
-          colorText: Colors.white,
-          margin: const EdgeInsets.all(20),
+          snackPosition: SnackPosition.TOP,
         );
       },
       child: Scaffold(
         key: _scaffoldKey,
-        drawer: AgentDrawer(),
         backgroundColor: _tealBg,
         body: Stack(
           children: [
             Column(
               children: [
-                const SizedBox(height: 200), // Adjusted for flexible header
+                const SizedBox(height: 160), // Adjusted for simplified header
                 Expanded(
                   child: Obx(() {
                     final isCollection =
@@ -94,8 +91,8 @@ class DeliveryRouteView extends GetView<DeliveryController> {
                                 final originalIndex = originalDeliveries.indexOf(delivery);
                                 final currentActive = controller.currentCollectingIndex.value;
 
-                                if (delivery.apiIsCollected || 
-                                    delivery.collectedTrays > 0 || 
+                                if (delivery.apiIsCollected ||
+                                    delivery.collectedTrays > 0 ||
                                     delivery.status == DeliveryStatus.collected) {
                                    status = DeliveryStatus.delivered;
                                 } else if (originalIndex == currentActive) {
@@ -145,8 +142,8 @@ class DeliveryRouteView extends GetView<DeliveryController> {
 
       bool showSubmitBtn = controller.appMode.value == AppMode.collection &&
           deliveries.isNotEmpty &&
-          deliveries.every((d) => d.apiIsCollected || 
-                                  d.collectedTrays > 0 || 
+          deliveries.every((d) => d.apiIsCollected ||
+                                  d.collectedTrays > 0 ||
                                   d.status == DeliveryStatus.collected);
 
       if (!showCollectionBtn && !showSubmitBtn) return const SizedBox.shrink();
@@ -187,7 +184,7 @@ class DeliveryRouteView extends GetView<DeliveryController> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(showSubmitBtn ? Icons.check_circle_outline : Icons.shopping_basket_outlined, size: 20),
+                  const Icon(Icons.check_circle_outline, color: Colors.white, size: 24),
                   const SizedBox(width: 10),
                   Text(
                     showSubmitBtn ? "SUBMIT TRIP" : "START COLLECTION",
@@ -213,90 +210,43 @@ class DeliveryRouteView extends GetView<DeliveryController> {
     return Obx(() {
       final isCollection = controller.appMode.value == AppMode.collection;
       return Container(
-        padding: const EdgeInsets.fromLTRB(20, 52, 20, 20),
+        padding: const EdgeInsets.fromLTRB(20, 48, 20, 24),
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [_teal1, _teal2, _teal3],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          color: _teal1,
           borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(32),
-            bottomRight: Radius.circular(32),
+            bottomLeft: Radius.circular(28),
+            bottomRight: Radius.circular(28),
           ),
         ),
         child: Column(
-          mainAxisSize: MainAxisSize.min, // Fixes overflow by allowing self-sizing
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _iconBtn(
-                  icon: Icons.menu_rounded,
-                  onTap: () => Scaffold.of(Get.context!).openDrawer(),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        config.app_title.toUpperCase(),
-                        style: TextStyle(
-                          fontSize: 9,
-                          letterSpacing: 1.5,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white.withValues(alpha: 0.6),
-                        ),
+                Row(
+                  children: [
+                    const SizedBox(width: 16),
+                    Text(
+                      isCollection ? "Collection Mode" : "Delivery Mode",
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        letterSpacing: -0.5,
                       ),
-                      const Text(
-                        "Trip in Progress",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                _headerBadge(
-                  icon: Icons.local_shipping_outlined,
-                  label: controller.vehicleNumber.value,
+                    ),
+                  ],
                 ),
               ],
             ),
-            const SizedBox(height: 24),
-            Text(
-              "CURRENT STATUS",
-              style: TextStyle(
-                fontSize: 10,
-                letterSpacing: 1.5,
-                fontWeight: FontWeight.w800,
-                color: Colors.white.withValues(alpha: 0.5),
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              isCollection ? "Collection Mode" : "Delivery Mode",
-              style: const TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
-                letterSpacing: -0.5,
-              ),
-            ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Row(
               children: [
                 _headerBadge(
                   icon: Icons.calendar_today_rounded,
                   label: dateText,
-                ),
-                const SizedBox(width: 8),
-                _headerBadge(
-                  icon: isCollection ? Icons.assignment_returned_outlined : Icons.assignment_outlined,
-                  label: "${controller.deliveries.length} Stops",
                 ),
               ],
             ),
@@ -362,7 +312,7 @@ class DeliveryRouteView extends GetView<DeliveryController> {
 
   String _getMonthName(int month) {
     return [
-      "", "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+      "", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
       "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     ][month];
   }

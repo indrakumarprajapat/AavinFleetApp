@@ -24,33 +24,23 @@ class HomeView extends GetView<HomeController> {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() {
-      if (controller.isTripStarted.value) {
-        return Scaffold(
-          key: _scaffoldKey,
-          drawer: AgentDrawer(),
-          body: const DeliveryRouteView(),
-        );
-      }
-
-      return Scaffold(
-        key: _scaffoldKey,
-        backgroundColor: const Color(0xFFF0F4F8),
-        drawer: AgentDrawer(),
-        body: RefreshIndicator(
-          color: _teal2,
-          onRefresh: () async => controller.loadRouteDetails(),
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              _buildSliverAppBar(),
-              SliverToBoxAdapter(child: _buildHomeContent()),
-            ],
-          ),
+    return Scaffold(
+      key: _scaffoldKey,
+      backgroundColor: const Color(0xFFF0F4F8),
+      drawer: AgentDrawer(),
+      body: RefreshIndicator(
+        color: _teal2,
+        onRefresh: () async => controller.loadRouteDetails(),
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            _buildSliverAppBar(),
+            SliverToBoxAdapter(child: _buildHomeContent()),
+          ],
         ),
-        bottomNavigationBar: _buildFooter(),
-      );
-    });
+      ),
+      bottomNavigationBar: _buildFooter(),
+    );
   }
 
   // ────────────────────────────────────────────────────────────────
@@ -163,7 +153,6 @@ class HomeView extends GetView<HomeController> {
                         ],
                       ),
                     ),
-                    _buildCartIcon(isLocSubmitted),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -718,51 +707,6 @@ class HomeView extends GetView<HomeController> {
           ),
         ],
       ),
-    );
-  }
-
-  // ────────────────────────────────────────────────────────────────
-  //  CART ICON
-  // ────────────────────────────────────────────────────────────────
-  Widget _buildCartIcon(bool isLocSubmitted) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        _iconBtn(
-          icon: Icons.shopping_cart_outlined,
-          onTap: isLocSubmitted ? () => Get.toNamed('/cart') : null,
-        ),
-        Obx(() {
-          try {
-            final count = Get.find<GlobalCartService>().itemsCount;
-            if (count > 0) {
-              return Positioned(
-                top: 4,
-                right: 4,
-                child: Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    color: Colors.red,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  constraints: const BoxConstraints(
-                      minWidth: 16, minHeight: 16),
-                  child: Text(
-                    '$count',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              );
-            }
-          } catch (_) {}
-          return const SizedBox.shrink();
-        }),
-      ],
     );
   }
 

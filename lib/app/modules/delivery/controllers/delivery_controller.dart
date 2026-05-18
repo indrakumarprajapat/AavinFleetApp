@@ -63,6 +63,22 @@ class DeliveryController extends GetxController {
     fetchRouteBooths();
   }
 
+  Future<void> refreshData() async {
+    try {
+      isLoading.value = true;
+      storage.remove('delivered_booths_$tripId');
+      storage.remove('collected_booths_$tripId');
+      storage.remove('collecting_index_$tripId');
+      await fetchRouteBooths();
+      Get.snackbar("Sync Complete", "Route data updated from server", 
+        snackPosition: SnackPosition.TOP);
+    } catch (e) {
+      Get.snackbar("Refresh Error", e.toString(), snackPosition: SnackPosition.TOP);
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   void _loadUserInfo() {
     try {
       final session = Get.find<SessionManager>();
@@ -142,7 +158,7 @@ class DeliveryController extends GetxController {
       storage.write('collecting_index_$tripId', currentCollectingIndex.value);
       deliveries.assignAll(initialBooths);
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      Get.snackbar("Error", e.toString(), snackPosition: SnackPosition.TOP);
     } finally {
       isLoading.value = false;
     }
@@ -182,21 +198,26 @@ class DeliveryController extends GetxController {
         }
       }
 
-      Get.snackbar("Success", "Booth ${store.number} delivered", snackPosition: SnackPosition.TOP);
+      Get.snackbar("Success", "Booth ${store.number} delivered", 
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 1),
+      );
 
       final nextStore = getNextStore(updatedStore);
       FocusManager.instance.primaryFocus?.unfocus();
       
-      isLoading.value = false; // Reset before navigation
+      isLoading.value = false;
 
       if (nextStore != null) {
+        await Future.delayed(const Duration(milliseconds: 150));
         Get.offNamed(Routes.STORE_DETAILS, arguments: nextStore, preventDuplicates: false);
       } else {
-        Get.back();
+        // Use closeOverlays to ensure we don't just pop the snackbar
+        Get.back(closeOverlays: true);
       }
     } catch (e) {
       isLoading.value = false;
-      Get.snackbar("Error", e.toString());
+      Get.snackbar("Error", e.toString(), snackPosition: SnackPosition.TOP);
     }
   }
 
@@ -215,7 +236,7 @@ class DeliveryController extends GetxController {
       storage.write('app_mode', 'collection');
       await fetchRouteBooths();
     } catch (e) {
-      Get.snackbar("Error", "Failed to start collection: $e");
+      Get.snackbar("Error", "Failed to start collection: $e", snackPosition: SnackPosition.TOP);
     } finally {
       isLoading.value = false;
     }
@@ -270,7 +291,7 @@ class DeliveryController extends GetxController {
       
       SystemNavigator.pop();
     } catch (e) {
-      Get.snackbar("Error", "Failed to end trip: $e");
+      Get.snackbar("Error", "Failed to end trip: $e", snackPosition: SnackPosition.TOP);
     } finally {
       isLoading.value = false;
     }
@@ -321,21 +342,25 @@ class DeliveryController extends GetxController {
         storage.write('collecting_index_$tripId', currentCollectingIndex.value);
       }
       
-      Get.snackbar("Success", "Booth ${store.number} collected", snackPosition: SnackPosition.TOP);
+      Get.snackbar("Success", "Booth ${store.number} collected", 
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 1),
+      );
 
       final nextStore = getNextStore(updatedStore);
       FocusManager.instance.primaryFocus?.unfocus();
       
-      isLoading.value = false; // Reset before navigation
+      isLoading.value = false;
 
       if (nextStore != null) {
+        await Future.delayed(const Duration(milliseconds: 150));
         Get.offNamed(Routes.STORE_DETAILS, arguments: nextStore, preventDuplicates: false);
       } else {
-        Get.back();
+        Get.back(closeOverlays: true);
       }
     } catch (e) {
       isLoading.value = false;
-      Get.snackbar("Error", "Collection failed: $e");
+      Get.snackbar("Error", "Collection failed: $e", snackPosition: SnackPosition.TOP);
     }
   }
 

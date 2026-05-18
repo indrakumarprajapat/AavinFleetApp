@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:get_storage/get_storage.dart';
 import '../../../../utils/location-utils.dart';
 import '../../../../data/session_manager.dart';
 import '../../../../models/fleet_user.dart';
@@ -148,18 +149,12 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
       try {
         await apiService.startTrip(tripId.value, lat, lng);
         
-        // 1. Persist the trip ID for DeliveryController
-        final storage = Get.find<SessionManager>().storage; // We'll make this public or use GetStorage()
+        // 1. Persist the trip ID
+        final storage = GetStorage();
         storage.write('active_trip_id', tripId.value);
         
-        // 2. Initialize or Update DeliveryController
-        if (Get.isRegistered<DeliveryController>()) {
-          final delController = Get.find<DeliveryController>();
-          delController.tripId = tripId.value;
-          delController.fetchRouteBooths();
-        } else {
-          Get.put(DeliveryController());
-        }
+        // 2. Navigate to Delivery Route view and dispose Home
+        Get.offNamed(Routes.DELIVERY_ROUTE, arguments: tripId.value);
       } catch (e) {
         if (e.toString().toLowerCase().contains("trip already started")) {
           debugPrint("Trip already started, continuing...");
