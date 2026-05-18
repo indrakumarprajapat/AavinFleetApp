@@ -43,11 +43,20 @@ class Product {
     );
   }
 
-  bool get isMilkProduct => 
-    (categoryName?.toLowerCase().contains('milk') ?? false) ||
-    (name.toLowerCase().contains('milk'));
+  bool get isMilkProduct {
+    final n = name.toLowerCase();
+    return (categoryName?.toLowerCase().contains('milk') ?? false) ||
+           n.contains('milk') ||
+           n.contains('tm ') ||
+           n.contains('std ') ||
+           n.contains('fcm ') ||
+           n.contains('sgm ');
+  }
 
-  bool get isCurdProduct => 
-    (categoryName?.toLowerCase().contains('curd') ?? false) ||
-    (name.toLowerCase().contains('curd'));
+  bool get isCurdProduct {
+    final n = name.toLowerCase();
+    return (categoryName?.toLowerCase().contains('curd') ?? false) ||
+           n.contains('curd') ||
+           n.contains('bm jar');
+  }
 }

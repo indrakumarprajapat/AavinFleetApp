@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:get_storage/get_storage.dart';
 import '../../../../utils/location-utils.dart';
 import '../../../../data/session_manager.dart';
 import '../../../../models/fleet_user.dart';
@@ -26,6 +27,38 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
   var suppliesDate = ''.obs;
   var tripId = 0.obs;
   var products = <dynamic>[].obs;
+  final searchQuery = ''.obs;
+  final selectedCategory = 'All'.obs;
+
+  List<dynamic> get filteredProducts {
+    return products.where((product) {
+      final name = (product['product_name'] ?? '').toString().toLowerCase();
+      final query = searchQuery.value.toLowerCase();
+      final matchesSearch = name.contains(query);
+
+      if (selectedCategory.value == 'All') {
+        return matchesSearch;
+      }
+
+      bool matchesCategory = false;
+      if (selectedCategory.value == 'Milk') {
+        matchesCategory = name.contains('milk') ||
+            name.contains('tm') ||
+            name.contains('std') ||
+            name.contains('fcm') ||
+            name.contains('sgm');
+      } else if (selectedCategory.value == 'Curd') {
+        matchesCategory = name.contains('curd') || 
+                         name.contains('bm jar') || 
+                         name.contains('cup');
+      } else {
+        matchesCategory = name.contains(selectedCategory.value.toLowerCase());
+      }
+
+      return matchesSearch && matchesCategory;
+    }).toList();
+  }
+
   final routeDetail = Rxn<RouteDetail>();
 
   late TabController tabController;
@@ -115,6 +148,13 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
 
       try {
         await apiService.startTrip(tripId.value, lat, lng);
+        
+        // 1. Persist the trip ID
+        final storage = GetStorage();
+        storage.write('active_trip_id', tripId.value);
+        
+        // 2. Navigate to Delivery Route view and dispose Home
+        Get.offNamed(Routes.DELIVERY_ROUTE, arguments: tripId.value);
       } catch (e) {
         if (e.toString().toLowerCase().contains("trip already started")) {
           debugPrint("Trip already started, continuing...");

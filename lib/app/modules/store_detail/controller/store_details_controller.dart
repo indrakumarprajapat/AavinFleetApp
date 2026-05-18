@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import '../../../api/api_service.dart';
 import '../../../models/delivery_model.dart';
 import '../../delivery/controllers/delivery_controller.dart';
@@ -12,15 +14,16 @@ class StoreDetailsController extends GetxController {
   DeliveryModel? get store => _store.value;
   
   final isLoading = false.obs;
-  final TextEditingController collectedTraysController =
-      TextEditingController();
+  late TextEditingController collectedTraysController;
 
   @override
   void onInit() {
     super.onInit();
-    final initialStore = Get.arguments as DeliveryModel;
-    _store.value = initialStore;
-
+    collectedTraysController = TextEditingController();
+    if (Get.arguments is DeliveryModel) {
+      _store.value = Get.arguments as DeliveryModel;
+    }
+    
     collectedTraysController.text = "0";
     fetchBoothProductDetails();
   }
@@ -35,11 +38,9 @@ class StoreDetailsController extends GetxController {
       final products =
           data.map((json) => DeliveryProductModel.fromJson(json)).toList();
 
-      // Update the local store with fetched products
       final updatedStore = store!.copyWith(products: products);
       _store.value = updatedStore;
 
-      // Also update the main list in DeliveryController so the change is reflected when going back
       final index = deliveryController.deliveries.indexWhere((d) => d.id == store!.id);
       if (index != -1) {
         deliveryController.deliveries[index] = updatedStore;
@@ -53,9 +54,6 @@ class StoreDetailsController extends GetxController {
 
   @override
   void onClose() {
-    // Note: We don't dispose collectedTraysController here because GetX might 
-    // reuse the instance or the view might still access it during transitions,
-    // which causes the "used after being disposed" error.
     super.onClose();
   }
 
@@ -66,7 +64,7 @@ class StoreDetailsController extends GetxController {
       AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
         title: const Text("Confirm Delivery", style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Text("Are you sure you want to mark Booth ${store!.number} as delivered (${store!.totalTrays} Trays)?"),
+        content: Text("Are you sure you want to mark Booth ${store!.number} as delivered?"),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
@@ -74,14 +72,15 @@ class StoreDetailsController extends GetxController {
           ),
           ElevatedButton(
             onPressed: () async {
-              Get.back();
-              try {
-                await deliveryController.markDelivered(store!);
-              } catch (e) {
-                Get.snackbar("Error", e.toString());
-              }
+              FocusManager.instance.primaryFocus?.unfocus();
+              Get.back(); // Close dialog
+              await deliveryController.markDelivered(store!);
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF007EA7),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
             child: const Text("Confirm"),
           ),
         ],
@@ -103,8 +102,7 @@ class StoreDetailsController extends GetxController {
       Get.snackbar(
         "Invalid Count",
         "You must collect either all ($expectedCount) or 0 trays.",
-        backgroundColor: Colors.red.shade100,
-        colorText: Colors.red.shade900,
+        snackPosition: SnackPosition.TOP,
       );
       return;
     }
@@ -113,7 +111,7 @@ class StoreDetailsController extends GetxController {
       AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
         title: const Text("Confirm Collection", style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Text("Are you sure you want to mark $collectedCount trays as collected from Booth ${store!.number}?"),
+        content: Text("Mark $collectedCount trays as collected from Booth ${store!.number}?"),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
@@ -121,17 +119,15 @@ class StoreDetailsController extends GetxController {
           ),
           ElevatedButton(
             onPressed: () async {
-              Get.back();
-              try {
-                await deliveryController.markCollected(
-                  store!,
-                  collectedCount,
-                );
-              } catch (e) {
-                Get.snackbar("Error", e.toString());
-              }
+              FocusManager.instance.primaryFocus?.unfocus();
+              Get.back(); // Close dialog
+              await deliveryController.markCollected(store!, collectedCount);
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF007EA7),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
             child: const Text("Confirm"),
           ),
         ],
@@ -142,6 +138,20 @@ class StoreDetailsController extends GetxController {
   void openMap() {
     if (store != null) {
       deliveryController.openMap(store!.address);
+    }
+  }
+
+  Future<void> callAgent() async {
+    if (store?.agentPhone == null) return;
+    final Uri url = Uri.parse("tel:${store!.agentPhone}");
+    try {
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url);
+      } else {
+        Get.snackbar("Error", "Could not launch dialer", snackPosition: SnackPosition.TOP);
+      }
+    } catch (e) {
+      Get.snackbar("Error", "Error launching dialer: $e", snackPosition: SnackPosition.TOP);
     }
   }
 }

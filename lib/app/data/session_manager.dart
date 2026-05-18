@@ -6,6 +6,7 @@ import '../models/fleet_user.dart';
 
 class SessionManager extends GetxService {
   final _storage = GetStorage();
+  GetStorage get storage => _storage;
 
   /// 🔑 Keys (centralized)
   static const _kAccessToken = 'access_token';

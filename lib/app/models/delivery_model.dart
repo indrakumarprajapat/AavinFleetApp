@@ -1,3 +1,5 @@
+import '../utils/parse-util.dart';
+
 enum DeliveryStatus {
   toBeDelivered,
   delivering,
@@ -13,12 +15,18 @@ class DeliveryProductModel {
   final int trays;
   final int packets;
   final int? collectedTrays;
+  final int leak;
+  final int pktMinus;
+  final int pktPlus;
 
   const DeliveryProductModel({
     required this.name,
     required this.trays,
     required this.packets,
     this.collectedTrays,
+    this.leak = 0,
+    this.pktMinus = 0,
+    this.pktPlus = 0,
   });
 
   // JSON
@@ -27,14 +35,12 @@ class DeliveryProductModel {
       name: json['productName']?.toString() ??
           json['name']?.toString() ??
           "Product",
-      trays: (json['tray'] as num?)?.toInt() ??
-          (json['trays'] as num?)?.toInt() ??
-          0,
-      packets: (json['loosePackets'] as num?)?.toInt() ??
-          (json['packets'] as num?)?.toInt() ??
-          0,
-      collectedTrays: (json['collected_trays'] as num?)?.toInt() ??
-          (json['collectedTrays'] as num?)?.toInt(),
+      trays: ParseUtil.parseInt(json['tray'] ?? json['trays']) ?? 0,
+      packets: ParseUtil.parseInt(json['loosePackets'] ?? json['packets']) ?? 0,
+      collectedTrays: ParseUtil.parseInt(json['collected_trays'] ?? json['collectedTrays']),
+      leak: ParseUtil.parseInt(json['leak']) ?? 0,
+      pktMinus: ParseUtil.parseInt(json['pkt_minus']) ?? 0,
+      pktPlus: ParseUtil.parseInt(json['pkt_plus']) ?? 0,
     );
   }
 
@@ -44,6 +50,9 @@ class DeliveryProductModel {
       'trays': trays,
       'packets': packets,
       'collected_trays': collectedTrays,
+      'leak': leak,
+      'pkt_minus': pktMinus,
+      'pkt_plus': pktPlus,
     };
   }
 
@@ -52,12 +61,18 @@ class DeliveryProductModel {
     int? trays,
     int? packets,
     int? collectedTrays,
+    int? leak,
+    int? pktMinus,
+    int? pktPlus,
   }) {
     return DeliveryProductModel(
       name: name ?? this.name,
       trays: trays ?? this.trays,
       packets: packets ?? this.packets,
       collectedTrays: collectedTrays ?? this.collectedTrays,
+      leak: leak ?? this.leak,
+      pktMinus: pktMinus ?? this.pktMinus,
+      pktPlus: pktPlus ?? this.pktPlus,
     );
   }
 }
@@ -74,6 +89,8 @@ class DeliveryModel {
   final int remainingTrays; // Historical residue from previous trips
   final bool apiIsDelivered;
   final bool apiIsCollected;
+  final String? agentName;
+  final String? agentPhone;
 
   // Calculations
   int get totalTrays => products.isNotEmpty
@@ -99,6 +116,8 @@ class DeliveryModel {
     this.remainingTrays = 0,
     this.apiIsDelivered = false,
     this.apiIsCollected = false,
+    this.agentName,
+    this.agentPhone,
     int totalTrays = 0,
     int totalPackets = 0,
   })  : _totalTrays = totalTrays,
@@ -117,6 +136,8 @@ class DeliveryModel {
     int? remainingTrays,
     bool? apiIsDelivered,
     bool? apiIsCollected,
+    String? agentName,
+    String? agentPhone,
     int? totalTrays,
     int? totalPackets,
   }) {
@@ -132,6 +153,8 @@ class DeliveryModel {
       remainingTrays: remainingTrays ?? this.remainingTrays,
       apiIsDelivered: apiIsDelivered ?? this.apiIsDelivered,
       apiIsCollected: apiIsCollected ?? this.apiIsCollected,
+      agentName: agentName ?? this.agentName,
+      agentPhone: agentPhone ?? this.agentPhone,
       totalTrays: totalTrays ?? _totalTrays,
       totalPackets: totalPackets ?? _totalPackets,
     );
@@ -153,43 +176,41 @@ class DeliveryModel {
     final bCode =
         json['number']?.toString() ?? json['boothCode']?.toString() ?? bIdStr;
 
-    final bool isDeliveredAPI = json['isDelivered'] == true ||
-        json['is_delivered'] == true ||
-        json['delivered'] == true ||
-        json['delivery_time'] != null ||
-        json['delivered_at'] != null;
+    final bool isDeliveredAPI = ParseUtil.parseBool(json['isDelivered'] ?? json['is_delivered'] ?? json['delivered']) ||
+        (json['delivery_time'] != null && 
+         json['delivery_time'].toString().isNotEmpty && 
+         json['delivery_time'].toString() != "null" && 
+         json['delivery_time'].toString() != "0" && 
+         json['delivery_time'].toString() != "00:00:00" &&
+         json['delivery_time'].toString() != "00:00:00.000000") ||
+        (json['delivered_at'] != null && 
+         json['delivered_at'].toString().isNotEmpty && 
+         json['delivered_at'].toString() != "null") ||
+        (ParseUtil.parseInt(json['deliveryStatus'] ?? json['delivery_status'] ?? json['status']) == 4);
 
-    final bool isCollectedAPI = json['isCollected'] == true ||
-        json['is_collected'] == true ||
-        json['is_completed'] == true ||
-        json['completed'] == true;
+    final bool isCollectedAPI = ParseUtil.parseBool(json['isCollected'] ?? json['is_collected'] ?? json['is_completed'] ?? json['completed']) ||
+        (json['collected_at'] != null && json['collected_at'].toString().isNotEmpty && json['collected_at'].toString() != "null");
 
     final bool isCompleted = isDeliveredAPI || isCollectedAPI;
 
     DeliveryStatus status = _parseStatus(json['status'] ??
         json['deliveryStatus'] ??
         json['delivery_status'] ??
-        json['boothStatus'] ??
-        json['tripStatus']);
+        json['boothStatus']);
 
     // If any "completed" flag is true, force the status to delivered
     if (isCompleted) {
       status = DeliveryStatus.delivered;
     }
 
-    // Fallback: If we have collected trays or a delivery record exists, it's delivered
-    final collected = (json['collectedTrays'] as num?)?.toInt() ??
-        (json['collected_trays'] as num?)?.toInt() ??
-        (json['collected_tray'] as num?)?.toInt() ??
-        (json['collectedTray'] as num?)?.toInt() ??
-        0;
-
-    if (collected > 0 && status == DeliveryStatus.toBeCollected) {
-      status = DeliveryStatus.delivered;
-    }
+    // Fallback: Trust API flags first
+    final collected = ParseUtil.parseInt(json['collectedTrays'] ??
+        json['collected_trays'] ??
+        json['collected_tray'] ??
+        json['collectedTray']) ?? 0;
 
     return DeliveryModel(
-      boothId: bId is int ? bId : int.tryParse(bId.toString()) ?? 0,
+      boothId: ParseUtil.parseInt(bId) ?? 0,
       id: bIdStr,
       number: bCode,
       storeName: "Booth $bCode",
@@ -200,24 +221,25 @@ class DeliveryModel {
               .toList() ??
           [],
       collectedTrays: collected,
-      remainingTrays: (json['remainingTrays'] as num?)?.toInt() ??
-          (json['remaining_trays'] as num?)?.toInt() ??
-          (json['outstandingTrays'] as num?)?.toInt() ??
-          0,
+      remainingTrays: ParseUtil.parseInt(json['remainingTrays'] ??
+          json['remaining_trays'] ??
+          json['outstandingTrays']) ?? 0,
       apiIsDelivered: isDeliveredAPI,
       apiIsCollected: isCollectedAPI,
-      totalTrays: (json['totalTrays'] as num?)?.toInt() ??
-          (json['total_trays'] as num?)?.toInt() ??
-          (json['totalTray'] as num?)?.toInt() ??
-          (json['total_tray'] as num?)?.toInt() ??
-          (json['tray'] as num?)?.toInt() ??
-          (json['trays'] as num?)?.toInt() ??
-          0,
-      totalPackets: (json['totalPackets'] as num?)?.toInt() ??
-          (json['total_packets'] as num?)?.toInt() ??
-          (json['loosePackets'] as num?)?.toInt() ??
-          (json['packets'] as num?)?.toInt() ??
-          0,
+      agentName: json['agentName']?.toString() ?? json['agent_name']?.toString(),
+      agentPhone: json['agentPhone']?.toString() ?? json['agent_phone']?.toString() ?? json['mobile']?.toString() ?? json['agentMobileNumber']?.toString(),
+      totalTrays: ParseUtil.parseInt(json['totalTrays'] ??
+          json['total_trays'] ??
+          json['totalTray'] ??
+          json['total_tray'] ??
+          json['tray'] ??
+          json['trays'] ??
+          json['trayCount']) ?? 0,
+      totalPackets: ParseUtil.parseInt(json['totalPackets'] ??
+          json['total_packets'] ??
+          json['loosePackets'] ??
+          json['packets'] ??
+          json['qtyPkt']) ?? 0,
     );
   }
 
@@ -229,7 +251,7 @@ class DeliveryModel {
         s == 'SUCCESS' ||
         s == 'COLLECTED' ||
         s == 'TRUE' ||
-        s == '1' ||
+        s == '4' ||
         s == 'FINISH') {
       return DeliveryStatus.delivered;
     }
@@ -237,7 +259,6 @@ class DeliveryModel {
         s == 'IN_PROGRESS' ||
         s == 'START' ||
         s == 'RUNNING' ||
-        s == '2' ||
         s == 'PROCESS') {
       return DeliveryStatus.delivering;
     }
@@ -255,6 +276,8 @@ class DeliveryModel {
       'products': products.map((e) => e.toJson()).toList(),
       'collectedTrays': collectedTrays,
       'remainingTrays': remainingTrays,
+      'agentName': agentName,
+      'agentPhone': agentPhone,
       'totalTray': _totalTrays,
       'totalPackets': _totalPackets,
     };

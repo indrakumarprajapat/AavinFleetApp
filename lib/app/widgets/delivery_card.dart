@@ -18,16 +18,22 @@ class DeliveryCard extends StatelessWidget {
   bool get isDelivered => status == DeliveryStatus.delivered || status == DeliveryStatus.collected;
   bool get isCurrent => status == DeliveryStatus.delivering || status == DeliveryStatus.collecting;
 
+  static const _teal1 = Color(0xFF005F80);
+  static const _teal2 = Color(0xFF007EA7);
+  static const _teal3 = Color(0xFF009CBF);
+  static const _teal4 = Color(0xFF1BA6C8);
+  static const _teal5 = Color(0xFF00ADD3);
+
   static final Map<DeliveryStatus, Color> statusColors = {
     DeliveryStatus.delivered: Colors.green,
-    DeliveryStatus.delivering: Colors.blue,
+    DeliveryStatus.delivering: _teal2,
     DeliveryStatus.toBeDelivered: Colors.grey,
     DeliveryStatus.collected: Colors.green,
-    DeliveryStatus.collecting: Colors.blue,
+    DeliveryStatus.collecting: _teal2,
     DeliveryStatus.toBeCollected: Colors.grey,
   };
 
-  Color getStatusColor() => statusColors[status] ?? Colors.grey;
+  Color getStatusColor() => statusColors[status] ?? Colors.blueGrey;
 
   String getStatusText() {
     if (isCollection) {
@@ -41,7 +47,7 @@ class DeliveryCard extends StatelessWidget {
     }
     return {
           DeliveryStatus.delivered: "DELIVERED",
-          DeliveryStatus.delivering: "IN_PROGRESS",
+          DeliveryStatus.delivering: "IN PROGRESS",
           DeliveryStatus.toBeDelivered: "PENDING",
         }[status] ?? "Unknown";
   }
@@ -49,19 +55,33 @@ class DeliveryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<DeliveryController>();
-    final h = MediaQuery.of(context).size.height;
     final w = MediaQuery.of(context).size.width;
+    final bool isPending = !isDelivered && !isCurrent;
 
     return GestureDetector(
       onTap: () => controller.openStoreDetails(store),
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
         width: double.infinity,
         padding: EdgeInsets.all(w * 0.04),
         decoration: BoxDecoration(
-          color: isCurrent ? Colors.blue.shade50 : Colors.white,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: isCurrent ? Border.all(color: Colors.blue, width: 1.5) : null,
-          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6)],
+          border: Border.all(
+            color: isCurrent
+              ? _teal2.withValues(alpha: 0.3)
+              : isDelivered 
+                ? Colors.green.withValues(alpha: 0.3) 
+                : Colors.grey.shade200,
+            width: (isCurrent || isDelivered) ? 1.5 : 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -69,69 +89,154 @@ class DeliveryCard extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  height: h * 0.08, width: h * 0.08,
+                  height: 54,
+                  width: 54,
                   alignment: Alignment.center,
-                  decoration: BoxDecoration(color: getStatusColor(), borderRadius: BorderRadius.circular(10)),
-                  child: Text(store.number, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: w * 0.06)),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    color: isPending ? Colors.grey.shade100 : getStatusColor().withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      store.number,
+                      maxLines: 1,
+                      style: TextStyle(
+                        color: isPending ? Colors.grey.shade400 : getStatusColor(),
+                        fontWeight: FontWeight.w900,
+                        fontSize: 24,
+                      ),
+                    ),
+                  ),
                 ),
-                SizedBox(width: w * 0.03),
+                const SizedBox(width: 16),
                 Expanded(
-                  child: Column(
+                    child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(store.storeName, style: TextStyle(fontWeight: FontWeight.bold, fontSize: w * 0.05)),
-                      Text(store.address, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.grey, fontSize: w * 0.035)),
+                      Text(
+                        store.storeName,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 20, // Slightly reduced from 28 to prevent wrapping
+                          color: isPending ? Colors.grey.shade400 : getStatusColor(),
+                          height: 1.1,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        store.address,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: isPending ? Colors.grey.shade400 : Colors.blueGrey.shade400,
+                          fontSize: 12, // Reduced from 20 to show more address info
+                          height: 1.2,
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                Icon(Icons.check_circle, color: isDelivered ? Colors.green : Colors.grey.shade300),
+                if (isDelivered)
+                  const Icon(Icons.check_circle, color: Colors.green, size: 22)
+                else if (isCurrent)
+                  const Icon(Icons.check_circle, color: _teal2, size: 22)
+                else
+                  Icon(Icons.check_circle, color: Colors.grey.shade300, size: 22),
               ],
             ),
-            Divider(height: h * 0.03),
-            // TRAY INFO (Directly from getTripBooths API)
+            const SizedBox(height: 16),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(children: [
-                  Icon(Icons.inventory, size: 18, color: Colors.orange),
-                  SizedBox(width: 8),
-                  Text("Trays", style: TextStyle(fontSize: 16)),
-                ]),
-                Text("${store.totalTrays}", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              ],
-            ),
-            SizedBox(height: 8),
-            // PACKET INFO (Directly from getTripBooths API)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(children: [
-                  Icon(Icons.local_drink, size: 18, color: Colors.blue),
-                  SizedBox(width: 8),
-                  Text("Packets", style: TextStyle(fontSize: 16)),
-                ]),
-                Text("${store.totalPackets}", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              ],
-            ),
-            SizedBox(height: h * 0.02),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(color: getStatusColor().withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-                  child: Text(getStatusText(), style: TextStyle(color: getStatusColor(), fontWeight: FontWeight.bold)),
+                Expanded(
+                  child: Container(
+                    height: 30, // Fixed height for consistency
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: isPending ? Colors.grey.shade50 : getStatusColor().withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: isPending ? Colors.grey.shade200 : getStatusColor().withValues(alpha: 0.1)),
+                    ),
+                    child: Center(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          getStatusText(),
+                          style: TextStyle(
+                            color: isPending ? Colors.grey.shade400 : getStatusColor(),
+                            fontWeight: FontWeight.w900,
+                            fontSize: 14, // Slightly reduced for "TO BE COLLECTED" cases
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-                TextButton.icon(
-                  onPressed: () => controller.openMap(store.address),
-                  icon: const Icon(Icons.directions, size: 18),
-                  label: const Text("Directions"),
-                )
+                const SizedBox(width: 12),
+                SizedBox(
+                  height: 30, // Match status button height
+                  child: TextButton.icon(
+                    onPressed: () => controller.openMap(store.address),
+                    icon: Icon(Icons.directions_rounded, size: 12, color: isPending ? Colors.grey.shade400 : _teal2),
+                    label: Text("MAP", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isPending ? Colors.grey.shade400 : _teal2)),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      backgroundColor: (isPending ? Colors.grey : _teal2).withValues(alpha: 0.05),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                  ),
+                ),
               ],
-            )
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildInfoBadge(IconData icon, String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: color),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIssueIndicator(DeliveryModel store) {
+    int totalIssues = 0;
+    for (var p in store.products) {
+      totalIssues += (p.leak + p.pktMinus + p.pktPlus);
+    }
+
+    if (totalIssues == 0) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: Colors.orange.shade50,
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.orange.shade200),
+      ),
+      child: Icon(Icons.report_problem_rounded, size: 14, color: Colors.orange.shade700),
     );
   }
 }

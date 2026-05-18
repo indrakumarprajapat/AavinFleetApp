@@ -3,6 +3,8 @@ import '../../../../api/api_service.dart';
 import '../../../../services/config_service.dart';
 import '../../../../services/global_cart_service.dart';
 import '../controllers/home_controller.dart';
+import '../../../delivery/controllers/delivery_controller.dart';
+import '../../../store_detail/controller/store_details_controller.dart';
 
 class HomeBinding extends Bindings {
   @override
@@ -17,5 +19,7 @@ class HomeBinding extends Bindings {
       Get.lazyPut<GlobalCartService>(() => GlobalCartService());
     }
     Get.put<HomeController>(HomeController());
+    Get.lazyPut<DeliveryController>(() => DeliveryController(), fenix: true);
+    Get.lazyPut<StoreDetailsController>(() => StoreDetailsController());
   }
 }

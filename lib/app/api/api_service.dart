@@ -1686,8 +1686,13 @@ class ApiService extends GetxService {
         ),
       );
 
-      if (response.data is List) {
-        return response.data;
+      final data = response.data;
+      if (data is List) {
+        return data;
+      } else if (data is Map) {
+        if (data['data'] is List) return data['data'];
+        if (data['booths'] is List) return data['booths'];
+        if (data['delivery_booths'] is List) return data['delivery_booths'];
       }
 
       return [];
@@ -1789,8 +1794,13 @@ class ApiService extends GetxService {
         ),
       );
 
-      if (response.data is List) {
-        return response.data;
+      final data = response.data;
+      if (data is List) {
+        return data;
+      } else if (data is Map) {
+        if (data['data'] is List) return data['data'];
+        if (data['booths'] is List) return data['booths'];
+        if (data['collection_booths'] is List) return data['collection_booths'];
       }
 
       return [];
