@@ -888,13 +888,14 @@ class HomeView extends GetView<HomeController> {
   IconData _productIcon(String name) {
     final n = name.toLowerCase();
     bool isMilk = n.contains('milk') || 
-                 n.contains('tm ') || 
-                 n.contains('std ') || 
-                 n.contains('fcm ') || 
-                 n.contains('sgm ');
+                 n.contains('tm') || 
+                 n.contains('std') || 
+                 n.contains('fcm') || 
+                 n.contains('sgm');
                  
     bool isCurd = n.contains('curd') || 
-                 n.contains('bm jar');
+                 n.contains('bm jar') ||
+                 n.contains('cup');
 
     if (isMilk) return Icons.water_drop_rounded;
     if (isCurd) return Icons.egg_rounded;

@@ -1,3 +1,5 @@
+import '../utils/parse-util.dart';
+
 enum DeliveryStatus {
   toBeDelivered,
   delivering,
@@ -33,17 +35,12 @@ class DeliveryProductModel {
       name: json['productName']?.toString() ??
           json['name']?.toString() ??
           "Product",
-      trays: (json['tray'] as num?)?.toInt() ??
-          (json['trays'] as num?)?.toInt() ??
-          0,
-      packets: (json['loosePackets'] as num?)?.toInt() ??
-          (json['packets'] as num?)?.toInt() ??
-          0,
-      collectedTrays: (json['collected_trays'] as num?)?.toInt() ??
-          (json['collectedTrays'] as num?)?.toInt(),
-      leak: (json['leak'] as num?)?.toInt() ?? 0,
-      pktMinus: (json['pkt_minus'] as num?)?.toInt() ?? 0,
-      pktPlus: (json['pkt_plus'] as num?)?.toInt() ?? 0,
+      trays: ParseUtil.parseInt(json['tray'] ?? json['trays']) ?? 0,
+      packets: ParseUtil.parseInt(json['loosePackets'] ?? json['packets']) ?? 0,
+      collectedTrays: ParseUtil.parseInt(json['collected_trays'] ?? json['collectedTrays']),
+      leak: ParseUtil.parseInt(json['leak']) ?? 0,
+      pktMinus: ParseUtil.parseInt(json['pkt_minus']) ?? 0,
+      pktPlus: ParseUtil.parseInt(json['pkt_plus']) ?? 0,
     );
   }
 
@@ -179,16 +176,12 @@ class DeliveryModel {
     final bCode =
         json['number']?.toString() ?? json['boothCode']?.toString() ?? bIdStr;
 
-    final bool isDeliveredAPI = json['isDelivered'] == true ||
-        json['is_delivered'] == true ||
-        json['delivered'] == true ||
+    final bool isDeliveredAPI = ParseUtil.parseBool(json['isDelivered'] ?? json['is_delivered'] ?? json['delivered']) ||
         json['delivery_time'] != null ||
-        json['delivered_at'] != null;
+        json['delivered_at'] != null ||
+        ParseUtil.parseInt(json['deliveryStatus'] ?? json['delivery_status']) == 1;
 
-    final bool isCollectedAPI = json['isCollected'] == true ||
-        json['is_collected'] == true ||
-        json['is_completed'] == true ||
-        json['completed'] == true;
+    final bool isCollectedAPI = ParseUtil.parseBool(json['isCollected'] ?? json['is_collected'] ?? json['is_completed'] ?? json['completed']);
 
     final bool isCompleted = isDeliveredAPI || isCollectedAPI;
 
@@ -204,18 +197,17 @@ class DeliveryModel {
     }
 
     // Fallback: If we have collected trays or a delivery record exists, it's delivered
-    final collected = (json['collectedTrays'] as num?)?.toInt() ??
-        (json['collected_trays'] as num?)?.toInt() ??
-        (json['collected_tray'] as num?)?.toInt() ??
-        (json['collectedTray'] as num?)?.toInt() ??
-        0;
+    final collected = ParseUtil.parseInt(json['collectedTrays'] ??
+        json['collected_trays'] ??
+        json['collected_tray'] ??
+        json['collectedTray']) ?? 0;
 
     if (collected > 0 && status == DeliveryStatus.toBeCollected) {
       status = DeliveryStatus.delivered;
     }
 
     return DeliveryModel(
-      boothId: bId is int ? bId : int.tryParse(bId.toString()) ?? 0,
+      boothId: ParseUtil.parseInt(bId) ?? 0,
       id: bIdStr,
       number: bCode,
       storeName: "Booth $bCode",
@@ -226,26 +218,25 @@ class DeliveryModel {
               .toList() ??
           [],
       collectedTrays: collected,
-      remainingTrays: (json['remainingTrays'] as num?)?.toInt() ??
-          (json['remaining_trays'] as num?)?.toInt() ??
-          (json['outstandingTrays'] as num?)?.toInt() ??
-          0,
+      remainingTrays: ParseUtil.parseInt(json['remainingTrays'] ??
+          json['remaining_trays'] ??
+          json['outstandingTrays']) ?? 0,
       apiIsDelivered: isDeliveredAPI,
       apiIsCollected: isCollectedAPI,
       agentName: json['agentName']?.toString() ?? json['agent_name']?.toString(),
-      agentPhone: json['agentPhone']?.toString() ?? json['agent_phone']?.toString() ?? json['mobile']?.toString(),
-      totalTrays: (json['totalTrays'] as num?)?.toInt() ??
-          (json['total_trays'] as num?)?.toInt() ??
-          (json['totalTray'] as num?)?.toInt() ??
-          (json['total_tray'] as num?)?.toInt() ??
-          (json['tray'] as num?)?.toInt() ??
-          (json['trays'] as num?)?.toInt() ??
-          0,
-      totalPackets: (json['totalPackets'] as num?)?.toInt() ??
-          (json['total_packets'] as num?)?.toInt() ??
-          (json['loosePackets'] as num?)?.toInt() ??
-          (json['packets'] as num?)?.toInt() ??
-          0,
+      agentPhone: json['agentPhone']?.toString() ?? json['agent_phone']?.toString() ?? json['mobile']?.toString() ?? json['agentMobileNumber']?.toString(),
+      totalTrays: ParseUtil.parseInt(json['totalTrays'] ??
+          json['total_trays'] ??
+          json['totalTray'] ??
+          json['total_tray'] ??
+          json['tray'] ??
+          json['trays'] ??
+          json['trayCount']) ?? 0,
+      totalPackets: ParseUtil.parseInt(json['totalPackets'] ??
+          json['total_packets'] ??
+          json['loosePackets'] ??
+          json['packets'] ??
+          json['qtyPkt']) ?? 0,
     );
   }
 

@@ -26,6 +26,38 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
   var suppliesDate = ''.obs;
   var tripId = 0.obs;
   var products = <dynamic>[].obs;
+  final searchQuery = ''.obs;
+  final selectedCategory = 'All'.obs;
+
+  List<dynamic> get filteredProducts {
+    return products.where((product) {
+      final name = (product['product_name'] ?? '').toString().toLowerCase();
+      final query = searchQuery.value.toLowerCase();
+      final matchesSearch = name.contains(query);
+
+      if (selectedCategory.value == 'All') {
+        return matchesSearch;
+      }
+
+      bool matchesCategory = false;
+      if (selectedCategory.value == 'Milk') {
+        matchesCategory = name.contains('milk') ||
+            name.contains('tm') ||
+            name.contains('std') ||
+            name.contains('fcm') ||
+            name.contains('sgm');
+      } else if (selectedCategory.value == 'Curd') {
+        matchesCategory = name.contains('curd') || 
+                         name.contains('bm jar') || 
+                         name.contains('cup');
+      } else {
+        matchesCategory = name.contains(selectedCategory.value.toLowerCase());
+      }
+
+      return matchesSearch && matchesCategory;
+    }).toList();
+  }
+
   final routeDetail = Rxn<RouteDetail>();
 
   late TabController tabController;
@@ -115,6 +147,19 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
 
       try {
         await apiService.startTrip(tripId.value, lat, lng);
+        
+        // 1. Persist the trip ID for DeliveryController
+        final storage = Get.find<SessionManager>().storage; // We'll make this public or use GetStorage()
+        storage.write('active_trip_id', tripId.value);
+        
+        // 2. Initialize or Update DeliveryController
+        if (Get.isRegistered<DeliveryController>()) {
+          final delController = Get.find<DeliveryController>();
+          delController.tripId = tripId.value;
+          delController.fetchRouteBooths();
+        } else {
+          Get.put(DeliveryController());
+        }
       } catch (e) {
         if (e.toString().toLowerCase().contains("trip already started")) {
           debugPrint("Trip already started, continuing...");
