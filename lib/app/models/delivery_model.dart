@@ -171,7 +171,7 @@ class DeliveryModel {
 
   // JSON
   factory DeliveryModel.fromJson(Map<String, dynamic> json) {
-    final bId = json['boothId'] ?? json['id'] ?? 0;
+    final bId = json['booth_id'] ?? json['boothId'] ?? json['id'] ?? 0;
     final bIdStr = bId.toString();
     final bCode =
         json['number']?.toString() ?? json['boothCode']?.toString() ?? bIdStr;

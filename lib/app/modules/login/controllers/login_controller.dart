@@ -9,6 +9,7 @@ import '../../../services/config_service.dart';
 import 'package:get_storage/get_storage.dart';
 
 import '../../../utils/device-util.dart';
+import '../../../utils/location-utils.dart';
 
 class LoginController extends GetxController {
   final phoneController = TextEditingController();
@@ -63,17 +64,34 @@ class LoginController extends GetxController {
       return;
     }
 
+    if (passwordController.text.length < 8) {
+      Get.snackbar('Error', 'Password must be at least 8 characters long');
+      return;
+    }
+
     _isLoading.value = true;
     try {
+      double? lat, lng;
+      final allowed = await LocationUtils.ensureLocationPermission();
+      if (allowed) {
+        final pos = await LocationUtils.getCurrentLocation();
+        if (pos != null) {
+          lat = pos.latitude;
+          lng = pos.longitude;
+        }
+      }
+
       final fleetUser = await apiService.loginWithPassword(
           phoneController.text,
-          passwordController.text
+          passwordController.text,
+          lat: lat,
+          lng: lng,
       );
 
-      // if (response['isForcePasswordReset'] == true) {
-      //   await forgotPassword();
-      //   return;
-      // }
+      if (fleetUser.accessToken == null || fleetUser.accessToken!.isEmpty) {
+        Get.snackbar('Error', 'Invalid credentials or missing access token');
+        return;
+      }
 
       final session = Get.find<SessionManager>();
       await session.saveSession(fleetUser);
@@ -169,6 +187,16 @@ class LoginController extends GetxController {
     _isLoading.value = true;
 
     try {
+      double? lat, lng;
+      final allowed = await LocationUtils.ensureLocationPermission();
+      if (allowed) {
+        final pos = await LocationUtils.getCurrentLocation();
+        if (pos != null) {
+          lat = pos.latitude;
+          lng = pos.longitude;
+        }
+      }
+
       if (_selectedUserType.value == UserType.fleetUser) {
         // Check if this is for password reset
         if (resetToken.value.isNotEmpty) {
@@ -182,7 +210,7 @@ class LoginController extends GetxController {
           // Normal OTP verification for login
           final fleetUser = await apiService.agentVerifyOtp(
               _accessToken.value,
-              otpController.text
+              otpController.text,
           );
 
           final session = Get.find<SessionManager>();

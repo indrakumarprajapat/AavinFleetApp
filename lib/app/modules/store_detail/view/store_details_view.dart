@@ -361,7 +361,6 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
           ),
           const SizedBox(height: 6),
           ...s.products.map((product) {
-            final hasIssues = product.leak > 0 || product.pktMinus > 0 || product.pktPlus > 0;
             return Column(
               children: [
                 Padding(
@@ -379,37 +378,6 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
                     ],
                   ),
                 ),
-                if (hasIssues)
-                  Padding(
-                    padding: EdgeInsets.only(left: w * 0.05, right: w * 0.05, bottom: 8),
-                    child: Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
-                      children: [
-                        if (product.leak > 0)
-                          _issueBadge(
-                            icon: Icons.water_damage_rounded,
-                            label: 'Leak: ${product.leak}',
-                            bg: const Color(0xFFFEE2E2),
-                            fg: const Color(0xFFC0392B),
-                          ),
-                        if (product.pktMinus > 0)
-                          _issueBadge(
-                            icon: Icons.remove_circle_outline_rounded,
-                            label: 'Short: ${product.pktMinus}',
-                            bg: const Color(0xFFFEF3CD),
-                            fg: const Color(0xFFB7700C),
-                          ),
-                        if (product.pktPlus > 0)
-                          _issueBadge(
-                            icon: Icons.add_circle_outline_rounded,
-                            label: 'Extra: ${product.pktPlus}',
-                            bg: const Color(0xFFD4F0E0),
-                            fg: const Color(0xFF1A7A42),
-                          ),
-                      ],
-                    ),
-                  ),
               ],
             );
           }),

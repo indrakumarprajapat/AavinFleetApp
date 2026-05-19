@@ -47,6 +47,11 @@ class DeliveryRouteView extends GetView<DeliveryController> {
                 const SizedBox(height: 160), // Adjusted for simplified header
                 Expanded(
                   child: Obx(() {
+                    if (controller.isLoading.value) {
+                      return const Center(
+                        child: CircularProgressIndicator(color: _teal2),
+                      );
+                    }
                     final isCollection =
                         controller.appMode.value == AppMode.collection;
 
