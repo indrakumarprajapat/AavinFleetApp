@@ -121,8 +121,8 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
   }
 
   Future<void> startDelivery() async {
-    if (tripId.value == 0) {
-      Get.snackbar("No Active Trip", "No trip assigned yet.");
+    if (tripId.value == 0 || _isLoading.value) {
+      if (tripId.value == 0) Get.snackbar("No Active Trip", "No trip assigned yet.");
       return;
     }
 
@@ -135,15 +135,11 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
       double lng = 0;
 
       if (allowed) {
-        LocationSettings locationSettings = const LocationSettings(
-          accuracy: LocationAccuracy.high,
-        );
-        Position position = await Geolocator.getCurrentPosition(
-          locationSettings: locationSettings,
-        );
-
-        lat = position.latitude;
-        lng = position.longitude;
+        Position? position = await LocationUtils.getCurrentLocation();
+        if (position != null) {
+          lat = position.latitude;
+          lng = position.longitude;
+        }
       }
 
       try {
@@ -153,7 +149,12 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
         final storage = GetStorage();
         storage.write('active_trip_id', tripId.value);
         
-        // 2. Navigate to Delivery Route view and dispose Home
+        // 2. Clear old delivery state to ensure fresh initialization
+        if (Get.isRegistered<DeliveryController>()) {
+          Get.delete<DeliveryController>();
+        }
+
+        // 3. Navigate to Delivery Route view and dispose Home
         Get.offNamed(Routes.DELIVERY_ROUTE, arguments: tripId.value);
       } catch (e) {
         if (e.toString().toLowerCase().contains("trip already started")) {
@@ -187,6 +188,15 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
       if (idToUse != null) {
         tripId.value = idToUse;
         debugPrint("Loaded Trip ID: ${tripId.value}");
+
+        // Check if this specific trip is marked as completed in local storage
+        final storage = GetStorage();
+        if (storage.read('completed_trip_$idToUse') == true) {
+          debugPrint("Trip $idToUse is already completed. Setting tripId to 0 for UI.");
+          tripId.value = 0;
+          products.clear();
+          return;
+        }
       }
 
       if (reportDetails.products != null) {

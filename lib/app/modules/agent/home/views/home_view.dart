@@ -671,7 +671,9 @@ class HomeView extends GetView<HomeController> {
           ),
           const SizedBox(height: 16),
           Text(
-            'No products found for this trip',
+            controller.tripId.value == 0 
+                ? "No active trip available" 
+                : 'No products found for this trip',
             style: TextStyle(
               fontSize: 18,
               color: Colors.blueGrey.shade700,
@@ -680,7 +682,9 @@ class HomeView extends GetView<HomeController> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Pull down to refresh or check later',
+            controller.tripId.value == 0 
+                ? "Pull down to refresh or wait for assignment" 
+                : 'Pull down to refresh or check later',
             style: TextStyle(
               fontSize: 14,
               color: Colors.grey.shade500,

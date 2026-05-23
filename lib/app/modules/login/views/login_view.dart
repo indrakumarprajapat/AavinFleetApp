@@ -134,10 +134,7 @@ class _LoginViewState extends State<LoginView> {
           children: [
             TextField(
               controller: phoneController,
-              maxLength: 20,
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
-              ],
+              maxLength: 50,
               decoration: InputDecoration(
                 labelText: 'Enter Route ID or Username',
                 filled: true,

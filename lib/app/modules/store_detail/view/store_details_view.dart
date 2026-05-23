@@ -603,11 +603,7 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
         ? s.status == DeliveryStatus.collected
         : s.status == DeliveryStatus.delivered;
 
-    final isLastBooth = controller.deliveryController.getNextStore(s) == null;
-
-    String actionText = isCollection
-        ? (isLastBooth ? "Submit Trip" : "Mark Collected")
-        : "Mark Delivered";
+    String actionText = isCollection ? "Mark Collected" : "Mark Delivered";
     String doneText = isCollection ? "Collected" : "Delivered";
 
     return Container(
@@ -641,7 +637,7 @@ class StoreDetailsView extends GetView<StoreDetailsController> {
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 56),
-                backgroundColor: isLastBooth && isCollection ? Colors.green.shade600 : _teal2,
+                backgroundColor: _teal2,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

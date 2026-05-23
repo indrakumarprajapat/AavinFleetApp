@@ -42,6 +42,7 @@ class SplashController extends GetxController {
     final isLoggedIn = await _autoLoginCall();
     if (isLoggedIn) {
       final activeTripId = storage.read('active_trip_id');
+
       if (activeTripId != null) {
         Get.offAllNamed(Routes.DELIVERY_ROUTE, arguments: activeTripId);
       } else {
