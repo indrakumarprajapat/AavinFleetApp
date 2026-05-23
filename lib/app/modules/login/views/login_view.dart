@@ -134,10 +134,7 @@ class _LoginViewState extends State<LoginView> {
           children: [
             TextField(
               controller: phoneController,
-              maxLength: 20,
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
-              ],
+              maxLength: 50,
               decoration: InputDecoration(
                 labelText: 'Enter Route ID or Username',
                 filled: true,
@@ -188,23 +185,8 @@ class _LoginViewState extends State<LoginView> {
             ) : SizedBox.shrink()),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 64),
 
-        if (config.name != ClientConfig.CLIENT_NILGIRIS) ...[
-          Obx(() => controller.isPasswordLogin ? Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton(
-                onPressed: controller.forgotPassword,
-                child: Text(
-                  'Forgot Password?',
-                  style: TextStyle(color: AppColors.primary),
-                ),
-              ),
-            ],
-          ): SizedBox.shrink()),
-          const SizedBox(height: 8),
-        ],
 
         Obx(() => SizedBox(
           width: double.infinity,
@@ -232,13 +214,22 @@ class _LoginViewState extends State<LoginView> {
               ),
               elevation: 0,
             ),
-            child: Text(
-              controller.isPasswordLogin ? 'Login' : 'Send OTP',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            child: controller.isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      color: AppColors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : Text(
+                    controller.isPasswordLogin ? 'Login' : 'Send OTP',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
           ),
         )),
 

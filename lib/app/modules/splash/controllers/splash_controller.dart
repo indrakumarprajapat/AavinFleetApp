@@ -14,6 +14,7 @@ import '../../../api/api_service.dart';
 import '../../../models/models.dart';
 import '../../../services/config_service.dart';
 import '../../../utils/device-util.dart';
+import '../../../utils/location-utils.dart';
 
 class SplashController extends GetxController {
   final storage = GetStorage();
@@ -41,6 +42,7 @@ class SplashController extends GetxController {
     final isLoggedIn = await _autoLoginCall();
     if (isLoggedIn) {
       final activeTripId = storage.read('active_trip_id');
+
       if (activeTripId != null) {
         Get.offAllNamed(Routes.DELIVERY_ROUTE, arguments: activeTripId);
       } else {
@@ -103,15 +105,31 @@ class SplashController extends GetxController {
     try {
       var deviceInfo = DeviceInfo();
       var version = '';
+      double? lat, lng;
       try {
         deviceInfo = await DeviceUtil.getDeviceDetails();
         version = await DeviceUtil.getAppVersion();
+        
+        final allowed = await LocationUtils.ensureLocationPermission();
+        if (allowed) {
+          final pos = await LocationUtils.getCurrentLocation();
+          if (pos != null) {
+            lat = pos.latitude;
+            lng = pos.longitude;
+          }
+        }
       } catch (err) {
         // Silently continue
       }
 
       // Attempt auto-login with the token
-      final responseFleetUser = await apiService.agentAutoLogin(storedToken, deviceInfo, version);
+      final responseFleetUser = await apiService.agentAutoLogin(
+        storedToken, 
+        deviceInfo, 
+        version,
+        lat: lat,
+        lng: lng,
+      );
       
       // Save the refreshed session
       await session.saveSession(responseFleetUser);

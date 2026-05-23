@@ -7,13 +7,13 @@ import '../../../routes/app_pages.dart';
 import '../../../api/api_service.dart';
 import '../../../services/config_service.dart';
 import 'package:get_storage/get_storage.dart';
-
 import '../../../utils/device-util.dart';
+import '../../../utils/location-utils.dart';
 
 class LoginController extends GetxController {
   final phoneController = TextEditingController();
   final passwordController = TextEditingController();
-  final otpController = TextEditingController();
+  // final otpController = TextEditingController();
 
   final _isLoading = false.obs;
   final _isOtpSent = false.obs;
@@ -40,7 +40,7 @@ class LoginController extends GetxController {
     _isPasswordLogin.value = !_isPasswordLogin.value;
     _isOtpSent.value = false;
     resetToken.value = ''; // Clear reset token when switching
-    otpController.clear();
+    // otpController.clear();
     passwordController.clear();
   }
 
@@ -52,7 +52,7 @@ class LoginController extends GetxController {
     tempToken.value = '';
     _accessToken.value = '';
     _customerId.value = 0;
-    otpController.clear();
+    // otpController.clear();
     passwordController.clear();
     phoneController.clear();
   }
@@ -65,15 +65,27 @@ class LoginController extends GetxController {
 
     _isLoading.value = true;
     try {
+      double? lat, lng;
+      final allowed = await LocationUtils.ensureLocationPermission();
+      if (allowed) {
+        final pos = await LocationUtils.getCurrentLocation();
+        if (pos != null) {
+          lat = pos.latitude;
+          lng = pos.longitude;
+        }
+      }
+
       final fleetUser = await apiService.loginWithPassword(
           phoneController.text,
-          passwordController.text
+          passwordController.text,
+          lat: lat,
+          lng: lng,
       );
 
-      // if (response['isForcePasswordReset'] == true) {
-      //   await forgotPassword();
-      //   return;
-      // }
+      if (fleetUser.accessToken == null || fleetUser.accessToken!.isEmpty) {
+        Get.snackbar('Error', 'Invalid credentials or missing access token');
+        return;
+      }
 
       final session = Get.find<SessionManager>();
       await session.saveSession(fleetUser);
@@ -160,64 +172,74 @@ class LoginController extends GetxController {
     }
   }
 
-  Future<void> verifyOtp() async {
-    if (otpController.text.isEmpty || otpController.text.length != 4) {
-      Get.snackbar('Error', 'Please enter valid 4-digit OTP');
-      return;
-    }
+  // Future<void> verifyOtp() async {
+  //   if (otpController.text.isEmpty || otpController.text.length != 4) {
+  //     Get.snackbar('Error', 'Please enter valid 4-digit OTP');
+  //     return;
+  //   }
+  //
+  //   _isLoading.value = true;
 
-    _isLoading.value = true;
+    // try {
+    //   double? lat, lng;
+    //   final allowed = await LocationUtils.ensureLocationPermission();
+    //   if (allowed) {
+    //     final pos = await LocationUtils.getCurrentLocation();
+    //     if (pos != null) {
+    //       lat = pos.latitude;
+    //       lng = pos.longitude;
+    //     }
+    //   }
 
-    try {
-      if (_selectedUserType.value == UserType.fleetUser) {
-        // Check if this is for password reset
-        if (resetToken.value.isNotEmpty) {
-          final response = await apiService.verifyResetOtp(
-              resetToken.value,
-              otpController.text
-          );
-          Get.snackbar('Success', response['message'] ?? 'OTP verified successfully');
-          Get.toNamed('/reset-password', arguments: resetToken.value);
-        } else {
-          // Normal OTP verification for login
-          final fleetUser = await apiService.agentVerifyOtp(
-              _accessToken.value,
-              otpController.text
-          );
-
-          final session = Get.find<SessionManager>();
-            await session.saveSession(fleetUser);
+      // if (_selectedUserType.value == UserType.fleetUser) {
+      //   // Check if this is for password reset
+      //   if (resetToken.value.isNotEmpty) {
+      //     final response = await apiService.verifyResetOtp(
+      //         resetToken.value,
+      //         otpController.text
+      //     );
+      //     Get.snackbar('Success', response['message'] ?? 'OTP verified successfully');
+      //     Get.toNamed('/reset-password', arguments: resetToken.value);
+      //   } else {
+      //     // Normal OTP verification for login
+      //     final fleetUser = await apiService.agentVerifyOtp(
+      //         _accessToken.value,
+      //         otpController.text,
+      //     );
+      //
+      //     final session = Get.find<SessionManager>();
+      //       await session.saveSession(fleetUser);
 
           // await storage.write('boothDetails', response.boothDetails?.toJson() ?? {});
-          // await storage.write('aadharNumber', fleetUser.aadharNumber ?? '');
-          // await storage.write('panNumber', fleetUser.panNumber ?? '');
-          // await storage.write('isAadhaarKycVerified', fleetUser.isAadhaarKycVerified ?? false);
-          // await storage.write('isPanKycVerified', fleetUser.isPanKycVerified ?? false);
-          await storage.write('profilePhotoUrl', fleetUser.profilePhoto ?? '');
-          await storage.write('razorpay_key', fleetUser.key ?? '');
-          try {
-            final configService = Get.find<ConfigService>();
-            await configService.fetchConfig();
-          } catch (e) {
-            print('Config fetch error: $e');
-          }
-
-          Get.offAllNamed(Routes.HOME);
-        }
-      }
-    } catch (e) {
-      Get.snackbar('Error', e.toString());
-    } finally {
-      _isLoading.value = false;
-    }
-  }
-
-
-  bool isDisposed = false;
-
-  @override
-  void onClose() {
-    isDisposed = true;
-    super.onClose();
-  }
+  //         // await storage.write('aadharNumber', fleetUser.aadharNumber ?? '');
+  //         // await storage.write('panNumber', fleetUser.panNumber ?? '');
+  //         // await storage.write('isAadhaarKycVerified', fleetUser.isAadhaarKycVerified ?? false);
+  //         // await storage.write('isPanKycVerified', fleetUser.isPanKycVerified ?? false);
+  //         await storage.write('profilePhotoUrl', fleetUser.profilePhoto ?? '');
+  //         await storage.write('razorpay_key', fleetUser.key ?? '');
+  //         try {
+  //           final configService = Get.find<ConfigService>();
+  //           await configService.fetchConfig();
+  //         } catch (e) {
+  //           print('Config fetch error: $e');
+  //         }
+  //
+  //         Get.offAllNamed(Routes.HOME);
+  //       }
+  //     }
+  //   } catch (e) {
+  //     Get.snackbar('Error', e.toString());
+  //   } finally {
+  //     _isLoading.value = false;
+  //   }
+  // }
+  //
+  //
+  // bool isDisposed = false;
+  //
+  // @override
+  // void onClose() {
+  //   isDisposed = true;
+  //   super.onClose();
+  // }
 }
