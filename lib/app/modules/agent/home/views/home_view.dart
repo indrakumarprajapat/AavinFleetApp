@@ -529,48 +529,43 @@ class HomeView extends GetView<HomeController> {
                 ),
 
                 // ── issue badges ──
-                if (hasIssues) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.only(top: 10),
-                    decoration: const BoxDecoration(
-                      border: Border(
-                        top: BorderSide(
-                          color: Color(0xFFF0F4F7),
-                          style: BorderStyle.solid,
-                        ),
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.only(top: 10),
+                  decoration: const BoxDecoration(
+                    border: Border(
+                      top: BorderSide(
+                        color: Color(0xFFF0F4F7),
+                        style: BorderStyle.solid,
                       ),
                     ),
-                    child: Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        if (leak > 0)
-                          _issueBadge(
-                            icon: Icons.water_damage_rounded,
-                            label: 'Leak: $leak',
-                            bg: const Color(0xFFFEE2E2),
-                            fg: const Color(0xFFC0392B),
-                          ),
-                        if (minus > 0)
-                          _issueBadge(
-                            icon: Icons.remove_circle_outline_rounded,
-                            label: 'Short: $minus',
-                            bg: const Color(0xFFFCE8B5),
-                            fg: const Color(0xFFCE8211),
-                          ),
-                        if (plus > 0)
-                          _issueBadge(
-                            icon: Icons.add_circle_outline_rounded,
-                            label: 'Extra: $plus',
-                            bg: const Color(0xFFD4F0E0),
-                            fg: const Color(0xFF1A7A42),
-                          ),
-                      ],
-                    ),
                   ),
-                ],
+                  child: Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      _issueBadge(
+                        icon: Icons.water_damage_rounded,
+                        label: 'Leak: $leak',
+                        bg: const Color(0xFFFEE2E2),
+                        fg: const Color(0xFFC0392B),
+                      ),
+                      _issueBadge(
+                        icon: Icons.remove_circle_outline_rounded,
+                        label: 'pkt_minus: $minus',
+                        bg: const Color(0xFFFCE8B5),
+                        fg: const Color(0xFFCE8211),
+                      ),
+                      _issueBadge(
+                        icon: Icons.add_circle_outline_rounded,
+                        label: 'pkt_plus: $plus',
+                        bg: const Color(0xFFD4F0E0),
+                        fg: const Color(0xFF1A7A42),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -669,14 +664,11 @@ class HomeView extends GetView<HomeController> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Lottie.asset(
-            'assets/lottie/namakkalanimation.json',
-            height: 220,
-            repeat: true,
-          ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 40),
           Text(
-            'No products found for this trip',
+            controller.tripId.value == 0 
+                ? "No active trip available" 
+                : 'No products found for this trip',
             style: TextStyle(
               fontSize: 18,
               color: Colors.blueGrey.shade700,
@@ -685,7 +677,9 @@ class HomeView extends GetView<HomeController> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Pull down to refresh or check later',
+            controller.tripId.value == 0 
+                ? "Pull down to refresh or wait for assignment" 
+                : 'Pull down to refresh or check later',
             style: TextStyle(
               fontSize: 14,
               color: Colors.grey.shade500,

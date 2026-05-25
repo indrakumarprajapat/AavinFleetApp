@@ -117,9 +117,9 @@ class RouteDetail {
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
       'success': success,
-      'route_name': routeName,
-      'agent_name': agentName,
-      'agent_mobile': agentMobile,
+      'routeName': routeName,
+      'agentName': agentName,
+      'agentMobile': agentMobile,
     };
   }
 }

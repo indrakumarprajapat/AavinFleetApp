@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:dio/dio.dart' hide MultipartFile, FormData;
 import 'package:dio/dio.dart' as dio;
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import '../constants/api_constants.dart';
@@ -40,6 +41,31 @@ class ApiService extends GetxService {
           }
           handler.next(options);
         },
+        onError: (DioException e, handler) async {
+          if (e.response?.statusCode == 401) {
+            final session = Get.find<SessionManager>();
+            
+            // Clear session and redirect to login
+            await session.clearSession();
+            
+            Get.offAllNamed('/login'); // Use string literal if Routes.LOGIN is not available here, or check AppPages
+            
+            Get.dialog(
+              AlertDialog(
+                title: const Text("Session Expired"),
+                content: const Text("Your session has expired or you have logged in from another device. Please login again."),
+                actions: [
+                  TextButton(
+                    onPressed: () => Get.back(),
+                    child: const Text("OK"),
+                  ),
+                ],
+              ),
+              barrierDismissible: false,
+            );
+          }
+          handler.next(e);
+        },
       ),
     );
 
@@ -58,16 +84,34 @@ class ApiService extends GetxService {
   //   storage.write('access_token', token);
   // }
 
-  Future<FleetUser> loginWithPassword(String username,
-      String password) async {
+  Future<FleetUser> loginWithPassword(String username, String password,
+      {double? lat, double? lng}) async {
     try {
       final response = await _dio.post(
         '/auth/login',
         data: {
           'username': username,
           'password': password,
+          if (lat != null) 'lat': lat,
+          if (lng != null) 'lng': lng,
         },
       );
+
+      // Validate response success flag if present
+      if (response.data is Map) {
+        final data = response.data as Map<String, dynamic>;
+        if (data.containsKey('success') && data['success'] == false) {
+          throw data['message'] ?? 'Invalid credentials';
+        }
+
+        // Some backends return 200 OK but with an error status in the body
+        if (data.containsKey('status') && (data['status'] == 'error' || data['status'] == false)) {
+          throw data['message'] ?? 'Invalid credentials';
+        }
+
+        return FleetUser.fromJson(data['data'] ?? data);
+      }
+
       return FleetUser.fromJson(response.data);
     } catch (e) {
       throw _handleError(e);
@@ -83,20 +127,26 @@ class ApiService extends GetxService {
   }
 
 
-  Future<FleetUser> agentAutoLogin(String accessToken,    DeviceInfo deviceInfo,
-      String versionStr,
-      ) async {
+  Future<FleetUser> agentAutoLogin(
+    String accessToken,
+    DeviceInfo deviceInfo,
+    String versionStr, {
+    double? lat,
+    double? lng,
+  }) async {
     try {
       final response = await _dio.post(
         '/auth/autologin',
         data: {
           'accessToken': accessToken,
-           "login_device": deviceInfo.loginDevice,
+          "login_device": deviceInfo.loginDevice,
           "d_os_api": deviceInfo.dOsApi,
           "d_manufacture": deviceInfo.dManufacture,
           "d_model": deviceInfo.dModel,
           "d_os_version": deviceInfo.dOsVersion,
-          "app_cur_version": versionStr
+          "app_cur_version": versionStr,
+          if (lat != null) 'lat': lat,
+          if (lng != null) 'lng': lng,
         },
       );
       return FleetUser.fromJson(response.data);
@@ -108,12 +158,14 @@ class ApiService extends GetxService {
    * OLD APIS
    */
 
-  Future<FleetUser> loginWithOtp(String mobileNumber,) async {
+  Future<FleetUser> loginWithOtp(String mobileNumber, {double? lat, double? lng}) async {
     try {
       final response = await _dio.post(
         '/account/login',
         data: {
           'username': mobileNumber,
+          if (lat != null) 'lat': lat,
+          if (lng != null) 'lng': lng,
         },
       );
       return FleetUser.fromJson(response.data);
@@ -1733,12 +1785,12 @@ class ApiService extends GetxService {
   }
 
   Future<dynamic> markCollected(
-      int tripId,
-      int boothId,
-      int trayCollected,
-      double lat,
-      double lng,
-      ) async {
+    int tripId,
+    int boothId,
+    int trayCollected,
+    double lat,
+    double lng,
+  ) async {
     try {
       final storage = GetStorage();
       final accessToken = storage.read('access_token');
@@ -1749,6 +1801,7 @@ class ApiService extends GetxService {
           "trayCollected": trayCollected,
           "lat": lat,
           "lng": lng,
+          // "collectionStatus": trayCollected > 0 ? "COLLECTED" : "NOT_COLLECTED",
         },
         options: Options(
           headers: {

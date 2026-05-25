@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../routes/app_pages.dart';
 import '../../agent/drawer/views/agent_drawer_view.dart';
 import '../../agent/home/controllers/home_controller.dart';
 import '../../../config/app_config.dart';
@@ -11,7 +12,6 @@ import '../controllers/delivery_controller.dart';
 class DeliveryRouteView extends GetView<DeliveryController> {
   const DeliveryRouteView({super.key});
 
-  static final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   // ── Brand Palette (Professional Theme) ────────────────────────
   static const _teal1 = Color(0xFF005F80);
@@ -31,6 +31,10 @@ class DeliveryRouteView extends GetView<DeliveryController> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
+        if (controller.isTripCompleted.value) {
+          Get.offAllNamed(Routes.HOME);
+          return;
+        }
         Get.snackbar(
           "Trip in Progress",
           "You cannot go back until the trip is submitted or cancelled.",
@@ -38,7 +42,6 @@ class DeliveryRouteView extends GetView<DeliveryController> {
         );
       },
       child: Scaffold(
-        key: _scaffoldKey,
         backgroundColor: _tealBg,
         body: Stack(
           children: [
@@ -47,6 +50,74 @@ class DeliveryRouteView extends GetView<DeliveryController> {
                 const SizedBox(height: 160), // Adjusted for simplified header
                 Expanded(
                   child: Obx(() {
+                    if (controller.isLoading.value) {
+                      return const Center(
+                        child: CircularProgressIndicator(color: _teal2),
+                      );
+                    }
+
+                    if (controller.isTripCompleted.value) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(24),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 20,
+                                  )
+                                ],
+                              ),
+                              child: Icon(Icons.route_outlined, size: 64, color: Colors.blueGrey.shade200),
+                            ),
+                            const SizedBox(height: 24),
+                            Text(
+                              "No active trip",
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.blueGrey.shade800,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              "You don't have any trips in progress.",
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.blueGrey.shade400,
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+                            SizedBox(
+                              width: 200,
+                              height: 48,
+                              child: ElevatedButton(
+                                onPressed: () => Get.offAllNamed(Routes.HOME),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: _teal2,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  elevation: 0,
+                                ),
+                                child: const Text(
+                                  "GO TO HOME",
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
                     final isCollection =
                         controller.appMode.value == AppMode.collection;
 
@@ -84,27 +155,7 @@ class DeliveryRouteView extends GetView<DeliveryController> {
                             itemCount: deliveries.length,
                             itemBuilder: (context, index) {
                               final delivery = deliveries[index];
-
-                              DeliveryStatus status;
-
-                              if (isCollection) {
-                                final originalIndex = originalDeliveries.indexOf(delivery);
-                                final currentActive = controller.currentCollectingIndex.value;
-
-                                if (delivery.apiIsCollected ||
-                                    delivery.collectedTrays > 0 ||
-                                    delivery.status == DeliveryStatus.collected) {
-                                   status = DeliveryStatus.delivered;
-                                } else if (originalIndex == currentActive) {
-                                  status = DeliveryStatus.delivering; // Currently collecting
-                                } else if (originalIndex > currentActive && currentActive != -1) {
-                                  status = DeliveryStatus.delivered; // Already passed
-                                } else {
-                                  status = DeliveryStatus.toBeCollected; // To be collected
-                                }
-                              } else {
-                                status = delivery.status;
-                              }
+                              final status = delivery.status;
 
                               return Padding(
                                 padding: EdgeInsets.only(bottom: h * 0.015),
@@ -126,7 +177,9 @@ class DeliveryRouteView extends GetView<DeliveryController> {
             _buildCustomHeader(h, w, config),
           ],
         ),
-        bottomNavigationBar: _buildBottomActions(h, w),
+        bottomNavigationBar: Obx(() => controller.isTripCompleted.value 
+            ? const SizedBox.shrink() 
+            : _buildBottomActions(h, w)),
       ),
     );
   }
@@ -142,9 +195,7 @@ class DeliveryRouteView extends GetView<DeliveryController> {
 
       bool showSubmitBtn = controller.appMode.value == AppMode.collection &&
           deliveries.isNotEmpty &&
-          deliveries.every((d) => d.apiIsCollected ||
-                                  d.collectedTrays > 0 ||
-                                  d.status == DeliveryStatus.collected);
+          deliveries.every((d) => d.status == DeliveryStatus.collected);
 
       if (!showCollectionBtn && !showSubmitBtn) return const SizedBox.shrink();
 
@@ -242,11 +293,6 @@ class DeliveryRouteView extends GetView<DeliveryController> {
               children: [
                 Row(
                   children: [
-                    _iconBtn(
-                      icon: Icons.menu_rounded,
-                      onTap: () => _scaffoldKey.currentState?.openDrawer(),
-                    ),
-                    const SizedBox(width: 16),
                     Text(
                       isCollection ? "Collection Mode" : "Delivery Mode",
                       style: const TextStyle(

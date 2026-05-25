@@ -21,12 +21,13 @@ class DeliveryController extends GetxController {
 
   var deliveries = <DeliveryModel>[].obs;
   var isLoading = false.obs;
+  var isTripCompleted = false.obs;
   var appMode = AppMode.delivery.obs;
   var currentCollectingIndex = 0.obs;
   var isSummaryLoading = false.obs;
   var summary = <String, dynamic>{}.obs;
 
-  int tripId = 1;
+  int tripId = 0;
 
   var name = "".obs;
   var vehicleNumber = "".obs;
@@ -45,12 +46,17 @@ class DeliveryController extends GetxController {
 
     if (Get.arguments != null) {
       tripId = int.tryParse(Get.arguments.toString()) ?? 0;
+      if (tripId != 0) {
+        storage.write('active_trip_id', tripId);
+      }
     } else {
-      tripId = storage.read('active_trip_id') ?? 0;
+      tripId = storage.read('active_trip_id') ?? storage.read('completed_trip_id') ?? 0;
     }
 
-    if (tripId != 0) {
-      storage.write('active_trip_id', tripId);
+    if (tripId == 0) {
+      isTripCompleted.value = true;
+      isLoading.value = false;
+      return; // Stop here if no trip is available
     }
 
     _loadUserInfo();
@@ -61,6 +67,13 @@ class DeliveryController extends GetxController {
     }
 
     fetchRouteBooths();
+
+    if (storage.read('completed_trip_$tripId') == true) {
+      isTripCompleted.value = true;
+      if (storage.read('dialog_shown_$tripId') != true) {
+        Future.delayed(Duration.zero, () => showTripCompletedDialog());
+      }
+    }
   }
 
   Future<void> refreshData() async {
@@ -103,25 +116,16 @@ class DeliveryController extends GetxController {
         return DeliveryModel.fromJson(json);
       }).toList();
       
-      final List<dynamic> rawDelivered = storage.read('delivered_booths_$tripId') ?? [];
-      final Set<String> localDeliveredIds = rawDelivered.map((e) => e.toString()).toSet();
-      final List<dynamic> rawCollected = storage.read('collected_booths_$tripId') ?? [];
-      final Set<String> localCollectedIds = rawCollected.map((e) => e.toString()).toSet();
-
       for (int i = 0; i < initialBooths.length; i++) {
         final booth = initialBooths[i];
-        final bId = booth.boothId.toString();
 
         if (appMode.value == AppMode.delivery) {
-          final isDelivered = booth.apiIsDelivered || localDeliveredIds.contains(bId);
           initialBooths[i] = booth.copyWith(
-            status: isDelivered ? DeliveryStatus.delivered : DeliveryStatus.toBeDelivered,
+            status: booth.apiIsDelivered ? DeliveryStatus.delivered : DeliveryStatus.toBeDelivered,
           );
         } else {
-          final isCollected = booth.apiIsCollected || localCollectedIds.contains(bId) ||
-              (booth.totalTrays > 0 && booth.collectedTrays >= booth.totalTrays);
           initialBooths[i] = booth.copyWith(
-            status: isCollected ? DeliveryStatus.collected : DeliveryStatus.toBeCollected,
+            status: booth.apiIsCollected ? DeliveryStatus.collected : DeliveryStatus.toBeCollected,
           );
         }
       }
@@ -169,58 +173,137 @@ class DeliveryController extends GetxController {
 
     try {
       isLoading.value = true;
+
+      /// Hide keyboard
+      FocusManager.instance.primaryFocus?.unfocus();
+
+      /// LOCATION
       final allowed = await LocationUtils.ensureLocationPermission();
-      double lat = 0, lng = 0;
+
+      double lat = 0;
+      double lng = 0;
+
       if (allowed) {
         Position? pos = await LocationUtils.getCurrentLocation();
-        if (pos != null) { lat = pos.latitude; lng = pos.longitude; }
-      }
 
-      try {
-        await api.markDelivered(tripId, store.boothId, store.totalTrays, lat, lng);
-        _saveLocalStatus(store.boothId, 'delivered_booths_$tripId');
-      } catch (e) {
-        final errorStr = e.toString().toLowerCase();
-        if (!errorStr.contains("already delivered") && !errorStr.contains("already completed")) rethrow;
-        _saveLocalStatus(store.boothId, 'delivered_booths_$tripId');
-      }
-
-      final index = _getIndexById(store.id);
-      if (index == -1) { isLoading.value = false; return; }
-
-      final updatedStore = store.copyWith(status: DeliveryStatus.delivered);
-      deliveries[index] = updatedStore;
-
-      if (index < deliveries.length - 1) {
-        final next = deliveries[index + 1];
-        if (next.status == DeliveryStatus.toBeDelivered || next.status == DeliveryStatus.delivering) {
-          deliveries[index + 1] = next.copyWith(status: DeliveryStatus.delivering);
+        if (pos != null) {
+          lat = pos.latitude;
+          lng = pos.longitude;
         }
       }
 
-      Get.snackbar("Success", "Booth ${store.number} delivered", 
-        snackPosition: SnackPosition.TOP,
-        duration: const Duration(seconds: 1),
+      /// API CALL
+      try {
+        await api.markDelivered(
+          tripId,
+          store.boothId,
+          store.totalTrays,
+          lat,
+          lng,
+        );
+
+        _saveLocalStatus(
+          store.boothId,
+          'delivered_booths_$tripId',
+        );
+      } catch (e) {
+        final errorStr = e.toString().toLowerCase();
+
+        /// Already delivered case
+        if (!errorStr.contains("already delivered") &&
+            !errorStr.contains("already completed")) {
+          rethrow;
+        }
+
+        _saveLocalStatus(
+          store.boothId,
+          'delivered_booths_$tripId',
+        );
+      }
+
+      /// FIND CURRENT INDEX
+      final currentIndex = _getIndexById(store.id);
+
+      if (currentIndex == -1) {
+        isLoading.value = false;
+        return;
+      }
+
+      /// UPDATE CURRENT STORE
+      final updatedStore = store.copyWith(
+        status: DeliveryStatus.delivered,
       );
 
+      deliveries[currentIndex] = updatedStore;
+
+      /// UPDATE NEXT STORE STATUS
+      if (currentIndex < deliveries.length - 1) {
+        final next = deliveries[currentIndex + 1];
+
+        if (next.status == DeliveryStatus.toBeDelivered ||
+            next.status == DeliveryStatus.delivering) {
+          deliveries[currentIndex + 1] = next.copyWith(
+            status: DeliveryStatus.delivering,
+          );
+        }
+      }
+
+      /// FORCE REFRESH
+      deliveries.refresh();
+
+      /// FIND NEXT STORE
       final nextStore = getNextStore(updatedStore);
-      FocusManager.instance.primaryFocus?.unfocus();
-      
+
+      /// CLOSE LOADER BEFORE NAVIGATION
       isLoading.value = false;
 
+      /// REMOVE ALL SNACKBARS
+      Get.closeAllSnackbars();
+
+      /// SUCCESS MESSAGE
+      Get.snackbar(
+        "Success",
+        "Booth ${store.number} delivered",
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 2),
+      );
+
+      /// SMALL DELAY FOR SMOOTH NAVIGATION
+      await Future.delayed(
+        const Duration(milliseconds: 500),
+      );
+
+      /// NAVIGATION
       if (nextStore != null) {
-        await Future.delayed(const Duration(milliseconds: 150));
-        Get.offNamed(Routes.STORE_DETAILS, arguments: nextStore, preventDuplicates: false);
+        /// REMOVE CURRENT SCREEN AND OPEN NEXT
+        Get.offNamed(
+          Routes.STORE_DETAILS,
+          arguments: nextStore,
+          preventDuplicates: false,
+        );
       } else {
-        // Use closeOverlays to ensure we don't just pop the snackbar
-        Get.back(closeOverlays: true);
+        /// NO MORE STORES
+        if (Get.isOverlaysOpen ?? false) {
+          Get.back(closeOverlays: true);
+        }
+
+        if (Get.currentRoute == Routes.STORE_DETAILS) {
+          Get.back();
+        }
       }
     } catch (e) {
       isLoading.value = false;
-      Get.snackbar("Error", e.toString(), snackPosition: SnackPosition.TOP);
+
+      Get.closeAllSnackbars();
+
+      Get.snackbar(
+        "Error",
+        e.toString(),
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 2),
+      );
     }
   }
-
   void _saveLocalStatus(int boothId, String key) {
     List<dynamic> list = storage.read(key) ?? [];
     if (!list.contains(boothId)) {
@@ -283,87 +366,254 @@ class DeliveryController extends GetxController {
       }
       await api.endTrip(tripId, lat, lng);
       
+      storage.write('completed_trip_$tripId', true);
+      storage.write('completed_trip_id', tripId);
+      storage.write('dialog_shown_$tripId', false);
       storage.remove('active_trip_id');
-      storage.remove('app_mode');
-      storage.remove('delivered_booths_$tripId');
-      storage.remove('collected_booths_$tripId');
-      storage.remove('collecting_index_$tripId');
       
-      SystemNavigator.pop();
-    } catch (e) {
-      Get.snackbar("Error", "Failed to end trip: $e", snackPosition: SnackPosition.TOP);
-    } finally {
+      isTripCompleted.value = true;
       isLoading.value = false;
+      showTripCompletedDialog();
+    } catch (e) {
+      isLoading.value = false;
+      Get.snackbar("Error", "Failed to end trip: $e", snackPosition: SnackPosition.TOP);
     }
+  }
+
+  void showTripCompletedDialog() {
+    Get.dialog(
+      PopScope(
+        canPop: false,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+          title: const Column(
+            children: [
+              Icon(Icons.verified_rounded, color: Colors.lightGreen, size: 60),
+              SizedBox(height: 10),
+              Text("Trip Completed", style: TextStyle(fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: const Text(
+            "Your trip has been successfully completed and submitted.",
+            textAlign: TextAlign.center,
+          ),
+          actions: [
+            Center(
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Get.back(); // Close dialog
+                    Get.offAllNamed(Routes.HOME); // Go to Home
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.lightGreen,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    "BACK TO HOME",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      barrierDismissible: false,
+    );
   }
 
   int _getIndexById(String id) {
     return deliveries.indexWhere((s) => s.id == id);
   }
 
-  Future<void> markCollected(DeliveryModel store, int trays) async {
+  Future<void> markCollected(
+      DeliveryModel store,
+      int trays,
+      ) async {
     if (isLoading.value) return;
 
     try {
       isLoading.value = true;
-      final allowed = await LocationUtils.ensureLocationPermission();
-      double lat = 0, lng = 0;
+
+      /// HIDE KEYBOARD
+      FocusManager.instance.primaryFocus?.unfocus();
+
+      /// LOCATION
+      final allowed =
+      await LocationUtils.ensureLocationPermission();
+
+      double lat = 0;
+      double lng = 0;
+
       if (allowed) {
-        Position? pos = await LocationUtils.getCurrentLocation();
-        if (pos != null) { lat = pos.latitude; lng = pos.longitude; }
+        Position? pos =
+        await LocationUtils.getCurrentLocation();
+
+        if (pos != null) {
+          lat = pos.latitude;
+          lng = pos.longitude;
+        }
       }
 
+      /// API CALL
       try {
-        await api.markCollected(tripId, store.boothId, trays, lat, lng);
-        _saveLocalStatus(store.boothId, 'collected_booths_$tripId');
+        await api.markCollected(
+          tripId,
+          store.boothId,
+          trays,
+          lat,
+          lng,
+        );
+
+        _saveLocalStatus(
+          store.boothId,
+          'collected_booths_$tripId',
+        );
       } catch (e) {
         final errorStr = e.toString().toLowerCase();
-        if (!errorStr.contains("already collected") && !errorStr.contains("already completed")) rethrow;
-        _saveLocalStatus(store.boothId, 'collected_booths_$tripId');
-      }
 
-      final index = _getIndexById(store.id);
-      if (index == -1) { isLoading.value = false; return; }
-
-      final updatedStore = store.copyWith(collectedTrays: trays, status: DeliveryStatus.collected);
-      deliveries[index] = updatedStore;
-
-      if (appMode.value == AppMode.collection) {
-        int nextIndex = index - 1;
-        while (nextIndex >= 0) {
-          if (deliveries[nextIndex].status != DeliveryStatus.collected) {
-            deliveries[nextIndex] = deliveries[nextIndex].copyWith(status: DeliveryStatus.collecting);
-            currentCollectingIndex.value = nextIndex;
-            break;
-          }
-          nextIndex--;
+        /// ALREADY COLLECTED CASE
+        if (!errorStr.contains("already collected") &&
+            !errorStr.contains("already completed")) {
+          rethrow;
         }
-        if (nextIndex < 0) currentCollectingIndex.value = -1;
-        storage.write('collecting_index_$tripId', currentCollectingIndex.value);
+
+        _saveLocalStatus(
+          store.boothId,
+          'collected_booths_$tripId',
+        );
       }
-      
-      Get.snackbar("Success", "Booth ${store.number} collected", 
-        snackPosition: SnackPosition.TOP,
-        duration: const Duration(seconds: 1),
+
+      /// FIND CURRENT INDEX
+      final currentIndex = _getIndexById(store.id);
+
+      if (currentIndex == -1) {
+        isLoading.value = false;
+        return;
+      }
+
+      /// UPDATE CURRENT STORE
+      final updatedStore = store.copyWith(
+        collectedTrays: trays,
+        status: DeliveryStatus.collected,
       );
 
+      deliveries[currentIndex] = updatedStore;
+
+      /// COLLECTION MODE LOGIC
+      if (appMode.value == AppMode.collection) {
+        int nextIndex = currentIndex - 1;
+
+        while (nextIndex >= 0) {
+          if (deliveries[nextIndex].status !=
+              DeliveryStatus.collected) {
+            deliveries[nextIndex] =
+                deliveries[nextIndex].copyWith(
+                  status: DeliveryStatus.collecting,
+                );
+
+            currentCollectingIndex.value =
+                nextIndex;
+
+            break;
+          }
+
+          nextIndex--;
+        }
+
+        if (nextIndex < 0) {
+          currentCollectingIndex.value = -1;
+        }
+
+        storage.write(
+          'collecting_index_$tripId',
+          currentCollectingIndex.value,
+        );
+      }
+
+      /// FORCE REFRESH
+      deliveries.refresh();
+
+      /// FIND NEXT STORE
       final nextStore = getNextStore(updatedStore);
-      FocusManager.instance.primaryFocus?.unfocus();
-      
+
+      /// STOP LOADING BEFORE NAVIGATION
       isLoading.value = false;
 
+      /// REMOVE OLD SNACKBARS
+      Get.closeAllSnackbars();
+
+      /// SUCCESS MESSAGE
+      Get.snackbar(
+        "Success",
+        "Booth ${store.number} collected",
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 2),
+      );
+
+      /// SMALL DELAY
+      await Future.delayed(
+        const Duration(milliseconds: 500),
+      );
+
+      /// NAVIGATION
       if (nextStore != null) {
-        await Future.delayed(const Duration(milliseconds: 150));
-        Get.offNamed(Routes.STORE_DETAILS, arguments: nextStore, preventDuplicates: false);
+        /// OPEN NEXT STORE
+        Get.offNamed(
+          Routes.STORE_DETAILS,
+          arguments: nextStore,
+          preventDuplicates: false,
+        );
       } else {
-        Get.back(closeOverlays: true);
+        /// CLOSE CURRENT SCREEN SAFELY
+        if (Get.isOverlaysOpen ?? false) {
+          Get.back(closeOverlays: true);
+        }
+
+        if (Get.currentRoute ==
+            Routes.STORE_DETAILS) {
+          Get.back();
+        }
+
+        /// SHOW COMPLETION DIALOG
+        if (appMode.value ==
+            AppMode.collection) {
+          final allDone = deliveries.every(
+                (d) =>
+            d.status ==
+                DeliveryStatus.collected ||
+                d.apiIsCollected,
+          );
+
+          if (allDone) {
+            Future.delayed(
+              const Duration(milliseconds: 400),
+                  () {
+                showCompletionDialog();
+              },
+            );
+          }
+        }
       }
     } catch (e) {
       isLoading.value = false;
-      Get.snackbar("Error", "Collection failed: $e", snackPosition: SnackPosition.TOP);
+
+      Get.closeAllSnackbars();
+
+      Get.snackbar(
+        "Error",
+        "Collection failed: $e",
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 2),
+      );
     }
   }
-
   DeliveryModel? getNextStore(DeliveryModel currentStore) {
     try {
       final index = _getIndexById(currentStore.id);
