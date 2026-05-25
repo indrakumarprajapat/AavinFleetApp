@@ -108,10 +108,10 @@ class StoreDetailsController extends GetxController {
         ? store!.totalTrays
         : store!.remainingTrays;
 
-    if (collectedCount != expectedCount && collectedCount != 0) {
+    if (collectedCount < 0 || collectedCount > expectedCount) {
       Get.snackbar(
         "Invalid Count",
-        "You must collect either all ($expectedCount) or 0 trays.",
+        "Please enter a value between 0 and $expectedCount.",
         snackPosition: SnackPosition.TOP,
       );
       return;

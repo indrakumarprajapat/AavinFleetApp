@@ -664,12 +664,7 @@ class HomeView extends GetView<HomeController> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Lottie.asset(
-            'assets/lottie/namakkalanimation.json',
-            height: 220,
-            repeat: true,
-          ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 40),
           Text(
             controller.tripId.value == 0 
                 ? "No active trip available" 

@@ -173,17 +173,12 @@ class DeliveryModel {
     final bIdStr = bId.toString();
     final bCode = json['boothCode']?.toString() ?? bIdStr;
 
-    final bool isDeliveredAPI = ParseUtil.parseBool(json['isDelivered']) ||
-        (json['deliveredAt'] != null && 
-         json['deliveredAt'].toString().isNotEmpty && 
-         json['deliveredAt'].toString() != "null") ||
-        (ParseUtil.parseInt(json['deliveryStatus']) == 4);
+    final bool isDeliveredAPI = (json['isDelivered'] == true || json['isDelivered'] == "true") ||
+        (ParseUtil.parseInt(json['deliveryStatus']) == 4) ||
+        (json['deliveryStatus']?.toString().toUpperCase() == 'DELIVERED');
 
-    final bool isCollectedAPI = ParseUtil.parseBool(json['isCollected']) ||
-        (json['collectedAt'] != null && 
-         json['collectedAt'].toString().isNotEmpty && 
-         json['collectedAt'].toString() != "null") ||
-        ['COLLECTED', 'NOT_COLLECTED', 'NOT COLLECTED', 'PARTIALLY_COLLECTED'].contains(json['collectionStatus']?.toString().toUpperCase());
+    final bool isCollectedAPI = (json['isCollected'] == true || json['isCollected'] == "true") ||
+        (json['collectionStatus']?.toString().toUpperCase() == 'COLLECTED');
 
     DeliveryStatus status = _parseStatus(json['collectionStatus'] ?? json['deliveryStatus'] ?? json['status']);
     if (isCollectedAPI) {
@@ -217,13 +212,13 @@ class DeliveryModel {
   static DeliveryStatus _parseStatus(dynamic status) {
     if (status == null) return DeliveryStatus.toBeDelivered;
     final s = status.toString().toUpperCase();
-    if (s == 'DELIVERED') {
+    if (s == 'DELIVERED' || s == '4') {
       return DeliveryStatus.delivered;
     }
     if (s == 'COLLECTED' || s == 'NOT_COLLECTED' || s == 'NOT COLLECTED' || s == 'PARTIALLY_COLLECTED') {
       return DeliveryStatus.collected;
     }
-    if (s == 'DELIVERING' || s == 'IN_PROGRESS' || s == 'COLLECTING') {
+    if (s == 'DELIVERING' || s == 'IN_PROGRESS' || s == 'COLLECTING' || s == '2') {
       return s.contains('COLLECT') ? DeliveryStatus.collecting : DeliveryStatus.delivering;
     }
     return DeliveryStatus.toBeDelivered;

@@ -155,25 +155,7 @@ class DeliveryRouteView extends GetView<DeliveryController> {
                             itemCount: deliveries.length,
                             itemBuilder: (context, index) {
                               final delivery = deliveries[index];
-
-                              DeliveryStatus status;
-
-                              if (isCollection) {
-                                final originalIndex = originalDeliveries.indexOf(delivery);
-                                final currentActive = controller.currentCollectingIndex.value;
-
-                                if (delivery.apiIsCollected ||
-                                    delivery.collectedTrays > 0 ||
-                                    delivery.status == DeliveryStatus.collected) {
-                                  status = DeliveryStatus.collected;
-                                } else if (originalIndex == currentActive) {
-                                  status = DeliveryStatus.collecting;
-                                } else {
-                                  status = DeliveryStatus.toBeCollected;
-                                }
-                              } else {
-                                status = delivery.status;
-                              }
+                              final status = delivery.status;
 
                               return Padding(
                                 padding: EdgeInsets.only(bottom: h * 0.015),
@@ -213,9 +195,7 @@ class DeliveryRouteView extends GetView<DeliveryController> {
 
       bool showSubmitBtn = controller.appMode.value == AppMode.collection &&
           deliveries.isNotEmpty &&
-          deliveries.every((d) => d.apiIsCollected ||
-                                  d.collectedTrays > 0 ||
-                                  d.status == DeliveryStatus.collected);
+          deliveries.every((d) => d.status == DeliveryStatus.collected);
 
       if (!showCollectionBtn && !showSubmitBtn) return const SizedBox.shrink();
 
@@ -313,21 +293,6 @@ class DeliveryRouteView extends GetView<DeliveryController> {
               children: [
                 Row(
                   children: [
-                    _iconBtn(
-                      icon: Icons.arrow_back,
-                      onTap: () {
-                        if (controller.isTripCompleted.value) {
-                          Get.offAllNamed(Routes.HOME);
-                        } else {
-                          Get.snackbar(
-                            "Trip in Progress",
-                            "You cannot go back until the trip is submitted or cancelled.",
-                            snackPosition: SnackPosition.TOP,
-                          );
-                        }
-                      },
-                    ),
-                    const SizedBox(width: 16),
                     Text(
                       isCollection ? "Collection Mode" : "Delivery Mode",
                       style: const TextStyle(

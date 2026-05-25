@@ -116,25 +116,16 @@ class DeliveryController extends GetxController {
         return DeliveryModel.fromJson(json);
       }).toList();
       
-      final List<dynamic> rawDelivered = storage.read('delivered_booths_$tripId') ?? [];
-      final Set<String> localDeliveredIds = rawDelivered.map((e) => e.toString()).toSet();
-      final List<dynamic> rawCollected = storage.read('collected_booths_$tripId') ?? [];
-      final Set<String> localCollectedIds = rawCollected.map((e) => e.toString()).toSet();
-
       for (int i = 0; i < initialBooths.length; i++) {
         final booth = initialBooths[i];
-        final bId = booth.boothId.toString();
 
         if (appMode.value == AppMode.delivery) {
-          final isDelivered = booth.apiIsDelivered || localDeliveredIds.contains(bId);
           initialBooths[i] = booth.copyWith(
-            status: isDelivered ? DeliveryStatus.delivered : DeliveryStatus.toBeDelivered,
+            status: booth.apiIsDelivered ? DeliveryStatus.delivered : DeliveryStatus.toBeDelivered,
           );
         } else {
-          final isCollected = booth.apiIsCollected || localCollectedIds.contains(bId) ||
-              (booth.totalTrays > 0 && booth.collectedTrays >= booth.totalTrays);
           initialBooths[i] = booth.copyWith(
-            status: isCollected ? DeliveryStatus.collected : DeliveryStatus.toBeCollected,
+            status: booth.apiIsCollected ? DeliveryStatus.collected : DeliveryStatus.toBeCollected,
           );
         }
       }
@@ -274,12 +265,12 @@ class DeliveryController extends GetxController {
         "Success",
         "Booth ${store.number} delivered",
         snackPosition: SnackPosition.TOP,
-        duration: const Duration(seconds: 1),
+        duration: const Duration(seconds: 2),
       );
 
       /// SMALL DELAY FOR SMOOTH NAVIGATION
       await Future.delayed(
-        const Duration(milliseconds: 300),
+        const Duration(milliseconds: 500),
       );
 
       /// NAVIGATION
@@ -563,12 +554,12 @@ class DeliveryController extends GetxController {
         "Success",
         "Booth ${store.number} collected",
         snackPosition: SnackPosition.TOP,
-        duration: const Duration(seconds: 1),
+        duration: const Duration(seconds: 2),
       );
 
       /// SMALL DELAY
       await Future.delayed(
-        const Duration(milliseconds: 300),
+        const Duration(milliseconds: 500),
       );
 
       /// NAVIGATION

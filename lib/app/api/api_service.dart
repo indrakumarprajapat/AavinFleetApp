@@ -103,11 +103,13 @@ class ApiService extends GetxService {
         if (data.containsKey('success') && data['success'] == false) {
           throw data['message'] ?? 'Invalid credentials';
         }
-        
+
         // Some backends return 200 OK but with an error status in the body
         if (data.containsKey('status') && (data['status'] == 'error' || data['status'] == false)) {
           throw data['message'] ?? 'Invalid credentials';
         }
+
+        return FleetUser.fromJson(data['data'] ?? data);
       }
 
       return FleetUser.fromJson(response.data);
@@ -1799,6 +1801,7 @@ class ApiService extends GetxService {
           "trayCollected": trayCollected,
           "lat": lat,
           "lng": lng,
+          // "collectionStatus": trayCollected > 0 ? "COLLECTED" : "NOT_COLLECTED",
         },
         options: Options(
           headers: {

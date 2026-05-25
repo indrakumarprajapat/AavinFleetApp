@@ -2,57 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../constants/app_enums.dart';
 import '../../../data/session_manager.dart';
-import '../../../models/device_info.dart';
 import '../../../routes/app_pages.dart';
 import '../../../api/api_service.dart';
-import '../../../services/config_service.dart';
 import 'package:get_storage/get_storage.dart';
-import '../../../utils/device-util.dart';
 import '../../../utils/location-utils.dart';
 
 class LoginController extends GetxController {
   final phoneController = TextEditingController();
   final passwordController = TextEditingController();
-  // final otpController = TextEditingController();
 
   final _isLoading = false.obs;
-  final _isOtpSent = false.obs;
-  final _isPasswordLogin = true.obs;
-  final _selectedUserType = UserType.customer.obs;
-  final _customerId = 0.obs;
-  final _accessToken = ''.obs;
-  final tempToken = ''.obs;
-  final resetToken = ''.obs;
+  final _selectedUserType = UserType.fleetUser.obs;
   final apiService = Get.find<ApiService>();
   final storage = GetStorage();
 
   bool get isLoading => _isLoading.value;
-  bool get isOtpSent => _isOtpSent.value;
-  bool get isPasswordLogin => _isPasswordLogin.value;
   UserType get selectedUserType => _selectedUserType.value;
-  int get customerId => _customerId.value;
 
   void setUserType(UserType type) {
     _selectedUserType.value = type;
   }
 
-  void toggleLoginMethod() {
-    _isPasswordLogin.value = !_isPasswordLogin.value;
-    _isOtpSent.value = false;
-    resetToken.value = ''; // Clear reset token when switching
-    // otpController.clear();
-    passwordController.clear();
-  }
-
   void resetLoginState() {
-    _isOtpSent.value = false;
-    _isPasswordLogin.value = true;
-    _selectedUserType.value = UserType.customer;
-    resetToken.value = '';
-    tempToken.value = '';
-    _accessToken.value = '';
-    _customerId.value = 0;
-    // otpController.clear();
+    _selectedUserType.value = UserType.fleetUser;
     passwordController.clear();
     phoneController.clear();
   }
@@ -98,148 +70,10 @@ class LoginController extends GetxController {
     }
   }
 
-  Future<void> forgotPassword() async {
-    if (phoneController.text.isEmpty) {
-      Get.snackbar('Error', 'Please enter route id/username');
-      return;
-    }
-
-    _isLoading.value = true;
-    try {
-      final response = await apiService.agentForgotPassword(phoneController.text);
-      resetToken.value = response['resetToken'] ?? '';
-      _isOtpSent.value = true;
-      Get.snackbar('Success', response['message'] ?? 'OTP sent for password reset');
-    } catch (e) {
-      Get.snackbar('Error', e.toString());
-    } finally {
-      _isLoading.value = false;
-    }
+  @override
+  void onClose() {
+    phoneController.dispose();
+    passwordController.dispose();
+    super.onClose();
   }
-
-  Future<void> sendOtp() async {
-    // if (phoneController.text.isEmpty || phoneController.text.length != 10) {
-    //   Get.snackbar('Error', 'Please enter valid 10-digit mobile number');
-    //   return;
-    // }
-
-    _isLoading.value = true;
-    try {
-      if (_selectedUserType.value == UserType.fleetUser) {
-        var  deviceInfo = DeviceInfo();
-        var  version = '';
-        try{
-          deviceInfo = await DeviceUtil.getDeviceDetails();
-          version = await DeviceUtil.getAppVersion();
-
-        }catch(err){
-          print(err);
-        }
-
-        // final response = await apiService.agentLogin(phoneController.text,deviceInfo,version);
-        final fleetUser = await apiService.loginWithOtp(phoneController.text);
-        _accessToken.value = fleetUser.accessToken ?? '';
-        tempToken.value = fleetUser.accessToken ?? '';
-        // _customerId.value = response.agentId ?? 0;
-
-        _isOtpSent.value = true;
-        Get.snackbar('Success', 'OTP sent successfully');
-      }
-    } catch (e) {
-      String errorMessage = e.toString();
-      if (errorMessage.contains('message:')) {
-        final messageStart = errorMessage.indexOf('message:') + 8;
-        final messageEnd = errorMessage.indexOf('}', messageStart);
-        if (messageEnd != -1) {
-          errorMessage = errorMessage.substring(messageStart, messageEnd).trim();
-        }
-      }
-      Get.dialog(
-        AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Error'),
-          content: Text(errorMessage),
-          actions: [
-            ElevatedButton(
-              onPressed: () => Get.back(),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
-    } finally {
-      _isLoading.value = false;
-    }
-  }
-
-  // Future<void> verifyOtp() async {
-  //   if (otpController.text.isEmpty || otpController.text.length != 4) {
-  //     Get.snackbar('Error', 'Please enter valid 4-digit OTP');
-  //     return;
-  //   }
-  //
-  //   _isLoading.value = true;
-
-    // try {
-    //   double? lat, lng;
-    //   final allowed = await LocationUtils.ensureLocationPermission();
-    //   if (allowed) {
-    //     final pos = await LocationUtils.getCurrentLocation();
-    //     if (pos != null) {
-    //       lat = pos.latitude;
-    //       lng = pos.longitude;
-    //     }
-    //   }
-
-      // if (_selectedUserType.value == UserType.fleetUser) {
-      //   // Check if this is for password reset
-      //   if (resetToken.value.isNotEmpty) {
-      //     final response = await apiService.verifyResetOtp(
-      //         resetToken.value,
-      //         otpController.text
-      //     );
-      //     Get.snackbar('Success', response['message'] ?? 'OTP verified successfully');
-      //     Get.toNamed('/reset-password', arguments: resetToken.value);
-      //   } else {
-      //     // Normal OTP verification for login
-      //     final fleetUser = await apiService.agentVerifyOtp(
-      //         _accessToken.value,
-      //         otpController.text,
-      //     );
-      //
-      //     final session = Get.find<SessionManager>();
-      //       await session.saveSession(fleetUser);
-
-          // await storage.write('boothDetails', response.boothDetails?.toJson() ?? {});
-  //         // await storage.write('aadharNumber', fleetUser.aadharNumber ?? '');
-  //         // await storage.write('panNumber', fleetUser.panNumber ?? '');
-  //         // await storage.write('isAadhaarKycVerified', fleetUser.isAadhaarKycVerified ?? false);
-  //         // await storage.write('isPanKycVerified', fleetUser.isPanKycVerified ?? false);
-  //         await storage.write('profilePhotoUrl', fleetUser.profilePhoto ?? '');
-  //         await storage.write('razorpay_key', fleetUser.key ?? '');
-  //         try {
-  //           final configService = Get.find<ConfigService>();
-  //           await configService.fetchConfig();
-  //         } catch (e) {
-  //           print('Config fetch error: $e');
-  //         }
-  //
-  //         Get.offAllNamed(Routes.HOME);
-  //       }
-  //     }
-  //   } catch (e) {
-  //     Get.snackbar('Error', e.toString());
-  //   } finally {
-  //     _isLoading.value = false;
-  //   }
-  // }
-  //
-  //
-  // bool isDisposed = false;
-  //
-  // @override
-  // void onClose() {
-  //   isDisposed = true;
-  //   super.onClose();
-  // }
 }
