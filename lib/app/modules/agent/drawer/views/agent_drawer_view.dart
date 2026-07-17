@@ -169,108 +169,73 @@ class _AgentDrawerState extends State<AgentDrawer> {
   }
 
   Widget _buildProfileCard(String firstName, String mobileNumber) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Color(0xFFFFFFFF),
-            Color(0xFFFFFFFF).withValues(alpha:0.8),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Color(0xFF00ABD5).withValues(alpha:0.2),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+    return GestureDetector(
+      onTap: () async {
+        Navigator.of(context).pop();
+        final result = await Get.toNamed(Routes.PROFILE);
+        if (result == true || result == null) {
+          _loadProfileData();
+        }
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFFFFFFFF),
+              Color(0xFFFFFFFF).withValues(alpha: 0.8),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                /*Text(
-                  'Hi,',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.black.withValues(alpha:0.9),
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-                const SizedBox(height: 4),*/
-                Text(
-                  firstName,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-                /*const SizedBox(height: 4),
-                Text(
-                  mobileNumber,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.black.withValues(alpha:0.8),
-                    fontFamily: 'Poppins',
-                  ),
-                ),*/
-              ],
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Color(0xFF00ABD5).withValues(alpha: 0.2),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
-          ),
-          GestureDetector(
-            onTap: null,
-            /*onTap: () async {
-              Navigator.of(context).pop();
-              final result = await Get.to(() => AgentProfileView());
-              if (result == true || result == null) {
-                _loadProfileData();
-              }
-            },*/
-            child: Stack(
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    firstName,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Stack(
               children: [
                 CircleAvatar(
                   radius: 30,
-                  backgroundColor: Color(0xFF05967B).withValues(alpha:0.1),
+                  backgroundColor: Color(0xFF05967B).withValues(alpha: 0.1),
                   backgroundImage: profilePhotoUrl != null && profilePhotoUrl!.isNotEmpty
-                      ? NetworkImage(profilePhotoUrl!) : null,
-                  child: profilePhotoUrl == null || profilePhotoUrl!.isEmpty ? Icon(
-                    Icons.person,
-                    size: 35,
-                    color: Color(0xFF05967B),
-                  ) : null,
+                      ? NetworkImage(profilePhotoUrl!)
+                      : null,
+                  child: profilePhotoUrl == null || profilePhotoUrl!.isEmpty
+                      ? Icon(
+                          Icons.person,
+                          size: 35,
+                          color: Color(0xFF05967B),
+                        )
+                      : null,
                 ),
-              // Positioned(
-              //   bottom: 0,
-              //   right: 0,
-              //   child: Container(
-              //     width: 24,
-              //     height: 24,
-              //     decoration: BoxDecoration(
-              //       color: Color(0xFF05967B),
-              //       borderRadius: BorderRadius.circular(12),
-              //       border: Border.all(color: Colors.white, width: 2),
-              //     ),
-              //     child: Icon(
-              //       Icons.camera_alt,
-              //       size: 12,
-              //       color: Colors.white,
-              //     ),
-              //   ),
-              // ),
               ],
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

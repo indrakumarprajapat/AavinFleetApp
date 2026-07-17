@@ -111,8 +111,12 @@ class FleetUser {
   factory FleetUser.fromJson(Map<String, dynamic> json) {
     return FleetUser(
       id: json['id']?.toString(),
-      name: json['name']?.toString(),
-      mobileNumber: json['mobile_number']?.toString() ?? json['mobileNumber']?.toString(),
+      name: json['name']?.toString() ?? json['operatorName']?.toString() ?? json['operator_name']?.toString(),
+      mobileNumber: json['mobile_number']?.toString() ?? 
+                    json['mobileNumber']?.toString() ?? 
+                    json['operatorMobileNumber']?.toString() ?? 
+                    json['operatorMobile']?.toString() ?? 
+                    json['operator_mobile']?.toString(),
       gender: json['gender']?.toString(),
       // aadharNumber: json['aadhar_number']?.toString() ?? json['aadharNumber']?.toString(),
       // panNumber: json['pan_number']?.toString() ?? json['panNumber']?.toString(),
@@ -147,10 +151,12 @@ class FleetUser {
 
       operatorName: json['operator_name']?.toString() ?? json['operatorName']?.toString(),
 
-      operatorMobile: json['operator_mobile']?.toString() ?? json['operatorMobile']?.toString(),
+      operatorMobile: json['operator_mobile']?.toString() ?? 
+                     json['operatorMobile']?.toString() ?? 
+                     json['operatorMobileNumber']?.toString(),
 
         routeId: ParseUtil.parseInt(
-            json['route_id'] ?? json['routeId']
+            json['route_id'] ?? json['routeId'] ?? json['contract']?['routeId']
         ),
       routeName:
             json['route_name'] ?? json['routeName'],

@@ -1,0 +1,4 @@
+- [x] Update `ApiService.verifyOtpAndResetPassword` to handle success flag [C:/Users/vishu/Documents/GitHub/AavinFleetApp/lib/app/api/api_service.dart](file:///C:/Users/vishu/Documents/GitHub/AavinFleetApp/lib/app/api/api_service.dart)
+- [x] Update `ForgotPasswordController.resetPassword` to handle redirection and success message [C:/Users/vishu/Documents/GitHub/AavinFleetApp/lib/app/modules/forgot_password/controllers/forgot_password_controller.dart](file:///C:/Users/vishu/Documents/GitHub/AavinFleetApp/lib/app/modules/forgot_password/controllers/forgot_password_controller.dart)
+- [x] Update `ResetPasswordView` to handle redirection and success message [C:/Users/vishu/Documents/GitHub/AavinFleetApp/lib/app/modules/reset_password/views/reset_password_view.dart](file:///C:/Users/vishu/Documents/GitHub/AavinFleetApp/lib/app/modules/reset_password/views/reset_password_view.dart)
+- [x] Verify changes manually

@@ -84,7 +84,7 @@ class DeliveryModel {
   final DeliveryStatus status;
   final List<DeliveryProductModel> products;
   final int collectedTrays;
-  final int remainingTrays; // Historical residue from previous trips
+  final int remainingTrays;
   final bool apiIsDelivered;
   final bool apiIsCollected;
   final String? agentName;
