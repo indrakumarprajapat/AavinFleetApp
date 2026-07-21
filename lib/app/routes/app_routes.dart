@@ -42,6 +42,8 @@ abstract class Routes {
   // static const COMMISSION_STATEMENT = _Paths.COMMISSION_STATEMENT;
   static const CHANGE_PASSWORD = _Paths.CHANGE_PASSWORD;
   // static const PDF = _Paths.PDF;
+  static const FORGOT_PASSWORD = _Paths.FORGOT_PASSWORD;
+  static const PROFILE = _Paths.PROFILE;
 }
 
 abstract class _Paths {
@@ -51,13 +53,14 @@ abstract class _Paths {
   static const HOME = '/home-view';
   static const DELIVERY_ROUTE = '/delivery-routes';
   static const STORE_DETAILS = '/store-details-view';
-static const USER_TYPE = '/user-type';
+  // static const USER_TYPE = '/user-type';
   // static const HOME = '/home';
   // static const CUSTOMER_HOME = '/customer-home';
   // static const MAIN_NAVIGATION = '/main-navigation';
   // static const ORDER = '/order';
   // static const CUSTOMER_ORDERS = '/customer-orders';
   // static const ORDER_DETAILS = '/order-details';
+  static const USER_TYPE = '/user-type';
   static const BOOTH_CAPTURE = '/booth-capture';
   // static const CART = '/cart';
   // static const CUSTOMER_LOGIN = '/customer-login';
@@ -86,4 +89,6 @@ static const USER_TYPE = '/user-type';
   // static const MONTHLY_STATEMENTS = '/monthly-statement';
   static const CHANGE_PASSWORD = '/change-password';
   // static const PDF = '/pdf';
+  static const FORGOT_PASSWORD = '/forgot-password';
+  static const PROFILE = '/profile';
 }

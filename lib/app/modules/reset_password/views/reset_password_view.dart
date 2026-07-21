@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../constants/app_colors.dart';
 import '../../../api/api_service.dart';
 import '../../login/controllers/login_controller.dart';
+import '../../../routes/app_pages.dart';
 
 class ResetPasswordView extends StatefulWidget {
   @override
@@ -13,7 +14,6 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
   final newPasswordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
   final _isLoading = false.obs;
-  final resetToken = Get.arguments as String;
   bool _obscureNewPassword = true;
   bool _obscureConfirmPassword = true;
   bool _passwordsMatch = false;
@@ -55,15 +55,22 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
     
     _isLoading.value = true;
     try {
-      final response = await Get.find<ApiService>().resetPassword(
-        resetToken,
-        newPasswordController.text
+      final response = await Get.find<ApiService>().verifyOtpAndResetPassword(
+        mobileNumber: Get.arguments['mobileNumber'],
+        otp: Get.arguments['otp'],
+        newPassword: newPasswordController.text,
       );
-      Get.snackbar('Success', response['message'] ?? 'Password reset successfully');
+      
+      Get.snackbar('Success', response['message'] ?? 'Password reset successfully',
+          duration: const Duration(seconds: 3));
+          
       // Reset login controller state
       final loginController = Get.find<LoginController>();
       loginController.resetLoginState();
-      Get.offAllNamed('/login', arguments: 2);
+      
+      Future.delayed(const Duration(seconds: 1), () {
+        Get.offAllNamed(Routes.LOGIN, arguments: 2);
+      });
     } catch (e) {
       Get.snackbar('Error', e.toString());
     } finally {
