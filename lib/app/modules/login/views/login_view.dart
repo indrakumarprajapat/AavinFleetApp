@@ -7,6 +7,7 @@ import '../../../config/app_config.dart';
 import '../../../constants/app_colors.dart';
 import '../../../constants/app_enums.dart';
 import '../../../api/api_service.dart';
+import '../../../routes/app_pages.dart';
 import '../controllers/login_controller.dart';
 
 class LoginView extends StatefulWidget {
@@ -158,9 +159,24 @@ class _LoginViewState extends State<LoginView> {
                 ),
               ),
             ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () {
+                  Get.toNamed(Routes.FORGOT_PASSWORD);
+                },
+                child: Text(
+                  'Forgot Password?',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
-        const SizedBox(height: 64),
+        const SizedBox(height: 32),
         Obx(() => SizedBox(
               width: double.infinity,
               height: 52,

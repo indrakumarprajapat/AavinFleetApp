@@ -20,9 +20,14 @@ class ApiService extends GetxService {
   void onInit() {
     super.onInit();
 
+    String base = ApiConstants.baseUrl;
+    if (base.endsWith('/')) {
+      base = base.substring(0, base.length - 1);
+    }
+    
     _dio = Dio(
       BaseOptions(
-        baseUrl: '${ApiConstants.baseUrl}/${ApiConstants.apiSocietyPrefix}',
+        baseUrl: '$base/${ApiConstants.apiSocietyPrefix}',
         connectTimeout: Duration(seconds: ApiConstants.connectTimeout),
         receiveTimeout: Duration(seconds: ApiConstants.receiveTimeout),
         headers: {'Content-Type': 'application/json'},
@@ -175,26 +180,14 @@ class ApiService extends GetxService {
   }
 
 
-  Future<Map<String, dynamic>> agentForgotPassword(String username) async {
+  Future<Map<String, dynamic>> forgotPassword({
+    required String mobileNumber,
+  }) async {
     try {
       final response = await _dio.post(
         '/auth/forgot-password',
-        data: {'username': username},
-      );
-      return response.data;
-    } catch (e) {
-      throw _handleError(e);
-    }
-  }
-
-  Future<Map<String, dynamic>> verifyResetOtp(String resetToken,
-      String otp,) async {
-    try {
-      final response = await _dio.post(
-        '/auth/verify-reset-otp',
         data: {
-          'resetToken': resetToken,
-          'otp': otp,
+          'mobileNumber': mobileNumber,
         },
       );
       return response.data;
@@ -203,13 +196,41 @@ class ApiService extends GetxService {
     }
   }
 
-  Future<Map<String, dynamic>> resetPassword(String resetToken,
-      String newPassword,) async {
+  Future<Map<String, dynamic>> verifyOtpAndResetPassword({
+    required String mobileNumber,
+    required String otp,
+    required String newPassword,
+  }) async {
     try {
       final response = await _dio.post(
-        '/auth/reset-password',
+        '/auth/verify-otp-reset',
         data: {
-          'resetToken': resetToken,
+          'mobileNumber': mobileNumber,
+          'otp': otp,
+          'newPassword': newPassword,
+        },
+      );
+
+      final data = response.data;
+      if (data is Map && data.containsKey('success') && data['success'] == false) {
+        throw data['message'] ?? 'Failed to reset password';
+      }
+
+      return data;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> changePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final response = await _dio.put(
+        '/account/change-password',
+        data: {
+          'oldPassword': oldPassword,
           'newPassword': newPassword,
         },
       );
@@ -554,33 +575,6 @@ class ApiService extends GetxService {
     }
   }
 
-  Future<Map<String, dynamic>> changePassword({
-    required String oldPassword,
-    required String newPassword,
-  }) async {
-    try {
-      final storage = GetStorage();
-      final accessToken = storage.read('access_token');
-
-      final response = await _dio.post(
-        '/auth/change-password',
-        data: {
-          'oldPassword': oldPassword,
-          'newPassword': newPassword,
-        },
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $accessToken',
-            'Content-Type': 'application/json',
-          },
-        ),
-      );
-      return response.data;
-    } catch (e) {
-      throw _handleError(e);
-    }
-  }
-
   Future<OrderModel> getOrderDetails(int orderId) async {
     try {
       final storage = GetStorage();
@@ -711,7 +705,8 @@ class ApiService extends GetxService {
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       );
       final responseData = response.data;
-      return FleetUser.fromJson(responseData['agent'] ?? responseData);
+      final profile = responseData['data'] ?? responseData['agent'] ?? responseData;
+      return FleetUser.fromJson(profile);
     } catch (e) {
       throw _handleError(e);
     }
@@ -728,7 +723,7 @@ class ApiService extends GetxService {
       });
 
       final response = await _dio.post(
-        '/account/upload-profile-photo',
+        'account/upload-profile-photo',
         data: formData,
         options: Options(
           headers: {

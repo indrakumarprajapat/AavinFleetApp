@@ -41,7 +41,7 @@ class ChangePasswordView extends StatelessWidget {
                     Padding(
                       padding: EdgeInsets.only(left: 4, bottom: 8),
                       child: Text(
-                        'Note: Password must be at least 8 characters long',
+                        'Note: Password must be 6-20 characters long and contain no spaces',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey[600],

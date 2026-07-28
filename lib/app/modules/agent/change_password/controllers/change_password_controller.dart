@@ -24,15 +24,20 @@ class ChangePasswordController extends GetxController {
   }
   
   void validateForm() {
-    newPasswordError.value = newPasswordController.text.isNotEmpty && newPasswordController.text.length < 8;
+    final text = newPasswordController.text;
+    final hasSpace = text.contains(' ');
+    
+    newPasswordError.value = text.isNotEmpty && (text.length < 6 || text.length > 20 || hasSpace);
     confirmPasswordError.value = confirmPasswordController.text.isNotEmpty && 
-                               (confirmPasswordController.text.length < 8 || 
-                                confirmPasswordController.text != newPasswordController.text);
+                               (confirmPasswordController.text.length < 6 || 
+                                confirmPasswordController.text != text);
     
     isFormValid.value = oldPasswordController.text.isNotEmpty &&
-                       newPasswordController.text.length >= 8 &&
+                       text.length >= 6 &&
+                       text.length <= 20 &&
+                       !hasSpace &&
                        confirmPasswordController.text.isNotEmpty &&
-                       newPasswordController.text == confirmPasswordController.text;
+                       text == confirmPasswordController.text;
   }
 
   void toggleOldPasswordVisibility() {
@@ -50,8 +55,9 @@ class ChangePasswordController extends GetxController {
   Future<void> changePassword() async {
     if (!isFormValid.value) return;
     
-    if (newPasswordController.text.length < 8) {
-      Get.snackbar('Info', 'New password must be at least 8 characters long');
+    final text = newPasswordController.text;
+    if (text.length < 6 || text.length > 20 || text.contains(' ')) {
+      Get.snackbar('Info', 'Password must be 6-20 characters long and contain no spaces');
       return;
     }
     
