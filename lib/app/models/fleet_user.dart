@@ -53,32 +53,18 @@ class FleetUser {
   final String? username;
   final String? accessToken;
   final String? refreshToken;
+  /// 1=Distribution, 2=MCR, 3=MTR
+  final int? fleetType;
 
   FleetUser(
       {this.id,
       this.name,
       this.mobileNumber,
       this.gender,
-      // this.aadharNumber,
-      // this.panNumber,
-      // this.isAadhaarKycVerified,
-      // this.isPanKycVerified,
-      // this.hasBankAccountVerified,
       this.profilePhoto,
-      // this.accountNumber,
-      // this.bankName,
-      // this.ifscCode,
-      // this.accountHolderName,
-      // this.bankBranch,
-      // this.aadharLink,
-      // this.panCardLink,
-      // this.hasAadharVerified,
-      // this.hasPancardVerified,
       this.unionId,
       this.userType,
       this.status,
-      // this.gstRegistered,
-      // this.gstNumber,
       this.key,
         this.iosPushToken,
         this.androidPushToken,
@@ -105,9 +91,17 @@ class FleetUser {
         this.vehicleOffloadCapacity,
         this.username,
         this.accessToken,
-        this.refreshToken
+        this.refreshToken,
+        this.fleetType,
       });
 
+  bool get isCollectionFleet {
+    final t = fleetType ?? 1;
+    return t == 2 || t == 3;
+  }
+
+  bool get isMcr => fleetType == 2;
+  bool get isMtr => fleetType == 3;
   factory FleetUser.fromJson(Map<String, dynamic> json) {
     return FleetUser(
       id: json['id']?.toString(),
@@ -179,9 +173,16 @@ class FleetUser {
 
       username: json['username']?.toString(),
 
-      accessToken: json['access_token']?.toString() ?? json['accessToken']?.toString(),
+      accessToken: json['access_token']?.toString() ?? json['accessToken']?.toString() ?? json['token']?.toString(),
 
       refreshToken: json['refresh_token']?.toString() ?? json['refreshToken']?.toString(),
+
+      fleetType: ParseUtil.parseInt(
+        json['fleetType'] ??
+            json['fleet_type'] ??
+            json['contract']?['fleetType'] ??
+            json['contract']?['fleet_type'],
+      ),
     );
   }
 
@@ -218,6 +219,8 @@ class FleetUser {
 
       'access_token': accessToken,
       'refresh_token': refreshToken,
+      'fleetType': fleetType,
+      'fleet_type': fleetType,
     };
 
   }

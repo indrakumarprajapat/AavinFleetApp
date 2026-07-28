@@ -51,17 +51,27 @@ class HomeView extends GetView<HomeController> {
   Widget _buildSliverAppBar() {
     return Obx(() {
       final isLocSubmitted = controller.boothDetails?.isLocSubmit == true;
-      final reportDate = controller.routeDetail.value?.reportDate?.ddMMMMyyyy ?? '' ;
-      final routeName = controller.routeDetail.value?.routeName ??
-          controller.routeDetail.value?.routeId?.toString() ??
-          controller.fleetUser?.routeName ?? '';
+      final reportDate = controller.isCollectionFleet
+          ? (controller.collectionTrip.value?.tripDate ?? '')
+          : (controller.routeDetail.value?.reportDate?.ddMMMMyyyy ?? '');
+      final routeName = controller.isCollectionFleet
+          ? (controller.collectionTrip.value?.routeName ??
+              controller.fleetUser?.routeName ??
+              '')
+          : (controller.routeDetail.value?.routeName ??
+              controller.routeDetail.value?.routeId?.toString() ??
+              controller.fleetUser?.routeName ??
+              '');
       final regNumber =
           controller.fleetUser?.vehicleRegistrationNumber ?? '';
-      final shiftText = controller.routeDetail.value?.shift == OrderShift.morning.value
+      final shiftVal = controller.isCollectionFleet
+          ? controller.collectionTrip.value?.shift
+          : controller.routeDetail.value?.shift;
+      final shiftText = shiftVal == OrderShift.morning.value
           ? 'Morning'
-          : controller.routeDetail.value?.shift == OrderShift.evening.value
-          ? 'Evening'
-          : '';
+          : shiftVal == OrderShift.evening.value
+              ? 'Evening'
+              : '';
 
       return SliverAppBar(
         expandedHeight: 200,
@@ -237,6 +247,10 @@ class HomeView extends GetView<HomeController> {
           );
         }
 
+        if (controller.isCollectionFleet) {
+          return _buildCollectionHomeSummary();
+        }
+
         if (controller.products.isEmpty) {
           return _buildEmptyState();
         }
@@ -255,6 +269,113 @@ class HomeView extends GetView<HomeController> {
           ],
         );
       }),
+    );
+  }
+
+  Widget _buildCollectionHomeSummary() {
+    final trip = controller.collectionTrip.value;
+    if (trip == null || controller.tripId.value == 0) {
+      return _buildEmptyState(
+        title: 'No collection trip today',
+        subtitle: 'Trips are generated at midnight for active MCR/MTR contracts.',
+      );
+    }
+
+    final typeLabel = trip.isMtr ? 'MTR · Tanker collection' : 'MCR · Can collection';
+    final destLabel = trip.isMtr ? 'Dairy' : (trip.destinationName ?? 'BMC');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE3E8EF)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                typeLabel,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1B3A4B),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                trip.routeName ?? 'Route',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF607D8B),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        _summaryTile(
+          Icons.place_outlined,
+          'Stops',
+          '${trip.stopCount} ${trip.isMtr ? "BMC(s)" : "societies"}',
+        ),
+        const SizedBox(height: 10),
+        _summaryTile(Icons.flag_outlined, 'Submit at', destLabel),
+        const SizedBox(height: 10),
+        _summaryTile(
+          Icons.check_circle_outline,
+          'Collected',
+          '${trip.collectedCount} / ${trip.stopCount}',
+        ),
+        const SizedBox(height: 16),
+        Text(
+          trip.isMtr
+              ? 'Fill tanker compartments at each BMC, then submit at Dairy.'
+              : 'Collect milk cans at each society, then submit at BMC.',
+          style: const TextStyle(
+            fontSize: 13,
+            color: Color(0xFF546E7A),
+            height: 1.4,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _summaryTile(IconData icon, String label, String value) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE3E8EF)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: _teal2),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style: const TextStyle(
+                        fontSize: 12, color: Color(0xFF78909C))),
+                Text(value,
+                    style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF263238))),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -638,7 +759,7 @@ class HomeView extends GetView<HomeController> {
                               color: Colors.white, strokeWidth: 2),
                         )
                       : Text(
-                          hasTrip ? 'START DELIVERY' : 'NO TRIP ASSIGNED',
+                          controller.startButtonLabel,
                           style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
@@ -657,7 +778,7 @@ class HomeView extends GetView<HomeController> {
   // ────────────────────────────────────────────────────────────────
   //  EMPTY STATE
   // ────────────────────────────────────────────────────────────────
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState({String? title, String? subtitle}) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 48),
       width: double.infinity,
@@ -666,24 +787,28 @@ class HomeView extends GetView<HomeController> {
         children: [
           const SizedBox(height: 40),
           Text(
-            controller.tripId.value == 0 
-                ? "No active trip available" 
-                : 'No products found for this trip',
+            title ??
+                (controller.tripId.value == 0
+                    ? "No active trip available"
+                    : 'No products found for this trip'),
             style: TextStyle(
               fontSize: 18,
               color: Colors.blueGrey.shade700,
               fontWeight: FontWeight.bold,
             ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
-            controller.tripId.value == 0 
-                ? "Pull down to refresh or wait for assignment" 
-                : 'Pull down to refresh or check later',
+            subtitle ??
+                (controller.tripId.value == 0
+                    ? "Pull down to refresh or wait for assignment"
+                    : 'Pull down to refresh or check later'),
             style: TextStyle(
               fontSize: 14,
               color: Colors.grey.shade500,
             ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 30),
           OutlinedButton.icon(

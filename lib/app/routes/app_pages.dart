@@ -1,12 +1,14 @@
 import 'package:get/get.dart';
 
+import '../modules/collection/bindings/collection_route_binding.dart';
+import '../modules/collection/bindings/collection_stop_binding.dart';
+import '../modules/collection/bindings/collection_submit_binding.dart';
+import '../modules/collection/views/collection_route_view.dart';
+import '../modules/collection/views/collection_stop_view.dart';
+import '../modules/collection/views/collection_submit_view.dart';
 import '../modules/agent/home/bindings/home_binding.dart';
-import '../modules/dashboard/binding/dashboard_binding.dart';
-import '../modules/dashboard/view/dashboard_view.dart';
 import '../modules/delivery/binding/delivery_binding.dart';
 import '../modules/delivery/view/delivery_route_view.dart';
-// import '../modules/home/binding/home_binding.dart';
-// import '../modules/home/view/home_view.dart';
 import '../modules/agent/home/views/home_view.dart';
 import '../modules/login/bindings/login_binding.dart';
 import '../modules/login/views/login_view.dart';
@@ -39,7 +41,7 @@ class AppPages {
     ),
     GetPage(
       name: _Paths.HOME,
-      page: () =>   HomeView(),
+      page: () => HomeView(),
       binding: HomeBinding(),
     ),
     GetPage(
@@ -51,6 +53,21 @@ class AppPages {
       name: _Paths.STORE_DETAILS,
       page: () => const StoreDetailsView(),
       binding: StoreDetailsBinding(),
+    ),
+    GetPage(
+      name: _Paths.COLLECTION_ROUTE,
+      page: () => const CollectionRouteView(),
+      binding: CollectionRouteBinding(),
+    ),
+    GetPage(
+      name: _Paths.COLLECTION_STOP,
+      page: () => const CollectionStopView(),
+      binding: CollectionStopBinding(),
+    ),
+    GetPage(
+      name: _Paths.COLLECTION_SUBMIT,
+      page: () => const CollectionSubmitView(),
+      binding: CollectionSubmitBinding(),
     ),
     GetPage(
       name: _Paths.FORGOT_PASSWORD,

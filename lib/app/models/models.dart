@@ -1,5 +1,6 @@
 export 'fleet_user.dart';
 export 'booth_model.dart';
+export 'collection_trip.dart';
 export 'nearby_booth_model.dart';
 export 'slot_model.dart';
 export 'product_model.dart';

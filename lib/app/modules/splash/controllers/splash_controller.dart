@@ -1,18 +1,15 @@
 import 'dart:io';
-import 'package:aavin/app/modules/agent/home/controllers/home_controller.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 import '../../../config/app_config.dart';
-import '../../../constants/app_enums.dart';
 import '../../../data/session_manager.dart';
 import '../../../models/device_info.dart';
+import '../../../models/fleet_user.dart';
 import '../../../routes/app_pages.dart';
 import '../../../api/api_service.dart';
-import '../../../models/models.dart';
-import '../../../services/config_service.dart';
 import '../../../utils/device-util.dart';
 import '../../../utils/location-utils.dart';
 
@@ -42,9 +39,14 @@ class SplashController extends GetxController {
     final isLoggedIn = await _autoLoginCall();
     if (isLoggedIn) {
       final activeTripId = storage.read('active_trip_id');
+      final tripKind = storage.read('active_trip_kind');
 
       if (activeTripId != null) {
-        Get.offAllNamed(Routes.DELIVERY_ROUTE, arguments: activeTripId);
+        if (tripKind == 'collection') {
+          Get.offAllNamed(Routes.COLLECTION_ROUTE, arguments: activeTripId);
+        } else {
+          Get.offAllNamed(Routes.DELIVERY_ROUTE, arguments: activeTripId);
+        }
       } else {
         Get.offAllNamed(Routes.HOME);
       }
@@ -130,9 +132,18 @@ class SplashController extends GetxController {
         lat: lat,
         lng: lng,
       );
-      
-      // Save the refreshed session
-      await session.saveSession(responseFleetUser);
+
+      // Preserve fleetType if autologin payload omits it
+      FleetUser toSave = responseFleetUser;
+      if ((responseFleetUser.fleetType == null ||
+              responseFleetUser.fleetType == 0) &&
+          fleetUser?.fleetType != null) {
+        final merged = Map<String, dynamic>.from(responseFleetUser.toJson());
+        merged['fleetType'] = fleetUser!.fleetType;
+        toSave = FleetUser.fromJson(merged);
+      }
+
+      await session.saveSession(toSave);
       return true;
     } catch (e) {
       // If it's an Authentication error (401/403), the session is invalid -> Logout

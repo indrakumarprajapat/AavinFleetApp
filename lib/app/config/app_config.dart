@@ -14,7 +14,7 @@ class ClientConfig {
   static const String CLIENT_NAMAKKAL = 'namakkal';
   static const String CLIENT_CBE = 'cbe';
   static const String CLIENT_NILGIRIS = 'nilgiris';
-  static const String CLIENT_DEFAULT = CLIENT_NILGIRIS;
+  static const String CLIENT_DEFAULT = CLIENT_NAMAKKAL;
 
   const ClientConfig({
     required this.name,
@@ -37,8 +37,8 @@ const Map<String, ClientConfig> clientConfigs = {
     loginLogo: "assets/images/logo_namakkal.svg",
     enableReports: true,
     enablePayments: false,
-    // baseUrl: "https://api.aavinnamakkal.in/",
-    baseUrl: "http://192.168.29.89:3042/",
+    baseUrl: "https://api.aavinnamakkal.in/",
+    // baseUrl: "http://192.168.29.89:3042/",
       privacyPolicyLink:'https://aavinnamakkal.in/privacy-policy',
     termAndCondLink:'https://aavinnamakkal.in/terms-and-conditions',
     centerLocation: LatLng(11.219321960519105, 78.16802061322994),

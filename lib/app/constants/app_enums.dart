@@ -57,3 +57,76 @@ enum FleetTripStatus {
   }
 }
 
+/// 1=Distribution, 2=MCR, 3=MTR
+enum FleetType {
+  distribution(1),
+  mcr(2),
+  mtr(3);
+
+  final int value;
+  const FleetType(this.value);
+
+  static FleetType fromValue(int? value) {
+    return FleetType.values.firstWhere(
+      (e) => e.value == value,
+      orElse: () => FleetType.distribution,
+    );
+  }
+
+  bool get isCollection => this == FleetType.mcr || this == FleetType.mtr;
+}
+
+/// Milk collection trip lifecycle (procure)
+enum CollectionFleetTripStatus {
+  none(0),
+  created(1),
+  started(2),
+  inProgress(3),
+  collectionDone(4),
+  submitted(5),
+  completed(6),
+  cancelled(9);
+
+  final int value;
+  const CollectionFleetTripStatus(this.value);
+
+  static CollectionFleetTripStatus fromValue(int? value) {
+    return CollectionFleetTripStatus.values.firstWhere(
+      (e) => e.value == value,
+      orElse: () => CollectionFleetTripStatus.none,
+    );
+  }
+}
+
+enum CollectionStopStatus {
+  pending(1),
+  collected(2),
+  partiallyCollected(3),
+  skipped(4);
+
+  final int value;
+  const CollectionStopStatus(this.value);
+
+  static CollectionStopStatus fromValue(int? value) {
+    return CollectionStopStatus.values.firstWhere(
+      (e) => e.value == value,
+      orElse: () => CollectionStopStatus.pending,
+    );
+  }
+}
+
+enum CollectionSubmitStatus {
+  pending(1),
+  submitted(2);
+
+  final int value;
+  const CollectionSubmitStatus(this.value);
+
+  static CollectionSubmitStatus fromValue(int? value) {
+    return CollectionSubmitStatus.values.firstWhere(
+      (e) => e.value == value,
+      orElse: () => CollectionSubmitStatus.pending,
+    );
+  }
+}
+

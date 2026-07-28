@@ -12,6 +12,7 @@ import '../models/credit_outstanding_model.dart';
 import '../models/models.dart';
 import '../models/razorpay-order-response.dart';
 import '../models/route_detail.dart';
+import '../models/collection_trip.dart';
 
 class ApiService extends GetxService {
   late Dio _dio;
@@ -1916,20 +1917,85 @@ class ApiService extends GetxService {
     }
   }
 
-  // Future<void> submitTrayCollection(int tripId, int boothId, int trays) async{
-  //   try{
-  //     final storage = GetStorage();
-  //     final accessToken = storage.read('access_token');
-  //
-  //     await _dio.post(
-  //       '/trips/gate-pass/$tripId/booths/$boothId/tray-collected',
-  //       data: {'trays': trays},
-  //       options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
-  //     );
-  //   }catch(e){
-  //     throw _handleError(e);
-  //   }
-  // }
+  // ─── Milk collection fleet (MCR / MTR) ─────────────────────────
+
+  Future<CollectionTrip?> getTodayCollectionTrip() async {
+    try {
+      final response = await _dio.get('/collection-trips/today');
+      final body = response.data;
+      if (body is! Map) return null;
+      final data = body['data'];
+      if (data == null) return null;
+      return CollectionTrip.fromJson(Map<String, dynamic>.from(data));
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<CollectionTrip> getCollectionTripDetail(int tripId) async {
+    try {
+      final response = await _dio.get('/collection-trips/$tripId');
+      final data = response.data['data'] ?? response.data;
+      return CollectionTrip.fromJson(Map<String, dynamic>.from(data));
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<dynamic> startCollectionTrip(int tripId, double lat, double lng) async {
+    try {
+      final response = await _dio.post(
+        '/collection-trips/$tripId/start',
+        data: {'lat': lat, 'lng': lng},
+      );
+      return response.data;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<dynamic> endCollectionTrip(int tripId, double lat, double lng) async {
+    try {
+      final response = await _dio.post(
+        '/collection-trips/$tripId/end',
+        data: {'lat': lat, 'lng': lng},
+      );
+      return response.data;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<dynamic> markCollectionStop(
+    int tripId,
+    int societyId,
+    Map<String, dynamic> body,
+  ) async {
+    try {
+      final response = await _dio.post(
+        '/collection-trips/$tripId/stops/$societyId',
+        data: body,
+      );
+      return response.data;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<dynamic> markCollectionSubmit(
+    int tripId,
+    Map<String, dynamic> body,
+  ) async {
+    try {
+      final response = await _dio.post(
+        '/collection-trips/$tripId/submit',
+        data: body,
+      );
+      return response.data;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
 }
 
 
