@@ -14,7 +14,7 @@ class ClientConfig {
   static const String CLIENT_NAMAKKAL = 'namakkal';
   static const String CLIENT_CBE = 'cbe';
   static const String CLIENT_NILGIRIS = 'nilgiris';
-  static const String CLIENT_DEFAULT = CLIENT_CBE;
+  static const String CLIENT_DEFAULT = CLIENT_NILGIRIS;
 
   const ClientConfig({
     required this.name,
@@ -49,9 +49,10 @@ const Map<String, ClientConfig> clientConfigs = {
     loginLogo: "assets/images/logo_cbe.svg",
     enableReports: true,
     enablePayments: true,
-    // baseUrl: "https://aapi.aavincoimbatore.com/",
     // baseUrl: "http://192.168.29.86:3043/",
-    baseUrl: "http://10.11.216.228:3043/",
+    // baseUrl: "http://10.11.216.228:3043/",
+    baseUrl: "https://aapi.aavincoimbatore.com/",
+    // baseUrl: "http://192.168.29.86:3043/",
     // baseUrl: "http://192.168.1.7:3043/",
     privacyPolicyLink:'https://aavincoimbatore.com/aavinfleet-privacy-policy.html',
     termAndCondLink:'https://aavincoimbatore.com/aavinfleet-terms-and-conditions.html',
@@ -59,11 +60,12 @@ const Map<String, ClientConfig> clientConfigs = {
   ),
   "nilgiris": ClientConfig(
     name: ClientConfig.CLIENT_NILGIRIS,
-    app_title: "Aavin Nilgiris",
+    app_title: "Aavin Fleet",
     loginLogo: "assets/images/logo_nilgiris.svg",
     enableReports: false,
     enablePayments: false,
     baseUrl: "https://api.aavinnilgiris.org/",
+    // baseUrl: "http://192.168.29.178:3042/",
       privacyPolicyLink:'https://aavinnilgiris.org/privacy-policy',
       termAndCondLink:'https://aavinnilgiris.org/terms-and-conditions',
     centerLocation: LatLng(11.413468370131161, 76.70249731758045),

@@ -10,6 +10,40 @@ enum DeliveryStatus {
   collected,
 }
 
+enum FleetTripDeliveryStatus {
+  pending(1),
+  delivered(2);
+
+  const FleetTripDeliveryStatus(this.value);
+
+  final int value;
+
+  static FleetTripDeliveryStatus fromValue(int value) {
+    return FleetTripDeliveryStatus.values.firstWhere(
+          (e) => e.value == value,
+      orElse: () => FleetTripDeliveryStatus.pending,
+    );
+  }
+}
+
+enum FleetTripCollectionStatus {
+  pending(1),
+  collected(2),
+  partiallyCollected(3),
+  notCollected(4);
+
+  const FleetTripCollectionStatus(this.value);
+
+  final int value;
+
+  static FleetTripCollectionStatus fromValue(int value) {
+    return FleetTripCollectionStatus.values.firstWhere(
+          (e) => e.value == value,
+      orElse: () => FleetTripCollectionStatus.pending,
+    );
+  }
+}
+
 class DeliveryProductModel {
   final String name;
   final int trays;
@@ -82,6 +116,7 @@ class DeliveryModel {
   final String storeName;
   final String address;
   final DeliveryStatus status;
+  final DateTime? reportDate;
   final List<DeliveryProductModel> products;
   final int collectedTrays;
   final int remainingTrays; // Historical residue from previous trips
@@ -109,6 +144,7 @@ class DeliveryModel {
     required this.storeName,
     required this.address,
     required this.status,
+    required this.reportDate,
     required this.products,
     this.collectedTrays = 0,
     this.remainingTrays = 0,
@@ -129,11 +165,12 @@ class DeliveryModel {
     String? storeName,
     String? address,
     DeliveryStatus? status,
+    DateTime? reportDate,
     List<DeliveryProductModel>? products,
     int? collectedTrays,
     int? remainingTrays,
-    bool? apiIsDelivered,
-    bool? apiIsCollected,
+    // bool? apiIsDelivered,
+    // bool? apiIsCollected,
     String? agentName,
     String? agentPhone,
     int? totalTrays,
@@ -146,11 +183,12 @@ class DeliveryModel {
       storeName: storeName ?? this.storeName,
       address: address ?? this.address,
       status: status ?? this.status,
+      reportDate: reportDate ?? this.reportDate,
       products: products ?? this.products,
       collectedTrays: collectedTrays ?? this.collectedTrays,
       remainingTrays: remainingTrays ?? this.remainingTrays,
-      apiIsDelivered: apiIsDelivered ?? this.apiIsDelivered,
-      apiIsCollected: apiIsCollected ?? this.apiIsCollected,
+      // apiIsDelivered: apiIsDelivered ?? this.apiIsDelivered,
+      // apiIsCollected: apiIsCollected ?? this.apiIsCollected,
       agentName: agentName ?? this.agentName,
       agentPhone: agentPhone ?? this.agentPhone,
       totalTrays: totalTrays ?? _totalTrays,
@@ -173,19 +211,23 @@ class DeliveryModel {
     final bIdStr = bId.toString();
     final bCode = json['boothCode']?.toString() ?? bIdStr;
 
-    final bool isDeliveredAPI = (json['isDelivered'] == true || json['isDelivered'] == "true") ||
-        (ParseUtil.parseInt(json['deliveryStatus']) == 4) ||
-        (json['deliveryStatus']?.toString().toUpperCase() == 'DELIVERED');
+    // final bool isDeliveredAPI = (json['isDelivered'] == true || json['isDelivered'] == "true") ||
+    //     (ParseUtil.parseInt(json['deliveryStatus']) == 4) ||
+    //     (json['deliveryStatus']?.toString().toUpperCase() == 'DELIVERED');
 
-    final bool isCollectedAPI = (json['isCollected'] == true || json['isCollected'] == "true") ||
-        (json['collectionStatus']?.toString().toUpperCase() == 'COLLECTED');
+    // final bool isCollectedAPI = (json['isCollected'] == true || json['isCollected'] == "true") || (json['collectionStatus']?.toString().toUpperCase() == 'COLLECTED');
 
-    DeliveryStatus status = _parseStatus(json['collectionStatus'] ?? json['deliveryStatus'] ?? json['status']);
-    if (isCollectedAPI) {
-      status = DeliveryStatus.collected;
-    } else if (isDeliveredAPI) {
-      status = DeliveryStatus.delivered;
-    }
+    DeliveryStatus status = DeliveryModel.parseStatus(json);
+
+    var reportDate = ParseUtil.parseDateTime(
+      json['report_date'] ?? json['reportDate'],
+    );
+
+    // if (isCollectedAPI) {
+    //   status = DeliveryStatus.collected;
+    // } else if (isDeliveredAPI) {
+    //   status = DeliveryStatus.delivered;
+    // }
 
     return DeliveryModel(
       boothId: ParseUtil.parseInt(bId) ?? 0,
@@ -194,14 +236,15 @@ class DeliveryModel {
       storeName: json['storeName'] ?? "Booth $bCode",
       address: json['address']?.toString() ?? "Address not available",
       status: status,
+      reportDate: reportDate,
       products: (json['products'] as List?)
               ?.map((e) => DeliveryProductModel.fromJson(e))
               .toList() ??
           [],
       collectedTrays: ParseUtil.parseInt(json['trayCollected']) ?? 0,
       remainingTrays: ParseUtil.parseInt(json['remainingTrays']) ?? 0,
-      apiIsDelivered: isDeliveredAPI,
-      apiIsCollected: isCollectedAPI,
+      // apiIsDelivered: isDeliveredAPI,
+      // apiIsCollected: isCollectedAPI,
       agentName: json['agentName']?.toString(),
       agentPhone: json['agentPhone']?.toString() ?? json['agentMobileNumber']?.toString(),
       totalTrays: ParseUtil.parseInt(json['trayCount']) ?? 0,
@@ -209,19 +252,31 @@ class DeliveryModel {
     );
   }
 
-  static DeliveryStatus _parseStatus(dynamic status) {
-    if (status == null) return DeliveryStatus.toBeDelivered;
-    final s = status.toString().toUpperCase();
-    if (s == 'DELIVERED' || s == '4') {
-      return DeliveryStatus.delivered;
+
+  static DeliveryStatus parseStatus(Map<String, dynamic> json) {
+    final collectionStatus = json['collectionStatus'];
+    if (collectionStatus != null) {
+      switch (collectionStatus) {
+        case 1:
+          return DeliveryStatus.toBeCollected;
+        case 2:
+          return DeliveryStatus.collected;
+        case 3:
+          return DeliveryStatus.collecting;
+        case 4:
+          return DeliveryStatus.toBeCollected;
+      }
     }
-    if (s == 'COLLECTED' || s == 'NOT_COLLECTED' || s == 'NOT COLLECTED' || s == 'PARTIALLY_COLLECTED') {
-      return DeliveryStatus.collected;
+
+    final deliveryStatus = json['deliveryStatus'];
+    switch (deliveryStatus) {
+      case 1:
+        return DeliveryStatus.toBeDelivered;
+      case 2:
+        return DeliveryStatus.delivered;
+      default:
+        return DeliveryStatus.toBeDelivered;
     }
-    if (s == 'DELIVERING' || s == 'IN_PROGRESS' || s == 'COLLECTING' || s == '2') {
-      return s.contains('COLLECT') ? DeliveryStatus.collecting : DeliveryStatus.delivering;
-    }
-    return DeliveryStatus.toBeDelivered;
   }
 
   Map<String, dynamic> toJson() {

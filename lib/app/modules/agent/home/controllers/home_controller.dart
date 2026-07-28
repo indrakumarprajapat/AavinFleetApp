@@ -182,7 +182,7 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
       if (!silent) _isLoading.value = true;
 
       final reportDetails = await apiService.getRouteDetails();
-      routeDetail.value = reportDetails;
+      routeDetail(reportDetails);
 
       final idToUse = reportDetails.tripId ?? reportDetails.id;
       if (idToUse != null) {

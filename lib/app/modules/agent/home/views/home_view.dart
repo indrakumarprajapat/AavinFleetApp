@@ -1,3 +1,5 @@
+import 'package:aavin/app/constants/app_enums.dart';
+import 'package:aavin/app/extensions/date_time_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
@@ -49,21 +51,20 @@ class HomeView extends GetView<HomeController> {
   Widget _buildSliverAppBar() {
     return Obx(() {
       final isLocSubmitted = controller.boothDetails?.isLocSubmit == true;
+      final reportDate = controller.routeDetail.value?.reportDate?.ddMMMMyyyy ?? '' ;
       final routeName = controller.routeDetail.value?.routeName ??
           controller.routeDetail.value?.routeId?.toString() ??
-          controller.fleetUser?.routeName ??
-          '';
+          controller.fleetUser?.routeName ?? '';
       final regNumber =
           controller.fleetUser?.vehicleRegistrationNumber ?? '';
-      final shift = controller.routeDetail.value?.shift;
-      final shiftText = shift == 1
+      final shiftText = controller.routeDetail.value?.shift == OrderShift.morning.value
           ? 'Morning'
-          : shift == 2
+          : controller.routeDetail.value?.shift == OrderShift.evening.value
           ? 'Evening'
           : '';
 
       return SliverAppBar(
-        expandedHeight: 178,
+        expandedHeight: 200,
         pinned: true,
         stretch: true,
         backgroundColor: _teal1,
@@ -71,10 +72,11 @@ class HomeView extends GetView<HomeController> {
         automaticallyImplyLeading: false,
         flexibleSpace: FlexibleSpaceBar(
           background: _buildHeader(
-            isLocSubmitted: isLocSubmitted,
-            routeName: routeName,
-            regNumber: regNumber,
-            shiftText: shiftText,
+             isLocSubmitted,
+             routeName,
+             regNumber,
+             shiftText,
+              reportDate
           ),
           stretchModes: const [
             StretchMode.zoomBackground,
@@ -85,15 +87,13 @@ class HomeView extends GetView<HomeController> {
     });
   }
 
-  Widget _buildHeader({
-    required bool isLocSubmitted,
-    required String routeName,
-    required String regNumber,
-    required String shiftText,
-  }) {
+  Widget _buildHeader(
+    bool isLocSubmitted,
+    String routeName,
+    String regNumber,
+    String shiftText,
+      String reportDate) {
     final now = DateTime.now();
-    final dateText =
-        '${now.day} ${_monthName(now.month)} ${now.year}';
 
     return Container(
       decoration: const BoxDecoration(
@@ -136,7 +136,7 @@ class HomeView extends GetView<HomeController> {
                           Text(
                             config.app_title.toUpperCase(),
                             style: TextStyle(
-                              fontSize: 10,
+                              fontSize: 12,
                               letterSpacing: 1.5,
                               color: Colors.white.withOpacity(0.65),
                             ),
@@ -196,7 +196,7 @@ class HomeView extends GetView<HomeController> {
                         ],
                         _headerBadge(
                           icon: Icons.calendar_today_rounded,
-                          label: dateText,
+                          label: reportDate,
                         ),
                       ],
                     ),
@@ -745,7 +745,7 @@ class HomeView extends GetView<HomeController> {
           Text(
             label,
             style: const TextStyle(
-              fontSize: 12,
+              fontSize: 15,
               color: Colors.white,
               fontWeight: FontWeight.w500,
             ),

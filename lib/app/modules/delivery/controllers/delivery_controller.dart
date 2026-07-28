@@ -18,6 +18,7 @@ enum AppMode {
 
 class DeliveryController extends GetxController {
   final ApiService api = Get.find<ApiService>();
+  final apiService = Get.find<ApiService>();
 
   var deliveries = <DeliveryModel>[].obs;
   var isLoading = false.obs;
@@ -121,11 +122,11 @@ class DeliveryController extends GetxController {
 
         if (appMode.value == AppMode.delivery) {
           initialBooths[i] = booth.copyWith(
-            status: booth.apiIsDelivered ? DeliveryStatus.delivered : DeliveryStatus.toBeDelivered,
+            status: booth.status ,
           );
         } else {
           initialBooths[i] = booth.copyWith(
-            status: booth.apiIsCollected ? DeliveryStatus.collected : DeliveryStatus.toBeCollected,
+            status: booth.status ,
           );
         }
       }
@@ -311,19 +312,46 @@ class DeliveryController extends GetxController {
       storage.write(key, list);
     }
   }
-
   Future<void> initiateCollection() async {
     try {
       isLoading.value = true;
-      appMode.value = AppMode.collection;
-      storage.write('app_mode', 'collection');
-      await fetchRouteBooths();
+      final allowed = await LocationUtils.ensureLocationPermission();
+      double lat = 0;
+      double lng = 0;
+      if (allowed) {
+        Position? position = await LocationUtils.getCurrentLocation();
+        if (position != null) {
+          lat = position.latitude;
+          lng = position.longitude;
+        }
+      }
+
+      try {
+        isLoading.value = true;
+        await apiService.startTripCollection(tripId, lat, lng);
+      } catch (e) {
+        Get.snackbar("Error", "Failed to start collection: $e", snackPosition: SnackPosition.TOP);
+      } finally {
+        isLoading.value = false;
+      }
+
+      try {
+        isLoading.value = true;
+        appMode.value = AppMode.collection;
+        storage.write('app_mode', 'collection');
+        await fetchRouteBooths();
+      } catch (e) {
+        Get.snackbar("Error", "Failed to start collection: $e", snackPosition: SnackPosition.TOP);
+      } finally {
+        isLoading.value = false;
+      }
     } catch (e) {
-      Get.snackbar("Error", "Failed to start collection: $e", snackPosition: SnackPosition.TOP);
+      Get.snackbar("Error", e.toString());
     } finally {
       isLoading.value = false;
     }
   }
+
 
   void openStoreDetails(DeliveryModel store) {
     Get.toNamed(Routes.STORE_DETAILS, arguments: store);

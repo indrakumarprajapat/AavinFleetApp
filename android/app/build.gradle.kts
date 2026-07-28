@@ -56,7 +56,7 @@ android {
         create("namakkal") {
             dimension = "client"
             applicationId = "tech.cwitch.aavinfleet"
-            resValue("string", "app_name", "Aavin NKL")
+            resValue("string", "app_name", "Aavin Fleet")
             signingConfig = signingConfigs.getByName("namakkalRelease")
         }
         create("cbe") {
@@ -68,7 +68,7 @@ android {
         create("nilgiris") {
             dimension = "client"
             applicationId = "tech.cwitch.aavinfleet"
-            resValue("string", "app_name", "AavinNilgiris")
+            resValue("string", "app_name", "Aavin Fleet")
             signingConfig = signingConfigs.getByName("nilgirisRelease")
         }
     }

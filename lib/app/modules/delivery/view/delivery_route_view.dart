@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:aavin/app/extensions/date_time_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../routes/app_pages.dart';
@@ -255,8 +256,8 @@ class DeliveryRouteView extends GetView<DeliveryController> {
   }
 
   Widget _buildCustomHeader(double h, double w, ClientConfig config) {
-    final now = DateTime.now();
-    final dateText = "${now.day} ${_getMonthName(now.month)} ${now.year}";
+    final deliveries = controller.deliveries;
+    final dateText = deliveries.isNotEmpty ? deliveries[0].reportDate?.ddMMMyyyy ?? '' : '';
 
     return Obx(() {
       final isCollection = controller.appMode.value == AppMode.collection;
@@ -357,7 +358,7 @@ class DeliveryRouteView extends GetView<DeliveryController> {
               Text(
                 label,
                 style: const TextStyle(
-                  fontSize: 11,
+                  fontSize: 14,
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
                 ),

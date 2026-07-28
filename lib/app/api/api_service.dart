@@ -1700,6 +1700,30 @@ class ApiService extends GetxService {
     }
   }
 
+  Future<dynamic> startTripCollection(int tripId, double lat, double lng) async {
+    try {
+      final storage = GetStorage();
+      final accessToken = storage.read('access_token');
+
+      final response = await _dio.post(
+        '/trips/$tripId/collection/start',
+        data: {
+          "lat": lat,
+          "lng": lng,
+        },
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+          },
+        ),
+      );
+
+      return response.data;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   Future<dynamic> endTrip(int tripId, double lat, double lng) async {
     try {
       final storage = GetStorage();
