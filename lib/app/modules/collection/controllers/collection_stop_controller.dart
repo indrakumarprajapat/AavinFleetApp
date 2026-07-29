@@ -14,6 +14,7 @@ class CollectionStopController extends GetxController {
   late final int tripId;
   late final CollectionStop stop;
   late final bool isMcr;
+  late final bool isReadOnly;
 
   // MCR
   final canCountCtrl = TextEditingController();
@@ -44,6 +45,7 @@ class CollectionStopController extends GetxController {
     tripId = args['tripId'] as int? ?? 0;
     stop = args['stop'] as CollectionStop;
     isMcr = args['isMcr'] as bool? ?? true;
+    isReadOnly = args['readOnly'] as bool? ?? false;
 
     canCountCtrl.text = stop.canCount > 0 ? '${stop.canCount}' : '';
     canSizeCtrl.text =
@@ -141,6 +143,13 @@ class CollectionStopController extends GetxController {
   }
 
   Future<void> submitStop({bool skip = false}) async {
+    if (isReadOnly) {
+      AppSnackbar.warning(
+        'Locked',
+        'Collection values cannot be changed after milk submit',
+      );
+      return;
+    }
     if (stop.societyId == null) {
       AppSnackbar.error('Error', 'Stop society is missing');
       return;

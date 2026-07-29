@@ -9,6 +9,8 @@ class CollectionStopView extends GetView<CollectionStopController> {
   static const _teal1 = Color(0xFF007EA7);
   static const _bg = Color(0xFFF4F7FB);
 
+  bool get _locked => controller.isReadOnly;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -27,7 +29,21 @@ class CollectionStopView extends GetView<CollectionStopController> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
           children: [
-            if (controller.isAlreadyDone)
+            if (_locked)
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE3F2FD),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF90CAF9)),
+                ),
+                child: const Text(
+                  'Milk already submitted. Collection values are locked.',
+                  style: TextStyle(color: Color(0xFF1565C0), fontSize: 13),
+                ),
+              )
+            else if (controller.isAlreadyDone)
               Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(12),
@@ -58,6 +74,7 @@ class CollectionStopView extends GetView<CollectionStopController> {
                   label: 'Remarks',
                   required: false,
                   hint: 'Optional',
+                  readOnly: _locked,
                 ),
               ],
             ),
@@ -75,7 +92,7 @@ class CollectionStopView extends GetView<CollectionStopController> {
                       ),
                       elevation: 0,
                     ),
-                    onPressed: controller.isLoading.value
+                    onPressed: (controller.isLoading.value || _locked)
                         ? null
                         : () => controller.submitStop(),
                     child: controller.isLoading.value
@@ -108,7 +125,7 @@ class CollectionStopView extends GetView<CollectionStopController> {
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                onPressed: () => controller.submitStop(skip: true),
+                onPressed: _locked ? null : () => controller.submitStop(skip: true),
                 child: const Text(
                   'SKIP STOP',
                   style: TextStyle(fontWeight: FontWeight.w600),
@@ -126,6 +143,7 @@ class CollectionStopView extends GetView<CollectionStopController> {
           controller: controller.canCountCtrl,
           label: 'Can count',
           required: true,
+          readOnly: _locked,
           keyboard: TextInputType.number,
           validator: (v) =>
               controller.validatePositiveNumber(v, 'Can count'),
@@ -135,6 +153,7 @@ class CollectionStopView extends GetView<CollectionStopController> {
           controller: controller.canSizeCtrl,
           label: 'Can size (Ltr)',
           required: true,
+          readOnly: _locked,
           keyboard: const TextInputType.numberWithOptions(decimal: true),
           validator: (v) =>
               controller.validatePositiveNumber(v, 'Can size'),
@@ -144,6 +163,7 @@ class CollectionStopView extends GetView<CollectionStopController> {
           controller: controller.milkQtyCtrl,
           label: 'Milk liters',
           required: true,
+          readOnly: _locked,
           hint: 'Auto = cans × size',
           keyboard: const TextInputType.numberWithOptions(decimal: true),
           validator: (v) =>
@@ -153,6 +173,7 @@ class CollectionStopView extends GetView<CollectionStopController> {
           controller: controller.fatCtrl,
           label: 'Fat %',
           required: true,
+          readOnly: _locked,
           keyboard: const TextInputType.numberWithOptions(decimal: true),
           validator: (v) => controller.validatePercent(v, 'Fat %'),
         ),
@@ -160,6 +181,7 @@ class CollectionStopView extends GetView<CollectionStopController> {
           controller: controller.snfCtrl,
           label: 'SNF %',
           required: true,
+          readOnly: _locked,
           keyboard: const TextInputType.numberWithOptions(decimal: true),
           validator: (v) => controller.validatePercent(v, 'SNF %'),
         ),
@@ -180,6 +202,7 @@ class CollectionStopView extends GetView<CollectionStopController> {
           controller: controller.fcLtrCtrl,
           label: 'FC liters',
           required: false,
+          readOnly: _locked,
           hint: '0 if empty',
           keyboard: const TextInputType.numberWithOptions(decimal: true),
           validator: (v) {
@@ -193,6 +216,7 @@ class CollectionStopView extends GetView<CollectionStopController> {
           controller: controller.fcFatCtrl,
           label: 'FC Fat %',
           required: false,
+          readOnly: _locked,
           keyboard: const TextInputType.numberWithOptions(decimal: true),
           validator: (v) =>
               controller.validateCompartmentFat(v, controller.fcLtrCtrl),
@@ -201,6 +225,7 @@ class CollectionStopView extends GetView<CollectionStopController> {
           controller: controller.fcSnfCtrl,
           label: 'FC SNF %',
           required: false,
+          readOnly: _locked,
           keyboard: const TextInputType.numberWithOptions(decimal: true),
           validator: (v) =>
               controller.validateCompartmentSnf(v, controller.fcLtrCtrl),
@@ -219,6 +244,7 @@ class CollectionStopView extends GetView<CollectionStopController> {
           controller: controller.mcLtrCtrl,
           label: 'MC liters',
           required: false,
+          readOnly: _locked,
           hint: '0 if empty',
           keyboard: const TextInputType.numberWithOptions(decimal: true),
           validator: (v) {
@@ -232,6 +258,7 @@ class CollectionStopView extends GetView<CollectionStopController> {
           controller: controller.mcFatCtrl,
           label: 'MC Fat %',
           required: false,
+          readOnly: _locked,
           keyboard: const TextInputType.numberWithOptions(decimal: true),
           validator: (v) =>
               controller.validateCompartmentFat(v, controller.mcLtrCtrl),
@@ -240,6 +267,7 @@ class CollectionStopView extends GetView<CollectionStopController> {
           controller: controller.mcSnfCtrl,
           label: 'MC SNF %',
           required: false,
+          readOnly: _locked,
           keyboard: const TextInputType.numberWithOptions(decimal: true),
           validator: (v) =>
               controller.validateCompartmentSnf(v, controller.mcLtrCtrl),
@@ -258,6 +286,7 @@ class CollectionStopView extends GetView<CollectionStopController> {
           controller: controller.rcLtrCtrl,
           label: 'RC liters',
           required: false,
+          readOnly: _locked,
           hint: '0 if empty',
           keyboard: const TextInputType.numberWithOptions(decimal: true),
           validator: (v) {
@@ -271,6 +300,7 @@ class CollectionStopView extends GetView<CollectionStopController> {
           controller: controller.rcFatCtrl,
           label: 'RC Fat %',
           required: false,
+          readOnly: _locked,
           keyboard: const TextInputType.numberWithOptions(decimal: true),
           validator: (v) =>
               controller.validateCompartmentFat(v, controller.rcLtrCtrl),
@@ -279,6 +309,7 @@ class CollectionStopView extends GetView<CollectionStopController> {
           controller: controller.rcSnfCtrl,
           label: 'RC SNF %',
           required: false,
+          readOnly: _locked,
           keyboard: const TextInputType.numberWithOptions(decimal: true),
           validator: (v) =>
               controller.validateCompartmentSnf(v, controller.rcLtrCtrl),

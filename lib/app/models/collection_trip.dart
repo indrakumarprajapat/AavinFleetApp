@@ -56,8 +56,10 @@ class CollectionTrip {
       stops.isNotEmpty && collectedCount == stops.length;
 
   bool get isSubmitted =>
-      submits.isNotEmpty &&
-      submits.every((s) => s.submitStatus == CollectionSubmitStatus.submitted);
+      status == CollectionFleetTripStatus.submitted ||
+      status == CollectionFleetTripStatus.completed ||
+      (submits.isNotEmpty &&
+          submits.every((s) => s.submitStatus == CollectionSubmitStatus.submitted));
 
   factory CollectionTrip.fromJson(Map<String, dynamic> json) {
     final stopsJson = json['stops'] as List? ?? [];

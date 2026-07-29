@@ -20,8 +20,14 @@ class CollectionSubmitController extends GetxController {
   final snfCtrl = TextEditingController();
 
   final fcLtrCtrl = TextEditingController();
+  final fcFatCtrl = TextEditingController();
+  final fcSnfCtrl = TextEditingController();
   final mcLtrCtrl = TextEditingController();
+  final mcFatCtrl = TextEditingController();
+  final mcSnfCtrl = TextEditingController();
   final rcLtrCtrl = TextEditingController();
+  final rcFatCtrl = TextEditingController();
+  final rcSnfCtrl = TextEditingController();
   final remarksCtrl = TextEditingController();
 
   final collectedSummary = ''.obs;
@@ -72,6 +78,31 @@ class CollectionSubmitController extends GetxController {
       fcLtrCtrl.text = fc > 0 ? _fmt(fc) : '';
       mcLtrCtrl.text = mc > 0 ? _fmt(mc) : '';
       rcLtrCtrl.text = rc > 0 ? _fmt(rc) : '';
+
+      // Weighted per-compartment fat/snf across all collected BMC stops.
+      final fcFat = _weightedAvg(doneStops, (s) => s.fcLtr, (s) => s.fcFatPercent);
+      final fcSnf = _weightedAvg(doneStops, (s) => s.fcLtr, (s) => s.fcSnfPercent);
+      final mcFat = _weightedAvg(doneStops, (s) => s.mcLtr, (s) => s.mcFatPercent);
+      final mcSnf = _weightedAvg(doneStops, (s) => s.mcLtr, (s) => s.mcSnfPercent);
+      final rcFat = _weightedAvg(doneStops, (s) => s.rcLtr, (s) => s.rcFatPercent);
+      final rcSnf = _weightedAvg(doneStops, (s) => s.rcLtr, (s) => s.rcSnfPercent);
+
+      fcFatCtrl.text = fcFat > 0 ? _fmt(fcFat) : '';
+      fcSnfCtrl.text = fcSnf > 0 ? _fmt(fcSnf) : '';
+      mcFatCtrl.text = mcFat > 0 ? _fmt(mcFat) : '';
+      mcSnfCtrl.text = mcSnf > 0 ? _fmt(mcSnf) : '';
+      rcFatCtrl.text = rcFat > 0 ? _fmt(rcFat) : '';
+      rcSnfCtrl.text = rcSnf > 0 ? _fmt(rcSnf) : '';
+
+      // Overall tanker fat/snf weighted across all compartments.
+      final totalLtr = fc + mc + rc;
+      if (totalLtr > 0) {
+        final overallFat = (fc * fcFat + mc * mcFat + rc * rcFat) / totalLtr;
+        final overallSnf = (fc * fcSnf + mc * mcSnf + rc * rcSnf) / totalLtr;
+        fatCtrl.text = overallFat > 0 ? _fmt(overallFat) : '';
+        snfCtrl.text = overallSnf > 0 ? _fmt(overallSnf) : '';
+      }
+
       collectedSummary.value =
           'From ${doneStops.length} BMC(s): FC ${_fmt(fc)} · MC ${_fmt(mc)} · RC ${_fmt(rc)} L';
     }
@@ -82,6 +113,20 @@ class CollectionSubmitController extends GetxController {
 
   double _d(TextEditingController c) => double.tryParse(c.text.trim()) ?? 0;
   int _i(TextEditingController c) => int.tryParse(c.text.trim()) ?? 0;
+
+  double _weightedAvg(
+    List<CollectionStop> stops,
+    double Function(CollectionStop) litersFn,
+    double Function(CollectionStop) valueFn,
+  ) {
+    final totalLtr = stops.fold<double>(0, (s, e) => s + litersFn(e));
+    if (totalLtr <= 0) return 0;
+    final weighted = stops.fold<double>(
+      0,
+      (s, e) => s + litersFn(e) * valueFn(e),
+    );
+    return weighted / totalLtr;
+  }
 
   String? validatePositive(String? v, String label) {
     if (v == null || v.trim().isEmpty) return '$label is required';
@@ -181,8 +226,14 @@ class CollectionSubmitController extends GetxController {
         body['snfPercent'] = _d(snfCtrl);
       } else {
         body['fcLtr'] = _d(fcLtrCtrl);
+        body['fcFatPercent'] = _d(fcFatCtrl);
+        body['fcSnfPercent'] = _d(fcSnfCtrl);
         body['mcLtr'] = _d(mcLtrCtrl);
+        body['mcFatPercent'] = _d(mcFatCtrl);
+        body['mcSnfPercent'] = _d(mcSnfCtrl);
         body['rcLtr'] = _d(rcLtrCtrl);
+        body['rcFatPercent'] = _d(rcFatCtrl);
+        body['rcSnfPercent'] = _d(rcSnfCtrl);
         body['milkQtyLtr'] = _d(fcLtrCtrl) + _d(mcLtrCtrl) + _d(rcLtrCtrl);
         body['fatPercent'] = _d(fatCtrl);
         body['snfPercent'] = _d(snfCtrl);
@@ -211,8 +262,14 @@ class CollectionSubmitController extends GetxController {
     fatCtrl.dispose();
     snfCtrl.dispose();
     fcLtrCtrl.dispose();
+    fcFatCtrl.dispose();
+    fcSnfCtrl.dispose();
     mcLtrCtrl.dispose();
+    mcFatCtrl.dispose();
+    mcSnfCtrl.dispose();
     rcLtrCtrl.dispose();
+    rcFatCtrl.dispose();
+    rcSnfCtrl.dispose();
     remarksCtrl.dispose();
     super.onClose();
   }

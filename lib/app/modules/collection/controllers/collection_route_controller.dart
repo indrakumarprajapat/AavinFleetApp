@@ -64,7 +64,12 @@ class CollectionRouteController extends GetxController {
   void openStop(CollectionStop stop) {
     Get.toNamed(
       Routes.COLLECTION_STOP,
-      arguments: {'tripId': tripId, 'stop': stop, 'isMcr': isMcr},
+      arguments: {
+        'tripId': tripId,
+        'stop': stop,
+        'isMcr': isMcr,
+        'readOnly': isSubmitted,
+      },
     )?.then((_) => loadTrip());
   }
 

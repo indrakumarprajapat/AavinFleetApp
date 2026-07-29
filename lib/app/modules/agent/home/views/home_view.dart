@@ -1,13 +1,9 @@
-import 'package:aavin/app/constants/app_enums.dart';
 import 'package:aavin/app/extensions/date_time_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:lottie/lottie.dart';
 
 import '../../../../config/app_config.dart';
-import '../../../../services/global_cart_service.dart';
 import '../../../../utils/parse-util.dart';
-import '../../../delivery/view/delivery_route_view.dart';
 import '../controllers/home_controller.dart';
 import '../../drawer/views/agent_drawer_view.dart';
 
@@ -52,7 +48,7 @@ class HomeView extends GetView<HomeController> {
     return Obx(() {
       final isLocSubmitted = controller.boothDetails?.isLocSubmit == true;
       final reportDate = controller.isCollectionFleet
-          ? (controller.collectionTrip.value?.tripDate ?? '')
+          ? _formatDateOnly(controller.collectionTrip.value?.tripDate)
           : (controller.routeDetail.value?.reportDate?.ddMMMMyyyy ?? '');
       final routeName = controller.isCollectionFleet
           ? (controller.collectionTrip.value?.routeName ??
@@ -64,17 +60,9 @@ class HomeView extends GetView<HomeController> {
               '');
       final regNumber =
           controller.fleetUser?.vehicleRegistrationNumber ?? '';
-      final shiftVal = controller.isCollectionFleet
-          ? controller.collectionTrip.value?.shift
-          : controller.routeDetail.value?.shift;
-      final shiftText = shiftVal == OrderShift.morning.value
-          ? 'Morning'
-          : shiftVal == OrderShift.evening.value
-              ? 'Evening'
-              : '';
 
       return SliverAppBar(
-        expandedHeight: 200,
+        expandedHeight: 172,
         pinned: true,
         stretch: true,
         backgroundColor: _teal1,
@@ -85,7 +73,6 @@ class HomeView extends GetView<HomeController> {
              isLocSubmitted,
              routeName,
              regNumber,
-             shiftText,
               reportDate
           ),
           stretchModes: const [
@@ -97,13 +84,24 @@ class HomeView extends GetView<HomeController> {
     });
   }
 
+  /// Formats API datetime/date strings as date-only (e.g. 29 July 2026).
+  String _formatDateOnly(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return '';
+    final parsed = DateTime.tryParse(raw.trim());
+    if (parsed != null) return parsed.ddMMMMyyyy;
+    // Fallback: strip time portion if present (e.g. "2026-07-29 10:30:00")
+    final spaceIdx = raw.indexOf(' ');
+    final tIdx = raw.indexOf('T');
+    if (tIdx > 0) return raw.substring(0, tIdx);
+    if (spaceIdx > 0) return raw.substring(0, spaceIdx);
+    return raw.trim();
+  }
+
   Widget _buildHeader(
     bool isLocSubmitted,
     String routeName,
     String regNumber,
-    String shiftText,
-      String reportDate) {
-    final now = DateTime.now();
+    String reportDate) {
 
     return Container(
       decoration: const BoxDecoration(
@@ -126,7 +124,7 @@ class HomeView extends GetView<HomeController> {
           ),
           // content
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 44, 20, 20),
+            padding: const EdgeInsets.fromLTRB(18, 36, 18, 14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -138,7 +136,7 @@ class HomeView extends GetView<HomeController> {
                       onTap: () =>
                           _scaffoldKey.currentState?.openDrawer(),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -146,8 +144,8 @@ class HomeView extends GetView<HomeController> {
                           Text(
                             config.app_title.toUpperCase(),
                             style: TextStyle(
-                              fontSize: 12,
-                              letterSpacing: 1.5,
+                              fontSize: 11,
+                              letterSpacing: 1.4,
                               color: Colors.white.withOpacity(0.65),
                             ),
                           ),
@@ -155,7 +153,7 @@ class HomeView extends GetView<HomeController> {
                             controller.fleetUser?.name ??
                                 'Delivery Partner',
                             style: const TextStyle(
-                              fontSize: 16,
+                              fontSize: 15,
                               fontWeight: FontWeight.w600,
                               color: Colors.white,
                             ),
@@ -165,51 +163,39 @@ class HomeView extends GetView<HomeController> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
                 // route
                 Text(
                   'CURRENT ROUTE',
                   style: TextStyle(
-                    fontSize: 10,
-                    letterSpacing: 1.8,
+                    fontSize: 9,
+                    letterSpacing: 1.6,
                     fontWeight: FontWeight.w600,
                     color: Colors.white.withOpacity(0.6),
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   routeName.isEmpty ? 'No Route Assigned' : routeName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 20,
+                    fontSize: 17,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                     letterSpacing: -0.3,
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 20),
                 // badges row (Date left, Vehicle right)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        if (shiftText.isNotEmpty) ...[
-                          _headerBadge(
-                            icon: shiftText == 'Morning'
-                                ? Icons.wb_sunny_rounded
-                                : Icons.nights_stay_rounded,
-                            label: shiftText,
-                          ),
-                          const SizedBox(width: 8),
-                        ],
-                        _headerBadge(
-                          icon: Icons.calendar_today_rounded,
-                          label: reportDate,
-                        ),
-                      ],
-                    ),
+                    if (reportDate.isNotEmpty)
+                      _headerBadge(
+                        icon: Icons.calendar_today_rounded,
+                        label: reportDate,
+                      ),
                     if (regNumber.isNotEmpty)
                       _headerBadge(
                         icon: Icons.local_shipping_outlined,
@@ -967,9 +953,4 @@ class HomeView extends GetView<HomeController> {
     return Icons.category_rounded;
   }
 
-  String _monthName(int m) => [
-    '',
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-  ][m];
 }

@@ -297,8 +297,16 @@ class HomeController extends GetxController
 
     final storage = GetStorage();
     if (storage.read('completed_trip_${trip!.id}') == true) {
-      tripId.value = 0;
-      return;
+      // If you manually reset the trip in DB back from completed/cancelled,
+      // clear the cached flag so the UI can show the trip again.
+      final isActuallyFinished = trip.status ==
+              CollectionFleetTripStatus.completed ||
+          trip.status == CollectionFleetTripStatus.cancelled;
+      if (isActuallyFinished) {
+        tripId.value = 0;
+        return;
+      }
+      storage.remove('completed_trip_${trip.id}');
     }
 
     // Resume mid-trip statuses
