@@ -2,6 +2,27 @@ import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 
 class LocationUtils {
+  /// True when GPS is missing or Null Island (0,0).
+  static bool isInvalidGeo(double? lat, double? lng) {
+    if (lat == null || lng == null) return true;
+    if (!lat.isFinite || !lng.isFinite) return true;
+    return lat.abs() < 0.000001 && lng.abs() < 0.000001;
+  }
+
+  /// Permission + a non-zero current position (Phase 2.7).
+  static Future<Position?> requireValidLocation({String action = 'continue'}) async {
+    final allowed = await ensureLocationPermission();
+    if (!allowed) return null;
+    final pos = await getCurrentLocation();
+    if (pos == null || isInvalidGeo(pos.latitude, pos.longitude)) {
+      Get.snackbar(
+        'Location required',
+        'Valid GPS is required to $action. Move outdoors and try again.',
+      );
+      return null;
+    }
+    return pos;
+  }
 
   static Future<bool> ensureLocationPermission() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();

@@ -190,19 +190,14 @@ class CollectionStopController extends GetxController {
 
     try {
       isLoading.value = true;
-      final allowed = await LocationUtils.ensureLocationPermission();
-      double lat = 0, lng = 0;
-      if (allowed) {
-        final pos = await LocationUtils.getCurrentLocation();
-        if (pos != null) {
-          lat = pos.latitude;
-          lng = pos.longitude;
-        }
-      }
+      final pos = await LocationUtils.requireValidLocation(
+        action: skip ? 'skip stop' : 'collect stop',
+      );
+      if (pos == null) return;
 
       final body = <String, dynamic>{
-        'lat': lat,
-        'lng': lng,
+        'lat': pos.latitude,
+        'lng': pos.longitude,
         'remarks': remarksCtrl.text.trim(),
         'stopStatus': skip
             ? CollectionStopStatus.skipped.value

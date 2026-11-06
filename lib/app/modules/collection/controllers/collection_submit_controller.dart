@@ -57,9 +57,17 @@ class CollectionSubmitController extends GetxController {
     if (isMcr) {
       final cans = doneStops.fold<int>(0, (s, e) => s + e.canCount);
       final milk = doneStops.fold<double>(0, (s, e) => s + e.milkQtyLtr);
-      final fatSum = doneStops.fold<double>(0, (s, e) => s + e.fatPercent);
-      final snfSum = doneStops.fold<double>(0, (s, e) => s + e.snfPercent);
-      final n = doneStops.length;
+      // Liters-weighted fat/SNF across society stops (not simple average)
+      final fat = _weightedAvg(
+        doneStops,
+        (s) => s.milkQtyLtr,
+        (s) => s.fatPercent,
+      );
+      final snf = _weightedAvg(
+        doneStops,
+        (s) => s.milkQtyLtr,
+        (s) => s.snfPercent,
+      );
       final size = doneStops
               .map((e) => e.canSizeLtr)
               .firstWhere((v) => v > 0, orElse: () => 40.0);
@@ -67,10 +75,10 @@ class CollectionSubmitController extends GetxController {
       canCountCtrl.text = cans > 0 ? '$cans' : '';
       canSizeCtrl.text = _fmt(size);
       milkQtyCtrl.text = milk > 0 ? _fmt(milk) : '';
-      fatCtrl.text = n > 0 ? _fmt(fatSum / n) : '';
-      snfCtrl.text = n > 0 ? _fmt(snfSum / n) : '';
+      fatCtrl.text = fat > 0 ? _fmt(fat) : '';
+      snfCtrl.text = snf > 0 ? _fmt(snf) : '';
       collectedSummary.value =
-          'From ${doneStops.length} stop(s): $cans cans · ${_fmt(milk)} L';
+          'From ${doneStops.length} stop(s): $cans cans · ${_fmt(milk)} L (weighted Fat/SNF)';
     } else {
       final fc = doneStops.fold<double>(0, (s, e) => s + e.fcLtr);
       final mc = doneStops.fold<double>(0, (s, e) => s + e.mcLtr);
@@ -199,19 +207,14 @@ class CollectionSubmitController extends GetxController {
 
     try {
       isLoading.value = true;
-      final allowed = await LocationUtils.ensureLocationPermission();
-      double lat = 0, lng = 0;
-      if (allowed) {
-        final pos = await LocationUtils.getCurrentLocation();
-        if (pos != null) {
-          lat = pos.latitude;
-          lng = pos.longitude;
-        }
-      }
+      final pos = await LocationUtils.requireValidLocation(
+        action: isMcr ? 'submit at BMC' : 'submit at Dairy',
+      );
+      if (pos == null) return;
 
       final body = <String, dynamic>{
-        'lat': lat,
-        'lng': lng,
+        'lat': pos.latitude,
+        'lng': pos.longitude,
         'remarks': remarksCtrl.text.trim(),
       };
 

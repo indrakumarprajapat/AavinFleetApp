@@ -62,6 +62,22 @@ class CollectionRouteController extends GetxController {
   }
 
   void openStop(CollectionStop stop) {
+    if (!isSubmitted && !_canCollectStop(stop)) {
+      final earlier = trip.value?.stops
+              .where((s) =>
+                  (s.stopSequence ?? 0) < (stop.stopSequence ?? 0) && !s.isDone)
+              .toList() ??
+          [];
+      earlier.sort(
+        (a, b) => (a.stopSequence ?? 0).compareTo(b.stopSequence ?? 0),
+      );
+      final first = earlier.isNotEmpty ? earlier.first.stopSequence : '?';
+      AppSnackbar.warning(
+        'Out of sequence',
+        'Finish stop #$first before stop #${stop.stopSequence}',
+      );
+      return;
+    }
     Get.toNamed(
       Routes.COLLECTION_STOP,
       arguments: {
@@ -71,6 +87,16 @@ class CollectionRouteController extends GetxController {
         'readOnly': isSubmitted,
       },
     )?.then((_) => loadTrip());
+  }
+
+  bool _canCollectStop(CollectionStop stop) {
+    if (stop.isDone) return true;
+    final seq = stop.stopSequence ?? 0;
+    if (seq <= 0) return true;
+    final stops = trip.value?.stops ?? [];
+    return stops
+        .where((s) => (s.stopSequence ?? 0) < seq)
+        .every((s) => s.isDone);
   }
 
   void openSubmit() {

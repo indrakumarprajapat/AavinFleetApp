@@ -160,6 +160,16 @@ class CollectionSubmitView extends GetView<CollectionSubmitController> {
           },
         ),
         CollectionFormField(
+          controller: controller.fcFatCtrl,
+          label: 'FC Fat %',
+          keyboard: const TextInputType.numberWithOptions(decimal: true),
+        ),
+        CollectionFormField(
+          controller: controller.fcSnfCtrl,
+          label: 'FC SNF %',
+          keyboard: const TextInputType.numberWithOptions(decimal: true),
+        ),
+        CollectionFormField(
           controller: controller.mcLtrCtrl,
           label: 'MC liters',
           required: true,
@@ -171,6 +181,16 @@ class CollectionSubmitView extends GetView<CollectionSubmitController> {
             if (n == null || n < 0) return 'Enter a valid number';
             return null;
           },
+        ),
+        CollectionFormField(
+          controller: controller.mcFatCtrl,
+          label: 'MC Fat %',
+          keyboard: const TextInputType.numberWithOptions(decimal: true),
+        ),
+        CollectionFormField(
+          controller: controller.mcSnfCtrl,
+          label: 'MC SNF %',
+          keyboard: const TextInputType.numberWithOptions(decimal: true),
         ),
         CollectionFormField(
           controller: controller.rcLtrCtrl,
@@ -186,15 +206,25 @@ class CollectionSubmitView extends GetView<CollectionSubmitController> {
           },
         ),
         CollectionFormField(
+          controller: controller.rcFatCtrl,
+          label: 'RC Fat %',
+          keyboard: const TextInputType.numberWithOptions(decimal: true),
+        ),
+        CollectionFormField(
+          controller: controller.rcSnfCtrl,
+          label: 'RC SNF %',
+          keyboard: const TextInputType.numberWithOptions(decimal: true),
+        ),
+        CollectionFormField(
           controller: controller.fatCtrl,
-          label: 'Fat % (overall)',
+          label: 'Fat % (overall, weighted)',
           required: true,
           keyboard: const TextInputType.numberWithOptions(decimal: true),
           validator: (v) => controller.validatePercent(v, 'Fat %'),
         ),
         CollectionFormField(
           controller: controller.snfCtrl,
-          label: 'SNF % (overall)',
+          label: 'SNF % (overall, weighted)',
           required: true,
           keyboard: const TextInputType.numberWithOptions(decimal: true),
           validator: (v) => controller.validatePercent(v, 'SNF %'),

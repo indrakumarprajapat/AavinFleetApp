@@ -211,22 +211,29 @@ class HomeController extends GetxController
 
     try {
       _isLoading.value = true;
-      final allowed = await LocationUtils.ensureLocationPermission();
-      double lat = 0;
-      double lng = 0;
-      if (allowed) {
-        final position = await LocationUtils.getCurrentLocation();
-        if (position != null) {
-          lat = position.latitude;
-          lng = position.longitude;
-        }
-      }
 
-      try {
-        await apiService.startCollectionTrip(tripId.value, lat, lng);
-      } catch (e) {
-        if (!e.toString().toLowerCase().contains('already started')) {
-          rethrow;
+      // Do not re-call START once trip is already running / submitted (bug 2.5)
+      final trip = collectionTrip.value;
+      final alreadyGoing = trip != null &&
+          (trip.status == CollectionFleetTripStatus.started ||
+              trip.status == CollectionFleetTripStatus.inProgress ||
+              trip.status == CollectionFleetTripStatus.collectionDone ||
+              trip.status == CollectionFleetTripStatus.submitted ||
+              trip.status == CollectionFleetTripStatus.completed);
+      if (!alreadyGoing) {
+        final position =
+            await LocationUtils.requireValidLocation(action: 'start trip');
+        if (position == null) return;
+        try {
+          await apiService.startCollectionTrip(
+            tripId.value,
+            position.latitude,
+            position.longitude,
+          );
+        } catch (e) {
+          if (!e.toString().toLowerCase().contains('already started')) {
+            rethrow;
+          }
         }
       }
 
